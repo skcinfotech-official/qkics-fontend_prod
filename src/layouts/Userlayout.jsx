@@ -14,7 +14,7 @@
 //   - No theme management (App.jsx still owns that)
 //   - No search state (Navbar owns its own search)
 
-import { Outlet } from "react-router-dom";
+import { Outlet, Link } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { lazy, Suspense } from "react";
 
@@ -39,7 +39,7 @@ const CreatePostModal   = lazy(() => import("../components/posts/create_post"));
 function ModalLoader() {
   return (
     <div className="flex items-center justify-center p-12">
-      <div className="animate-spin rounded-full h-8 w-8 border-2 border-t-red-500 border-neutral-300" />
+      <div className="animate-spin rounded-full h-8 w-8 border-2 border-t-primary border-muted" />
     </div>
   );
 }
@@ -83,11 +83,31 @@ function UserLayoutInner() {
       />
 
       {/* ── Page content ───────────────────────────────────────────────── */}
-      <main className="pb-16 lg:pb-0">
+      <main className="pb-16 lg:pb-0 min-h-screen lg:min-h-[calc(100vh-5rem)]">
         <ErrorBoundary>
           <Outlet />
         </ErrorBoundary>
       </main>
+
+      {/* ── Footer ──────────────────────────────────────────────────────── */}
+      <footer className="border-t border-border bg-card py-5 mt-auto">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center gap-3 text-center">
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs font-bold uppercase tracking-wider">
+            <Link to="/privacy-policy" className="text-muted-foreground hover:text-primary transition-colors">
+              Privacy Policy
+            </Link>
+            <Link to="/refund-policy" className="text-muted-foreground hover:text-primary transition-colors">
+              Refund Policy
+            </Link>
+            <Link to="/terms-conditions" className="text-muted-foreground hover:text-primary transition-colors">
+              Terms &amp; Conditions
+            </Link>
+          </div>
+          <p className="text-2xs text-muted-foreground/60">
+            &copy; {new Date().getFullYear()} Qkics. All rights reserved.
+          </p>
+        </div>
+      </footer>
 
       {/* ── Mobile bottom nav ──────────────────────────────────────────── */}
       {/* Reads openLogin from context instead of taking it as a prop
@@ -106,7 +126,6 @@ function UserLayoutInner() {
         <ModalOverlay close={closeLogin}>
           <Suspense fallback={<ModalLoader />}>
             <LoginModal
-              isDark={isDark}
               onClose={closeLogin}
               openSignup={switchToSignup}
             />
@@ -118,7 +137,6 @@ function UserLayoutInner() {
         <ModalOverlay close={closeSignup}>
           <Suspense fallback={<ModalLoader />}>
             <SignupModal
-              isDark={isDark}
               onClose={closeSignup}
               openLogin={switchToLogin}
             />
@@ -130,7 +148,6 @@ function UserLayoutInner() {
         <ModalOverlay close={closeChangePass}>
           <Suspense fallback={<ModalLoader />}>
             <ChangePasswordModal
-              isDark={isDark}
               onClose={closeChangePass}
             />
           </Suspense>
@@ -141,7 +158,6 @@ function UserLayoutInner() {
         <ModalOverlay close={closeCreatePost}>
           <Suspense fallback={<ModalLoader />}>
             <CreatePostModal
-              isDark={isDark}
               onClose={closeCreatePost}
               onSuccess={handlePostCreated}
             />

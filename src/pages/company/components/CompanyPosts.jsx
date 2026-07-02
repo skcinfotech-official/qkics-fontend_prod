@@ -1,15 +1,21 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { FaPlus, FaTimes, FaImage, FaCheck } from "react-icons/fa";
+import { FaImage } from "react-icons/fa";
+import { FiX } from "react-icons/fi";
 import axiosSecure from "../../../components/utils/axiosSecure";
 import CompanyPostCard from "./CompanyPostCard";
 import { useAlert } from "../../../context/AlertContext";
 import ModalOverlay from "../../../components/ui/ModalOverlay";
-import { useSelector } from "react-redux";
 import ConfirmationAlert from "../../../components/ui/ConfirmationAlert";
+import { Button } from "../../../components/ui";
 
-export default function CompanyPosts({ companyId, isDark, showCreate = true }) {
+const labelClass =
+  "mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground";
+
+const fieldClass =
+  "w-full rounded-lg border border-input bg-muted/40 px-3.5 py-2.5 text-sm font-medium text-foreground outline-none transition-all placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-ring/40";
+
+export default function CompanyPosts({ companyId, showCreate = true }) {
   const { showAlert } = useAlert();
-  const { data: loggedUser } = useSelector((state) => state.user);
 
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -56,7 +62,6 @@ export default function CompanyPosts({ companyId, isDark, showCreate = true }) {
       setHasMore(!!res.data.next);
     } catch (err) {
       console.error("Error fetching company posts:", err);
-      // showAlert("Error fetching posts", "error");
     } finally {
       setLoading(false);
     }
@@ -69,7 +74,6 @@ export default function CompanyPosts({ companyId, isDark, showCreate = true }) {
   const handleFileChange = (e) => {
     const selectedFiles = Array.from(e.target.files);
     setFiles((prev) => [...prev, ...selectedFiles]);
-
     const newPreviews = selectedFiles.map((file) => URL.createObjectURL(file));
     setPreviews((prev) => [...prev, ...newPreviews]);
   };
@@ -95,9 +99,7 @@ export default function CompanyPosts({ companyId, isDark, showCreate = true }) {
       const res = await axiosSecure.post(
         `/v1/companies/${companyId}/posts/create/`,
         formData,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-        }
+        { headers: { "Content-Type": "multipart/form-data" } }
       );
       setPosts((prev) => [res.data, ...prev]);
       setShowCreateModal(false);
@@ -127,7 +129,7 @@ export default function CompanyPosts({ companyId, isDark, showCreate = true }) {
   const handleUpdatePost = async (e) => {
     e.preventDefault();
     if (!title.trim() || !content.trim()) return;
-    
+
     setCreating(true);
     const formData = new FormData();
     formData.append("title", title);
@@ -139,9 +141,7 @@ export default function CompanyPosts({ companyId, isDark, showCreate = true }) {
       const res = await axiosSecure.patch(
         `/v1/companies/posts/${editPost.id}/update/`,
         formData,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-        }
+        { headers: { "Content-Type": "multipart/form-data" } }
       );
       setPosts((prev) =>
         prev.map((p) => (p.id === editPost.id ? { ...p, ...res.data } : p))
@@ -192,43 +192,33 @@ export default function CompanyPosts({ companyId, isDark, showCreate = true }) {
     }
   };
 
-  const text = isDark ? "text-white" : "text-black";
-  const bgCard = isDark ? "bg-neutral-900" : "bg-white";
-
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className={`text-xl font-black uppercase tracking-widest ${isDark ? "text-white" : "text-black"}`}>
-          Company Posts
-        </h2>
+    <div className="space-y-5">
+      <div className="flex items-center justify-between">
+        <h2 className="text-base font-bold tracking-tight text-foreground">Company Posts</h2>
         {showCreate && (
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2 px-6 py-3 bg-red-600 text-white rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-red-600/20 hover:scale-105 active:scale-95 transition-all"
-          >
-            <FaPlus />
+          <Button size="sm" onClick={() => setShowCreateModal(true)}>
             Create Post
-          </button>
+          </Button>
         )}
       </div>
 
-      <div className="grid grid-cols-1 gap-6">
+      <div className="grid grid-cols-1 gap-5">
         {posts.length > 0 ? (
           posts.map((post, index) => {
-            const canModify = showCreate; // or check if loggedUser is member of company
+            const canModify = showCreate;
             if (posts.length === index + 1) {
               return (
                 <div ref={lastPostRef} key={post.id}>
-                  <CompanyPostCard post={post} isDark={isDark} onDelete={handleDeleteClick} onEdit={handleEditClick} isOwner={canModify} />
+                  <CompanyPostCard post={post} onDelete={handleDeleteClick} onEdit={handleEditClick} isOwner={canModify} />
                 </div>
               );
-            } else {
-              return <CompanyPostCard key={post.id} post={post} isDark={isDark} onDelete={handleDeleteClick} onEdit={handleEditClick} isOwner={canModify} />;
             }
+            return <CompanyPostCard key={post.id} post={post} onDelete={handleDeleteClick} onEdit={handleEditClick} isOwner={canModify} />;
           })
         ) : (
           !loading && (
-            <div className="text-center py-10 opacity-50 italic">
+            <div className="rounded-2xl border border-dashed border-border py-12 text-center text-sm italic text-muted-foreground">
               No posts found for this company.
             </div>
           )
@@ -236,104 +226,84 @@ export default function CompanyPosts({ companyId, isDark, showCreate = true }) {
 
         {loading && (
           <div className="flex justify-center py-6">
-            <div className="w-8 h-8 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-primary" />
           </div>
         )}
       </div>
 
       {showCreateModal && (
         <ModalOverlay close={closeModal}>
-          <div className={`p-8 md:p-12 shadow-2xl rounded-3xl ${bgCard} shadow-black/10 max-w-2xl w-full mx-4 animate-pop`}>
-            <div className="flex justify-between items-start mb-8">
+          <div className="mx-4 w-full max-w-xl animate-pop rounded-2xl border border-border bg-card p-6 shadow-2xl md:p-8">
+            <div className="mb-6 flex items-start justify-between">
               <div>
-                <h1 className={`text-3xl font-black tracking-tighter mb-2 ${text}`}>
+                <h2 className="text-lg font-bold tracking-tight text-foreground">
                   {isEditing ? "Edit Post" : "Create New Post"}
-                </h1>
-                <p className={`text-sm ${isDark ? "text-neutral-400" : "text-neutral-500"}`}>
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground">
                   {isEditing ? "Update your post title and content." : "Share updates, news, or articles from your company."}
                 </p>
               </div>
               <button
                 onClick={closeModal}
-                className={`p-2 rounded-xl transition-colors ${isDark ? "hover:bg-white/10 text-neutral-400" : "hover:bg-black/10 text-neutral-500"}`}
+                className="rounded-full p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               >
-                <FaTimes size={20} />
+                <FiX size={20} />
               </button>
             </div>
 
-            <form onSubmit={isEditing ? handleUpdatePost : handleCreatePost} className="space-y-6">
+            <form onSubmit={isEditing ? handleUpdatePost : handleCreatePost} className="space-y-4">
               <div>
-                <label className={`block text-xs font-bold uppercase tracking-widest mb-2 ${isDark ? "text-neutral-400" : "text-neutral-500"}`}>
-                  Post Title *
-                </label>
+                <label className={labelClass}>Post Title *</label>
                 <input
                   type="text"
                   required
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className={`w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-red-500 outline-none transition-all ${isDark ? "bg-neutral-800 border-neutral-700 text-white" : "bg-neutral-50 border-neutral-200 text-black"}`}
+                  className={fieldClass}
                   placeholder="Enter post title"
                 />
               </div>
 
               <div>
-                <label className={`block text-xs font-bold uppercase tracking-widest mb-2 ${isDark ? "text-neutral-400" : "text-neutral-500"}`}>
-                  Content *
-                </label>
+                <label className={labelClass}>Content *</label>
                 <textarea
                   required
-                  rows="6"
+                  rows="5"
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
-                  className={`w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-red-500 outline-none transition-all resize-none ${isDark ? "bg-neutral-800 border-neutral-700 text-white" : "bg-neutral-50 border-neutral-200 text-black"}`}
+                  className={`${fieldClass} resize-none`}
                   placeholder="What's on your mind?..."
-                ></textarea>
+                />
               </div>
-                <div>
-                  <label className={`block text-xs font-bold uppercase tracking-widest mb-2 ${isDark ? "text-neutral-400" : "text-neutral-500"}`}>
-                    Attachments
-                  </label>
-                  <div className="flex flex-wrap gap-4">
-                    {previews.map((preview, index) => (
-                      <div key={index} className="relative w-24 h-24 rounded-2xl overflow-hidden group">
-                        <img src={preview} alt="Preview" className="w-full h-full object-cover" />
-                        <button
-                          type="button"
-                          onClick={() => removeFile(index)}
-                          className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white"
-                        >
-                          <FaTimes />
-                        </button>
-                      </div>
-                    ))}
-                    <label className={`w-24 h-24 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all ${isDark ? "border-neutral-700 hover:border-red-500 text-neutral-500 hover:text-red-500" : "border-neutral-200 hover:border-red-500 text-neutral-400 hover:text-red-500"}`}>
-                      <FaImage size={24} className="mb-1" />
-                      <span className="text-[10px] font-bold uppercase tracking-widest">Add Media</span>
-                      <input type="file" multiple accept="image/*,video/*" className="hidden" onChange={handleFileChange} />
-                    </label>
-                  </div>
-                </div>
 
-              <div className="flex justify-end gap-4 mt-8 pt-6 border-t border-neutral-200 dark:border-neutral-800">
-                <button
-                  type="button"
-                  onClick={closeModal}
-                  className="px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-widest bg-neutral-200 text-black hover:bg-neutral-300 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={creating || !title.trim() || !content.trim()}
-                  className="px-8 py-3 rounded-xl text-xs font-bold uppercase tracking-widest bg-gradient-to-r from-red-600 to-orange-600 text-white shadow-xl shadow-red-600/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {creating ? (
-                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                  ) : (
-                    <FaCheck />
-                  )}
+              <div>
+                <label className={labelClass}>Attachments</label>
+                <div className="flex flex-wrap gap-3">
+                  {previews.map((preview, index) => (
+                    <div key={index} className="group relative h-20 w-20 overflow-hidden rounded-xl">
+                      <img src={preview} alt="Preview" className="h-full w-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => removeFile(index)}
+                        className="absolute inset-0 flex items-center justify-center bg-black/60 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                      >
+                        <FiX />
+                      </button>
+                    </div>
+                  ))}
+                  <label className="flex h-20 w-20 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-border text-muted-foreground transition-all hover:border-primary hover:text-primary">
+                    <FaImage size={20} className="mb-1" />
+                    <span className="text-3xs font-bold uppercase tracking-wide">Add Media</span>
+                    <input type="file" multiple accept="image/*,video/*" className="hidden" onChange={handleFileChange} />
+                  </label>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 border-t border-border pt-4">
+                <Button type="button" variant="ghost" onClick={closeModal}>Cancel</Button>
+                <Button type="submit" loading={creating} disabled={!title.trim() || !content.trim()}>
                   {isEditing ? "Update Post" : "Publish Post"}
-                </button>
+                </Button>
               </div>
             </form>
           </div>

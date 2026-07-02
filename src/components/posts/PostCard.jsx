@@ -33,7 +33,6 @@ const timeAgo = (dateString) => {
 export default function PostCard({
     post,
     loggedUser,
-    isDark,
     onLike,
     onDelete,
     onEdit,
@@ -51,9 +50,6 @@ export default function PostCard({
     const [expanded, setExpanded] = useState(false);
     const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
 
-    const text = isDark ? "text-neutral-100" : "text-neutral-900";
-    const borderColor = isDark ? "border-white/5" : "border-black/5";
-
     const isLocked = post.is_locked === true;
     const fullContent = post.content || "";
     const previewLength = post.preview_length || 300;
@@ -63,8 +59,8 @@ export default function PostCard({
     const isLongContent = fullContent.length > previewLength || (isLocked && fullContent.length > 150);
 
     // What text to actually display
-    const displayText = expanded 
-        ? fullContent 
+    const displayText = expanded
+        ? fullContent
         : (isLongContent ? fullContent.slice(0, previewLength) + "..." : fullContent);
 
     // Gated message triggers if locked and expanded
@@ -77,12 +73,12 @@ export default function PostCard({
     );
 
     return (
-        <article className={`premium-card overflow-hidden ${isDark ? "bg-neutral-900" : "bg-white"} animate-fadeIn`}>
+        <article className="premium-card overflow-hidden bg-card text-foreground animate-fadeIn">
             {/* HEADER */}
             <header className="p-6 flex items-center justify-between">
                 <div className="flex items-center gap-4">
                     <div
-                        className="h-12 w-12 rounded-xl overflow-hidden cursor-pointer ring-2 ring-transparent hover:ring-red-500/30 transition-all"
+                        className="h-12 w-12 rounded-xl overflow-hidden cursor-pointer ring-2 ring-transparent hover:ring-primary/30 transition-all"
                         onClick={() => onProfileClick?.(post.author)}
                     >
                         <img
@@ -102,21 +98,21 @@ export default function PostCard({
                     <div>
                         <div className="flex items-center gap-2 mb-0.5">
                             <span
-                                className={`font-bold text-sm cursor-pointer hover:text-red-500 transition-colors ${text}`}
+                                className="font-bold text-sm cursor-pointer hover:text-primary transition-colors"
                                 onClick={() => onProfileClick?.(post.author)}
                             >
                                 {post.author?.first_name || post.author?.last_name
                                     ? `${post.author?.first_name || ""} ${post.author?.last_name || ""}`.trim()
                                     : post.author?.username}
                             </span>
-                            <UserBadge userType={post.author?.user_type} isDark={isDark} />
+                            <UserBadge userType={post.author?.user_type} />
                             {post.author?.is_subscribed && (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest bg-amber-500/10 text-amber-600 border border-amber-500/10 shadow-sm shadow-amber-500/5">
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-3xs font-black uppercase tracking-widest bg-amber-500/10 text-amber-600 border border-amber-500/10 shadow-sm shadow-amber-500/5">
                                     <FaCrown size={10} className="text-amber-600" /> Premium
                                 </span>
                             )}
                         </div>
-                        <div className="flex items-center gap-2 opacity-40 text-[10px] font-bold tracking-wider">
+                        <div className="flex items-center gap-2 text-muted-foreground text-2xs font-bold tracking-wider">
                             <span>{timeAgo(post.created_at)}</span>
                         </div>
                     </div>
@@ -127,22 +123,22 @@ export default function PostCard({
                     <div className="relative" ref={menuRef}>
                         <button
                             onClick={() => setMenuOpen(!menuOpen)}
-                            className="h-10 w-10 flex items-center justify-center rounded-xl bg-neutral-100/50 dark:bg-white/5 hover:bg-red-500 hover:text-white transition-all"
+                            className="h-10 w-10 flex items-center justify-center rounded-xl bg-muted hover:bg-primary hover:text-white transition-all"
                         >
                             <FaEllipsisH size={14} />
                         </button>
 
                         {menuOpen && (
-                            <div className={`absolute right-0 mt-3 w-40 rounded-xl shadow-2xl border p-1 animate-pop z-20 ${isDark ? "bg-neutral-800 border-white/10" : "bg-white border-black/5"}`}>
+                            <div className="absolute right-0 mt-3 w-40 rounded-xl shadow-2xl border border-border p-1 animate-pop z-20 bg-card">
                                 <button
                                     onClick={() => { setMenuOpen(false); onEdit?.(post); }}
-                                    className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700 text-sm font-medium transition-colors"
+                                    className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-muted text-sm font-medium transition-colors"
                                 >
                                     <HiPencilAlt size={16} /> Edit
                                 </button>
                                 <button
                                     onClick={() => { setMenuOpen(false); onDelete?.(post.id); }}
-                                    className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10 text-red-500 text-sm font-medium transition-colors"
+                                    className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-danger/10 text-danger text-sm font-medium transition-colors"
                                 >
                                     <HiTrash size={16} /> Delete
                                 </button>
@@ -153,7 +149,7 @@ export default function PostCard({
             </header>
 
             {/* CONTENT */}
-            <div className={`px-6 pb-6 ${text}`}>
+            <div className="px-6 pb-6">
                 {post.title && (
                     <h2 className="text-lg font-bold mb-1 leading-tight tracking-tight">
                         {post.title}
@@ -161,7 +157,7 @@ export default function PostCard({
                 )}
 
                 <div className="relative">
-                    <p className="text-sm leading-relaxed opacity-80 font-medium whitespace-pre-wrap">
+                    <p className="text-sm leading-relaxed text-muted-foreground font-medium whitespace-pre-wrap">
                         {displayText}
                     </p>
 
@@ -176,7 +172,7 @@ export default function PostCard({
                                     }
                                     setExpanded(true);
                                 }}
-                                className="text-xs font-black uppercase tracking-widest text-red-500 hover:text-red-600 transition-colors flex items-center gap-1"
+                                className="text-xs font-black uppercase tracking-widest text-primary hover:text-primary-hover transition-colors flex items-center gap-1"
                             >
                                 READ MORE ▼
                             </button>
@@ -190,7 +186,7 @@ export default function PostCard({
                                 e.stopPropagation();
                                 setExpanded(false);
                             }}
-                            className="mt-3 text-xs font-black uppercase tracking-widest text-neutral-400 hover:text-red-500 transition-colors block"
+                            className="mt-3 text-xs font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors block"
                         >
                             READ LESS ▲
                         </button>
@@ -198,16 +194,16 @@ export default function PostCard({
 
                     {/* GATED — expanded but not subscribed */}
                     {isGated && (
-                        <div className={`mt-3 p-4 rounded-xl border animate-fadeIn ${isDark ? "bg-red-600/10 border-red-600/20" : "bg-red-50 border-red-100"}`}>
+                        <div className="mt-3 p-4 rounded-xl border border-primary/20 bg-primary-soft animate-fadeIn">
                             <div className="flex items-center gap-2 mb-2">
-                                <div className="w-6 h-6 rounded-lg bg-red-600 flex items-center justify-center text-[10px] text-white font-black">
+                                <div className="w-6 h-6 rounded-lg bg-primary flex items-center justify-center text-2xs text-primary-foreground font-black">
                                     $
                                 </div>
-                                <p className="text-[10px] font-black uppercase tracking-widest text-red-600">
+                                <p className="text-2xs font-black uppercase tracking-widest text-primary">
                                     Subscription Required
                                 </p>
                             </div>
-                            <p className="text-xs opacity-70 mb-4 leading-relaxed">
+                            <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
                                 You've reached the free reading limit. Please subscribe to a Premium Plan to unlock the full intelligence of this discovery.
                             </p>
                             <button
@@ -215,7 +211,7 @@ export default function PostCard({
                                     e.stopPropagation();
                                     navigate("/subscription");
                                 }}
-                                className="w-full bg-red-600 text-white text-[10px] font-black uppercase tracking-[0.2em] px-4 py-3 rounded-xl shadow-lg hover:bg-red-700 transition-all hover:-translate-y-0.5"
+                                className="w-full bg-primary text-primary-foreground text-2xs font-black uppercase tracking-[0.2em] px-4 py-3 rounded-xl shadow-lg hover:bg-primary-hover transition-all hover:-translate-y-0.5"
                             >
                                 Subscribe to Unlock
                             </button>
@@ -230,11 +226,7 @@ export default function PostCard({
                             <span
                                 key={tag.id}
                                 onClick={() => onTagClick?.(tag.name)}
-                                className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-wider cursor-pointer rounded-full border transition-all 
-                                    ${isDark
-                                        ? "bg-white/5 border-white/5 text-neutral-400 hover:border-red-500 hover:text-red-500"
-                                        : "bg-neutral-100 border-black/5 text-neutral-600 hover:border-red-500 hover:text-red-500"
-                                    }`}
+                                className="px-4 py-1.5 text-2xs font-black uppercase tracking-wider cursor-pointer rounded-full border bg-muted border-border text-muted-foreground hover:border-primary hover:text-primary transition-all"
                             >
                                 #{tag.name}
                             </span>
@@ -244,10 +236,10 @@ export default function PostCard({
 
                 {/* MEDIA */}
                 {post.media && post.media.length > 0 ? (
-                    <div className="relative mt-3 overflow-hidden rounded-2xl group bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center min-h-[300px] max-h-[500px]">
+                    <div className="relative mt-3 overflow-hidden rounded-2xl group bg-muted flex items-center justify-center min-h-[300px] max-h-[500px]">
                         {/* Page Indicator Top Right */}
                         {post.media.length > 1 && (
-                            <div className="absolute top-4 right-4 z-30 bg-black/60 text-white text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full backdrop-blur-md">
+                            <div className="absolute top-4 right-4 z-30 bg-black/60 text-white text-2xs font-black uppercase tracking-widest px-3 py-1.5 rounded-full backdrop-blur-md">
                                 {currentMediaIndex + 1} / {post.media.length}
                             </div>
                         )}
@@ -287,7 +279,7 @@ export default function PostCard({
                                 {currentMediaIndex > 0 && (
                                     <button
                                         onClick={(e) => { e.stopPropagation(); setCurrentMediaIndex(prev => prev - 1); }}
-                                        className="absolute left-2 top-1/2 -translate-y-1/2 z-30 w-10 h-10 md:w-8 md:h-8 flex items-center justify-center bg-white/80 dark:bg-black/50 text-black dark:text-white rounded-full opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity hover:bg-white dark:hover:bg-black shadow-lg"
+                                        className="absolute left-2 top-1/2 -translate-y-1/2 z-30 w-10 h-10 md:w-8 md:h-8 flex items-center justify-center bg-card/80 text-foreground rounded-full opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity hover:bg-card shadow-lg"
                                     >
                                         <FaChevronLeft size={14} />
                                     </button>
@@ -295,7 +287,7 @@ export default function PostCard({
                                 {currentMediaIndex < post.media.length - 1 && (
                                     <button
                                         onClick={(e) => { e.stopPropagation(); setCurrentMediaIndex(prev => prev + 1); }}
-                                        className="absolute right-2 top-1/2 -translate-y-1/2 z-30 w-10 h-10 md:w-8 md:h-8 flex items-center justify-center bg-white/80 dark:bg-black/50 text-black dark:text-white rounded-full opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity hover:bg-white dark:hover:bg-black shadow-lg"
+                                        className="absolute right-2 top-1/2 -translate-y-1/2 z-30 w-10 h-10 md:w-8 md:h-8 flex items-center justify-center bg-card/80 text-foreground rounded-full opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity hover:bg-card shadow-lg"
                                     >
                                         <FaChevronRight size={14} />
                                     </button>
@@ -305,7 +297,7 @@ export default function PostCard({
                     </div>
                 ) : post.image && (
                     <div
-                        className="mt-3 overflow-hidden rounded-2xl group relative cursor-zoom-in bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center"
+                        className="mt-3 overflow-hidden rounded-2xl group relative cursor-zoom-in bg-muted flex items-center justify-center"
                         onClick={() => onImageClick?.(post.image)}
                     >
                         <div
@@ -326,21 +318,20 @@ export default function PostCard({
                     <button
                         onClick={() => onLike?.(post.id)}
                         className={`group flex items-center gap-3 px-5 py-2.5 rounded-xl border transition-all ${post.is_liked
-                            ? "bg-red-500 border-red-500 text-white shadow-lg shadow-red-500/20"
-                            : `border-black/5 dark:border-white/5 hover:border-red-500/50`
+                            ? "bg-primary border-primary text-white shadow-lg shadow-primary/20"
+                            : "border-border hover:border-primary/50"
                             }`}
                     >
-                        {post.is_liked ? <BiSolidLike size={18} /> : <BiLike size={18} className="group-hover:text-red-500 transition-colors" />}
+                        {post.is_liked ? <BiSolidLike size={18} /> : <BiLike size={18} className="group-hover:text-primary transition-colors" />}
                         <span className="text-xs font-bold">{post.total_likes}</span>
                     </button>
 
                     <button
                         onClick={() => onCommentClick?.(post)}
-                        className="flex items-center gap-3 px-5 py-2.5 rounded-xl border border-black/5 dark:border-white/5 hover:border-red-500/50 transition-all"
+                        className="flex items-center gap-3 px-5 py-2.5 rounded-xl border border-border hover:border-primary/50 transition-all"
                     >
-                        {/* <span className="text-base">💬</span> */}
                         <FaRegComments size={18} />
-                        <span className="text-xs font-bold text-neutral-500">{post.total_comments} Comments</span>
+                        <span className="text-xs font-bold text-muted-foreground">{post.total_comments} Comments</span>
                     </button>
                 </div>
             </div>

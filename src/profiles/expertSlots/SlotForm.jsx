@@ -1,13 +1,19 @@
 import { useEffect, useState } from "react";
 import { useAlert } from "../../context/AlertContext";
 import { useConfirm } from "../../context/ConfirmContext";
+import { FiX } from "react-icons/fi";
+import { Button } from "../../components/ui";
 
+const labelClass =
+  "mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground";
+
+const fieldClass =
+  "w-full rounded-lg border border-input bg-muted/40 px-3.5 py-2.5 text-sm font-medium text-foreground outline-none transition-all placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-ring/40 disabled:cursor-not-allowed disabled:opacity-60";
 
 export default function SlotForm({
   initialData,
   onSave,
   onCancel,
-  isDark,
 }) {
   const isEdit = Boolean(initialData);
   const { showAlert } = useAlert();
@@ -101,7 +107,6 @@ export default function SlotForm({
       is_video_call_available: videoCallPriceVal > 0,
     };
 
-    // Confirmation Logic
     const chatMsg = chatPriceVal > 0 ? `₹${chatPriceVal}` : "Not Available";
     const videoMsg = videoCallPriceVal > 0 ? `₹${videoCallPriceVal}` : "Not Available";
 
@@ -110,18 +115,18 @@ export default function SlotForm({
       message: (
         <div className="space-y-2">
           <p>Please confirm the slot details:</p>
-          <div className="bg-black/5 dark:bg-white/5 p-4 rounded-xl space-y-1">
+          <div className="space-y-1 rounded-xl bg-muted p-4">
             <div className="flex justify-between">
-              <span className="opacity-60">Chat Consultation:</span>
-              <span className={`font-bold ${chatPriceVal > 0 ? "text-green-500" : "text-red-500"}`}>{chatMsg}</span>
+              <span className="text-muted-foreground">Chat Consultation:</span>
+              <span className={`font-bold ${chatPriceVal > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-danger"}`}>{chatMsg}</span>
             </div>
             <div className="flex justify-between">
-              <span className="opacity-60">Video Call:</span>
-              <span className={`font-bold ${videoCallPriceVal > 0 ? "text-green-500" : "text-red-500"}`}>{videoMsg}</span>
+              <span className="text-muted-foreground">Video Call:</span>
+              <span className={`font-bold ${videoCallPriceVal > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-danger"}`}>{videoMsg}</span>
             </div>
           </div>
           {(chatPriceVal === 0 || videoCallPriceVal === 0) && (
-            <p className="text-xs text-red-500 font-medium mt-2">
+            <p className="mt-2 text-xs font-medium text-danger">
               Note: Features with "Not Available" cannot be booked by users for this slot.
             </p>
           )}
@@ -135,130 +140,98 @@ export default function SlotForm({
     });
   };
 
-  const inputClass = `w-full bg-transparent border-b-2 font-medium focus:outline-none transition-all pb-2 ${isDark
-      ? "border-white/20 focus:border-red-500 text-white placeholder-neutral-600"
-      : "border-black/10 focus:border-red-500 text-black placeholder-neutral-400"
-    }`;
-
-  const labelClass = `block text-xs font-black uppercase tracking-widest mb-3 ${isDark ? "text-neutral-500" : "text-neutral-400"}`;
-
   return (
-    <form
-      onSubmit={handleSubmit}
-      className={`${isDark ? "text-white" : "text-black"}`}
-    >
-      <div className="flex justify-between items-center mb-8 border-b border-white/10 pb-4">
-        <h2 className="text-2xl font-black uppercase tracking-tight">
-          {isEdit ? "Edit" : "Create"} <span className="text-red-600">Slot</span>
+    <form onSubmit={handleSubmit} className="text-foreground">
+      <div className="mb-6 flex items-center justify-between border-b border-border pb-4">
+        <h2 className="text-lg font-bold tracking-tight">
+          {isEdit ? "Edit" : "Create"} <span className="text-primary">Slot</span>
         </h2>
         <button
           type="button"
           onClick={onCancel}
-          className={`text-2xl hover:text-red-500 transition-colors ${isDark ? "text-white" : "text-black"}`}
+          className="rounded-full p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
         >
-          &times;
+          <FiX size={20} />
         </button>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-8 mb-8">
+      <div className="mb-6 grid gap-5 md:grid-cols-2">
         <div>
-          <label className={labelClass}>
-            Start Date & Time
-          </label>
+          <label className={labelClass}>Start Date &amp; Time</label>
           <input
             type="datetime-local"
             value={start}
             min={toLocalString(new Date())}
             onChange={(e) => setStart(e.target.value)}
-            className={inputClass}
+            className={fieldClass}
           />
         </div>
 
         <div>
-          <label className={labelClass}>
-            End Date & Time
-          </label>
+          <label className={labelClass}>End Date &amp; Time</label>
           <input
             type="datetime-local"
             value={end}
             min={start || toLocalString(new Date())}
             onChange={(e) => setEnd(e.target.value)}
-            className={inputClass}
+            className={fieldClass}
           />
         </div>
 
         <div>
-          <label className={labelClass}>
-            Duration (minutes)
-          </label>
+          <label className={labelClass}>Duration (minutes)</label>
           <input
             type="number"
             value={duration}
             disabled
-            className={`${inputClass} opacity-50 cursor-not-allowed`}
+            className={fieldClass}
           />
         </div>
 
         <div>
-          <label className={labelClass}>
-            Chat Price (₹)
-          </label>
+          <label className={labelClass}>Chat Price (₹)</label>
           <input
             type="number"
             min={0}
             value={chatPrice}
             onChange={(e) => setChatPrice(e.target.value)}
-            className={inputClass}
+            className={fieldClass}
             placeholder="0.00"
           />
         </div>
 
-        <div>
-          <label className={labelClass}>
-            Video Call Price (₹)
-          </label>
+        <div className="md:col-span-2">
+          <label className={labelClass}>Video Call Price (₹)</label>
           <input
             type="number"
             min={0}
             value={videoCallPrice}
             onChange={(e) => setVideoCallPrice(e.target.value)}
-            className={inputClass}
+            className={fieldClass}
             placeholder="0.00"
           />
         </div>
       </div>
 
-      <div className="mb-8">
-        <label className={`flex items-center gap-3 p-4 rounded-xl cursor-pointer border transition-all ${isDark ? "bg-white/5 border-white/5 hover:bg-white/10" : "bg-neutral-50 border-neutral-200 hover:bg-neutral-100"}`}>
+      <div className="mb-6">
+        <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-border bg-muted/40 p-4 transition-all hover:bg-muted">
           <input
             type="checkbox"
             checked={requiresApproval}
             onChange={(e) => setRequiresApproval(e.target.checked)}
-            className="w-5 h-5 accent-red-600 rounded"
+            className="h-5 w-5 rounded accent-primary"
           />
-          <span className="font-medium text-sm">Requires approval before booking confirmation</span>
+          <span className="text-sm font-medium">Requires approval before booking confirmation</span>
         </label>
       </div>
 
-
-      <div className="flex gap-4">
-        <button
-          type="submit"
-          className="flex-1 py-3 bg-red-600 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-red-700 transition-all shadow-lg shadow-red-600/20"
-        >
+      <div className="flex gap-3">
+        <Button type="submit" fullWidth>
           {isEdit ? "Update Slot" : "Create Slot"}
-        </button>
-
-        <button
-          type="button"
-          onClick={onCancel}
-          className={`flex-1 py-3 border rounded-xl text-xs font-black uppercase tracking-widest transition-all ${isDark
-            ? "border-white/10 hover:bg-white/5 text-white"
-            : "border-black/10 hover:bg-black/5 text-black"
-            }`}
-        >
+        </Button>
+        <Button type="button" variant="ghost" fullWidth onClick={onCancel}>
           Cancel
-        </button>
+        </Button>
       </div>
     </form>
   );

@@ -1,6 +1,12 @@
 import { useSelector } from "react-redux";
 import { FiEdit, FiCheck, FiX } from "react-icons/fi";
 
+const labelClass =
+  "mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground";
+
+const fieldClass =
+  "w-full rounded-lg border border-input bg-muted/40 px-3.5 py-2.5 text-sm font-medium text-foreground outline-none transition-all placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-ring/40 disabled:cursor-not-allowed disabled:opacity-60";
+
 export default function ExpertDetails({
   expertData,
   setExpertData,
@@ -8,33 +14,19 @@ export default function ExpertDetails({
   setEditExp,
   handleSaveExpert,
 }) {
-  const { theme, data: loggedUser } = useSelector((state) => state.user);
+  const { data: loggedUser } = useSelector((state) => state.user);
   const activeProfile = useSelector((state) => state.user.activeProfileData);
-  const isDark = theme === "dark";
 
   const isOwnProfile = loggedUser?.username === (activeProfile?.profile?.user?.username || activeProfile?.profile?.username);
   const readOnly = !isOwnProfile;
 
-  const inputClass = (enabled) =>
-    `w-full bg-transparent border-b-2 py-2 px-1 outline-none transition-all font-medium ${isDark
-      ? enabled
-        ? "border-red-600 text-white placeholder-white/30"
-        : "border-white/10 text-white/50"
-      : enabled
-        ? "border-red-600 text-black placeholder-black/30"
-        : "border-black/10 text-black/50"
-    }`;
-
-  const labelClass = "text-[10px] font-black uppercase tracking-[0.2em] opacity-40 mb-1 block";
-
   return (
-    <div className={`premium-card p-8 md:p-12 ${isDark ? "bg-neutral-900" : "bg-white"}`}>
+    <div className="rounded-2xl border border-border bg-card p-6 md:p-8">
 
       {/* HEADER */}
-      <div className="flex justify-between items-center mb-8 pb-4 border-b border-white/5">
-        <h2 className="text-xl font-black uppercase tracking-tight">
-          <span className="hidden md:inline">Expert <span className="text-red-600">Profile</span></span>
-          <span className="md:hidden">Professional <span className="text-red-600">Profile</span></span>
+      <div className="mb-6 flex items-center justify-between border-b border-border pb-4">
+        <h2 className="text-base font-bold tracking-tight text-foreground">
+          Expert <span className="text-primary">Profile</span>
         </h2>
 
         {!readOnly && (
@@ -42,28 +34,26 @@ export default function ExpertDetails({
             {!editExp ? (
               <button
                 onClick={() => setEditExp(true)}
-                className={`h-10 w-10 flex items-center justify-center rounded-xl transition-all ${isDark
-                  ? "bg-neutral-800 text-white hover:bg-neutral-700"
-                  : "bg-neutral-100 text-black hover:bg-neutral-200"}`}
-                title="Edit Details"
+                className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted text-foreground transition-all hover:bg-primary hover:text-primary-foreground"
+                title="Edit details"
               >
-                <FiEdit size={16} />
+                <FiEdit size={15} />
               </button>
             ) : (
               <>
                 <button
                   onClick={() => setEditExp(false)}
-                  className={`h-10 w-10 flex items-center justify-center rounded-xl transition-all bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white`}
+                  className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted text-muted-foreground transition-all hover:bg-danger hover:text-white"
                   title="Cancel"
                 >
-                  <FiX size={18} />
+                  <FiX size={17} />
                 </button>
                 <button
                   onClick={handleSaveExpert}
-                  className="h-10 w-10 flex items-center justify-center rounded-xl bg-green-500/10 text-green-500 hover:bg-green-500 hover:text-white transition-all shadow-lg shadow-green-500/10"
-                  title="Save Changes"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground transition-all hover:bg-primary-hover"
+                  title="Save changes"
                 >
-                  <FiCheck size={20} />
+                  <FiCheck size={18} />
                 </button>
               </>
             )}
@@ -72,39 +62,54 @@ export default function ExpertDetails({
       </div>
 
       {/* FORM GRID */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 gap-5">
 
-        <div className="md:col-span-2">
+        <div>
           <label className={labelClass}>Professional Headline</label>
           <input
-            value={expertData.headline}
+            value={expertData.headline || ""}
             disabled={!editExp}
             placeholder="e.g. Senior Investment Consultant"
             onChange={(e) => setExpertData({ ...expertData, headline: e.target.value })}
-            className={`${inputClass(editExp)} text-2xl font-bold`}
+            className={fieldClass}
           />
         </div>
 
-        <div className="md:col-span-2">
-          <label className={labelClass}>Primary Expertise</label>
-          <input
-            value={expertData.primary_expertise}
-            disabled={!editExp}
-            placeholder="e.g. Finance"
-            onChange={(e) => setExpertData({ ...expertData, primary_expertise: e.target.value })}
-            className={inputClass(editExp)}
-          />
+        <div className="grid grid-cols-1 gap-4">
+          <div>
+            <label className={labelClass}>Primary Expertise</label>
+            <input
+              value={expertData.primary_expertise || ""}
+              disabled={!editExp}
+              placeholder="e.g. Finance"
+              onChange={(e) => setExpertData({ ...expertData, primary_expertise: e.target.value })}
+              className={fieldClass}
+            />
+          </div>
+
+          <div>
+            <label className={labelClass}>Hourly Rate (₹)</label>
+            <input
+              type="number"
+              value={expertData.hourly_rate || ""}
+              disabled={!editExp}
+              placeholder="e.g. 1500"
+              onChange={(e) => setExpertData({ ...expertData, hourly_rate: e.target.value })}
+              className={fieldClass}
+            />
+          </div>
         </div>
 
-        <div className="md:col-span-2">
+        <div>
           <label className={labelClass}>Other Expertise</label>
           <input
-            value={expertData.other_expertise}
+            value={expertData.other_expertise || ""}
             disabled={!editExp}
             placeholder="e.g. Marketing, Strategy"
             onChange={(e) => setExpertData({ ...expertData, other_expertise: e.target.value })}
-            className={inputClass(editExp)}
+            className={fieldClass}
           />
+          <p className="mt-1.5 text-2xs text-muted-foreground">Separate skills with commas.</p>
         </div>
 
       </div>

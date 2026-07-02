@@ -106,7 +106,7 @@ export default function AdminDocuments({ theme }) {
               <span className={`text-2xl font-black ${isDark ? "text-blue-400" : "text-blue-600"}`}>{settings.monthly_download_limit} <span className="text-sm font-medium opacity-50">/ month</span></span>
             </div>
             <div className="flex flex-col justify-center">
-              <span className={`text-[10px] font-bold uppercase tracking-wider mb-0.5 ${isDark ? "text-gray-600" : "text-gray-400"}`}>Last Updated</span>
+              <span className={`text-2xs font-bold uppercase tracking-wider mb-0.5 ${isDark ? "text-gray-600" : "text-gray-400"}`}>Last Updated</span>
               <span className={`text-xs font-medium ${isDark ? "text-gray-400" : "text-gray-600"}`}>{new Date(settings.updated_at).toLocaleString()}</span>
             </div>
           </div>
@@ -123,7 +123,7 @@ export default function AdminDocuments({ theme }) {
       {/* Filters Area */}
       <div className={`p-4 rounded-xl border flex flex-col sm:flex-row gap-4 justify-between items-center ${isDark ? "bg-[#111111] border-gray-800" : "bg-white border-gray-200 shadow-sm"}`}>
         <div className={`relative w-full sm:max-w-md flex items-center`}>
-          <FaSearch className={`absolute left-3 text-[0.8rem] ${isDark ? "text-gray-500" : "text-gray-400"}`} />
+          <FaSearch className={`absolute left-3 text-sm ${isDark ? "text-gray-500" : "text-gray-400"}`} />
           <input
             type="text"
             placeholder="Search documents by title or access type..."
@@ -161,12 +161,12 @@ export default function AdminDocuments({ theme }) {
                     <td className={`py-3 px-5 font-medium ${isDark ? "text-gray-200" : "text-gray-900"}`}>{doc.title}</td>
                     <td className={`py-3 px-5 text-xs truncate max-w-[200px] ${isDark ? "text-gray-500" : "text-gray-500"}`}>{doc.description}</td>
                     <td className="py-3 px-5 text-center">
-                      <span className={`px-2 py-0.5 rounded text-[0.7rem] font-medium uppercase tracking-wider ${isDark ? "bg-indigo-900/30 text-indigo-400" : "bg-indigo-50 text-indigo-700"}`}>
+                      <span className={`px-2 py-0.5 rounded text-xs font-medium uppercase tracking-wider ${isDark ? "bg-indigo-900/30 text-indigo-400" : "bg-indigo-50 text-indigo-700"}`}>
                         {doc.access_type}
                       </span>
                     </td>
                     <td className="py-3 px-5 text-center">
-                      <span className={`px-2.5 py-1 rounded-full text-[0.7rem] font-medium ${doc.is_active
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${doc.is_active
                         ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
                         : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400"
                         }`}>

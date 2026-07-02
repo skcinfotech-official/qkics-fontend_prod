@@ -10,6 +10,7 @@ import { setNavigate } from "./components/utils/navigation";
 import { getAccessToken } from "./redux/store/tokenManager";
 import ServerDown from "./components/Serverdown";
 import ErrorBoundary from "./components/Errorboundary";
+import ScrollToTop from "./components/utils/ScrollToTop";
 
 // ─── Layouts & Guards ────────────────────────────────────────────────────────
 import UserLayout      from "./layouts/Userlayout";
@@ -26,6 +27,9 @@ const SearchResultsPage     = lazy(() => import("./pages/SearchResultsPage"));
 const EntrepreneurConnect   = lazy(() => import("./pages/entrepreneurConnect"));
 const KnowledgeHubFeed      = lazy(() => import("./pages/KnowledgeHubFeed"));
 const ProfileFetcher        = lazy(() => import("./profiles/ProfileFetcher"));
+const PrivacyPolicy         = lazy(() => import("./pages/PrivacyPolicy"));
+const RefundPolicy          = lazy(() => import("./pages/RefundPolicy"));
+const TermsConditions       = lazy(() => import("./pages/TermsConditions"));
 
 // ─── Protected pages (login required) ────────────────────────────────────────
 const Notification          = lazy(() => import("./pages/notification"));
@@ -66,8 +70,8 @@ const AdminAdvertisements             = lazy(() => import("./admin/adminPages/ad
 // ─── Full-screen loader shown while chunks download ───────────────────────────
 function PageLoader() {
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="animate-spin rounded-full h-8 w-8 border-2 border-t-red-500 border-neutral-800" />
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="animate-spin rounded-full h-8 w-8 border-2 border-t-primary border-muted" />
     </div>
   );
 }
@@ -117,6 +121,7 @@ function App() {
 
   return (
     <ErrorBoundary>
+      <ScrollToTop />
       <Suspense fallback={<PageLoader />}>
         <Routes>
 
@@ -134,6 +139,9 @@ function App() {
             <Route path="/entrepreneur-connect"         element={<EntrepreneurConnect />} />
             <Route path="/knowledge-hub"                element={<KnowledgeHubFeed />} />
             <Route path="/company/:slug"                element={<PublicCompanyProfile />} />
+            <Route path="/privacy-policy"              element={<PrivacyPolicy />} />
+            <Route path="/refund-policy"               element={<RefundPolicy />} />
+            <Route path="/terms-conditions"            element={<TermsConditions />} />
 
             {/* Public profile pages — anyone can view another user's profile */}
             <Route path="/normal/:username?"            element={<ProfileFetcher />} />

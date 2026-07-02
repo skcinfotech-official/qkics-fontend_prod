@@ -66,7 +66,7 @@ const SearchableMultiSelect = ({ label, options, selectedIds, onChange, isDark }
                                     onClick={() => toggleOption(opt.id)}
                                 >
                                     <div className={`w-4 h-4 rounded border flex items-center justify-center ${selectedIds.includes(opt.id) ? "bg-blue-500 border-blue-500" : (isDark ? "border-gray-600" : "border-gray-300")}`}>
-                                        {selectedIds.includes(opt.id) && <FaCheck className="text-white text-[0.6rem]" />}
+                                        {selectedIds.includes(opt.id) && <FaCheck className="text-white text-2xs" />}
                                     </div>
                                     {opt.name}
                                 </div>

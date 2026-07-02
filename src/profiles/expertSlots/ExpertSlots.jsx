@@ -14,9 +14,10 @@ import { useConfirm } from "../../context/ConfirmContext";
 import SlotForm from "./SlotForm";
 import SlotCard from "./SlotCard";
 import ModalOverlay from "../../components/ui/ModalOverlay";
+import { Button } from "../../components/ui";
 import { GoPlus } from "react-icons/go";
 
-export default function ExpertSlots({ theme: propTheme }) {
+export default function ExpertSlots() {
   const dispatch = useDispatch();
   const { showAlert } = useAlert();
   const { showConfirm } = useConfirm();
@@ -24,13 +25,10 @@ export default function ExpertSlots({ theme: propTheme }) {
   /* ----------------------------
       REDUX STATE
   ----------------------------- */
-  const { data: user, theme: reduxTheme } = useSelector((state) => state.user);
+  const { data: user } = useSelector((state) => state.user);
   const { items: slots, loading, error } = useSelector(
     (state) => state.expertSlots
   );
-
-  const theme = propTheme || reduxTheme;
-  const isDark = theme === "dark";
 
   /* ----------------------------
       LOCAL UI STATE
@@ -40,18 +38,12 @@ export default function ExpertSlots({ theme: propTheme }) {
 
   /* ----------------------------
       FETCH SLOTS
-      NOTE: user.uuid might be missing after a refresh because /v1/auth/me/ 
-      doesn't always include it. The thunk fetchExpertSlots handles 
-      the fallback using localStorage.getItem("user_uuid").
   ----------------------------- */
   useEffect(() => {
     if (!user) return;
     if (user.user_type !== "expert") return;
-
-    // Use user.uuid if available, else let the thunk fallback to localStorage
     dispatch(fetchExpertSlots(user.uuid));
   }, [user, dispatch]);
-
 
   /* ----------------------------
       CREATE / UPDATE SLOT
@@ -59,9 +51,7 @@ export default function ExpertSlots({ theme: propTheme }) {
   const handleSave = async (payload, slotUuid = null) => {
     try {
       if (slotUuid) {
-        await dispatch(
-          updateExpertSlot({ slotUuid, payload })
-        ).unwrap();
+        await dispatch(updateExpertSlot({ slotUuid, payload })).unwrap();
         showAlert("Slot updated successfully", "success");
       } else {
         await dispatch(createExpertSlot(payload)).unwrap();
@@ -71,8 +61,6 @@ export default function ExpertSlots({ theme: propTheme }) {
       setShowModal(false);
       setEditingSlot(null);
       dispatch(fetchExpertSlots(user.uuid));
-
-
     } catch (err) {
       if (typeof err === "object") {
         const msg =
@@ -96,17 +84,13 @@ export default function ExpertSlots({ theme: propTheme }) {
       confirmText: "Delete",
       cancelText: "Cancel",
       variant: "danger",
-
       onConfirm: async () => {
         try {
           await dispatch(deleteExpertSlot(slotUuid)).unwrap();
           showAlert("Slot deleted successfully", "success");
           dispatch(fetchExpertSlots(user.uuid));
         } catch (err) {
-          showAlert(
-            typeof err === "string" ? err : "Delete failed",
-            "error"
-          );
+          showAlert(typeof err === "string" ? err : "Delete failed", "error");
         }
       },
     });
@@ -118,64 +102,58 @@ export default function ExpertSlots({ theme: propTheme }) {
     );
   }, [slots]);
 
-
-
   /* ----------------------------
       UI
   ----------------------------- */
   return (
-    <div className={`min-h-screen px-4 py-4 md:px-8 ${isDark ? "bg-[#0a0a0a]" : "bg-[#f8f9fa]"}`}>
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-background text-foreground">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-6 pb-12">
 
         {/* HEADER */}
-        <div className={`premium-card p-8 md:p-12 mb-8 ${isDark ? "bg-neutral-900" : "bg-white"}`}>
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div>
-              <h1 className={`text-3xl md:text-4xl font-black tracking-tight mb-2 ${isDark ? "text-white" : "text-black"}`}>
-                Manage <span className="text-red-600">Booking Slots</span>
-              </h1>
-              <p className={`text-sm ${isDark ? "text-neutral-400" : "text-neutral-500"}`}>
-                Set your availability for consultation sessions.
-              </p>
-            </div>
-
-            <button
-              onClick={() => {
-                setEditingSlot(null);
-                setShowModal(true);
-              }}
-              className="flex items-center gap-2 px-6 py-3 bg-red-600 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-red-700 hover:scale-105 active:scale-95 transition-all shadow-xl shadow-red-600/20"
-            >
-              <GoPlus size={18} /> Add Slot
-            </button>
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
+              Manage <span className="text-primary">Booking Slots</span>
+            </h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Set your availability for consultation sessions.
+            </p>
           </div>
+
+          <Button
+            onClick={() => {
+              setEditingSlot(null);
+              setShowModal(true);
+            }}
+            className="shrink-0"
+          >
+            <GoPlus size={18} /> Add Slot
+          </Button>
         </div>
 
         {/* CONTENT */}
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-20">
-            <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin mb-4"></div>
-            <p className={`text-xs font-black uppercase tracking-widest opacity-50 ${isDark ? "text-white" : "text-black"}`}>Loading Slots...</p>
+          <div className="flex flex-col items-center justify-center gap-4 py-24">
+            <div className="h-10 w-10 animate-spin rounded-full border-2 border-muted border-t-primary" />
+            <p className="text-2xs font-bold uppercase tracking-widest text-muted-foreground">Loading Slots...</p>
           </div>
         ) : error ? (
-          <div className="p-8 text-center rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500">
+          <div className="rounded-2xl border border-danger/20 bg-danger/10 p-8 text-center text-danger">
             <p className="font-bold">{error}</p>
           </div>
         ) : slots.length === 0 ? (
-          <div className={`flex flex-col items-center justify-center p-20 rounded-3xl border border-dashed ${isDark ? "border-neutral-800 text-neutral-500" : "border-neutral-300 text-neutral-400"}`}>
-            <p className="font-bold text-lg mb-2">No Slots Available</p>
-            <p className="text-sm">Create your first booking slot to get started.</p>
+          <div className="flex flex-col items-center justify-center gap-1 rounded-2xl border border-dashed border-border py-24 text-center">
+            <p className="text-base font-bold text-foreground">No Slots Available</p>
+            <p className="text-sm text-muted-foreground">Create your first booking slot to get started.</p>
           </div>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {sortedSlots.map((slot) => {
-              // ✅ Normalize: API may return 'uuid' or 'id' as the primary key.
               const slotId = slot.uuid ?? slot.id;
               return (
                 <SlotCard
                   key={slotId}
                   slot={{ ...slot, uuid: slotId }}
-                  isDark={isDark}
                   onEdit={() => {
                     setEditingSlot({ ...slot, uuid: slotId });
                     setShowModal(true);
@@ -189,12 +167,10 @@ export default function ExpertSlots({ theme: propTheme }) {
 
       </div>
 
-      {/* ======================
-          MODAL
-      ======================= */}
+      {/* MODAL */}
       {showModal && (
         <ModalOverlay close={() => setShowModal(false)}>
-          <div className={`w-full max-w-xl p-8 rounded-3xl shadow-2xl relative ${isDark ? "bg-neutral-900 border border-neutral-800" : "bg-white"}`}>
+          <div className="relative w-full max-w-xl rounded-2xl border border-border bg-card p-6 shadow-2xl md:p-8">
             <SlotForm
               initialData={editingSlot}
               onSave={handleSave}
@@ -202,13 +178,10 @@ export default function ExpertSlots({ theme: propTheme }) {
                 setShowModal(false);
                 setEditingSlot(null);
               }}
-              isDark={isDark}
             />
           </div>
         </ModalOverlay>
       )}
-
-
     </div>
   );
 }

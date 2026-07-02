@@ -85,7 +85,7 @@ export default function DocumentList({ theme, searchQuery = "", filter = "all", 
                   {doc.title}
                 </h3>
                 <span
-                  className={`flex-shrink-0 text-[7px] md:text-[8px] uppercase font-black tracking-[0.2em] px-2 md:px-3 py-0.5 md:py-1 rounded-full border ${doc.access_type === "PREMIUM"
+                  className={`flex-shrink-0 text-3xs md:text-3xs uppercase font-black tracking-[0.2em] px-2 md:px-3 py-0.5 md:py-1 rounded-full border ${doc.access_type === "PREMIUM"
                     ? "bg-amber-500/10 text-amber-500 border-amber-500/20"
                     : "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
                     }`}
@@ -93,7 +93,7 @@ export default function DocumentList({ theme, searchQuery = "", filter = "all", 
                   {doc.access_type}
                 </span>
               </div>
-              {/* <p className={`text-[10px] md:text-sm font-medium opacity-50 line-clamp-1 max-w-2xl ${text}`}>
+              {/* <p className={`text-2xs md:text-sm font-medium opacity-50 line-clamp-1 max-w-2xl ${text}`}>
                 {doc.description}
               </p> */}
             </div>
@@ -102,15 +102,15 @@ export default function DocumentList({ theme, searchQuery = "", filter = "all", 
             <div className="flex items-center gap-3 md:gap-10 flex-shrink-0">
               {/* Date hidden on very small mobile if needed, but keeping it small */}
               <div className="hidden sm:flex flex-col items-end">
-                <span className="text-[8px] md:text-[9px] font-black uppercase tracking-widest opacity-30 mb-0.5">Updated</span>
-                <span className={`text-[10px] md:text-[12px] font-bold whitespace-nowrap ${text}`}>
+                <span className="text-3xs md:text-2xs font-black uppercase tracking-widest opacity-30 mb-0.5">Updated</span>
+                <span className={`text-2xs md:text-xs font-bold whitespace-nowrap ${text}`}>
                   {new Date(doc.updated_at || doc.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                 </span>
               </div>
               
               <button
                 onClick={() => setSelectedDoc(doc.uuid)}
-                className={`flex items-center gap-2 md:gap-3 px-4 md:px-4 py-2.5 md:py-2 rounded-xl md:rounded-xl text-[8px] md:text-[10px] font-black uppercase tracking-[0.15em] md:tracking-[0.2em] transition-all shadow-lg active:scale-95 ${isDark
+                className={`flex items-center gap-2 md:gap-3 px-4 md:px-4 py-2.5 md:py-2 rounded-xl md:rounded-xl text-3xs md:text-2xs font-black uppercase tracking-[0.15em] md:tracking-[0.2em] transition-all shadow-lg active:scale-95 ${isDark
                   ? "bg-white text-black hover:bg-neutral-200"
                   : "bg-black text-white hover:bg-neutral-800"}`}
               >

@@ -3,32 +3,17 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSun, faMoon } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "react-router-dom";
 
-export default function AdminNavbar({ theme, role, onToggleTheme, toggleSidebar, isSidebarOpen }) {
+export default function AdminNavbar({ theme, onToggleTheme, toggleSidebar, isSidebarOpen }) {
   const isDark = theme === "dark";
   const navigate = useNavigate();
 
   return (
-    <header
-      className={`
-        sticky top-0 z-20 w-full h-16 px-6 flex items-center justify-between
-        transition-colors duration-200 border-b
-        ${isDark
-          ? "bg-[#111111] border-gray-800 text-gray-200"
-          : "bg-white border-gray-200 text-gray-800"
-        }
-      `}
-    >
+    <header className="sticky top-0 z-20 w-full h-16 px-6 flex items-center justify-between transition-colors duration-200 border-b border-border bg-card text-foreground">
       <div className="flex items-center gap-4">
         {/* SIDEBAR TOGGLE */}
         <button
           onClick={toggleSidebar}
-          className={`
-            p-2 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50
-            ${isDark
-              ? "hover:bg-gray-800 text-gray-400 hover:text-gray-200"
-              : "hover:bg-gray-100 text-gray-500 hover:text-gray-900"
-            }
-          `}
+          className="p-2 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-ring text-muted-foreground hover:bg-muted hover:text-foreground"
         >
           <div className="relative w-5 h-5 flex items-center justify-center">
             <FaBars className={`text-lg absolute transition-all duration-200 ${isSidebarOpen ? "opacity-0 rotate-90 scale-50" : "opacity-100 rotate-0 scale-100"}`} />
@@ -38,7 +23,7 @@ export default function AdminNavbar({ theme, role, onToggleTheme, toggleSidebar,
 
         {/* BREADCRUMB OR TITILE */}
         <div className="hidden md:flex items-center gap-2">
-          <h1 className={`text-[1.05rem] font-semibold capitalize ${isDark ? "text-gray-100" : "text-gray-800"}`}>
+          <h1 className="text-base font-semibold capitalize text-foreground">
             {window.location.pathname.split("/").filter(Boolean).pop()?.replace(/-/g, ' ') || "Dashboard"}
           </h1>
         </div>
@@ -49,44 +34,31 @@ export default function AdminNavbar({ theme, role, onToggleTheme, toggleSidebar,
 
         {/* SEARCH & NOTIFICATION (Mocks for UI) */}
         <div className="hidden sm:flex items-center gap-1 mr-2">
-          <button className={`p-2 rounded-md transition-colors duration-200 ${isDark ? "hover:bg-gray-800 text-gray-400 hover:text-gray-200" : "hover:bg-gray-100 text-gray-500 hover:text-gray-900"}`}>
+          <button className="p-2 rounded-md transition-colors duration-200 text-muted-foreground hover:bg-muted hover:text-foreground">
             <FaSearch className="text-sm" />
           </button>
-          <button className={`relative p-2 rounded-md transition-colors duration-200 ${isDark ? "hover:bg-gray-800 text-gray-400 hover:text-gray-200" : "hover:bg-gray-100 text-gray-500 hover:text-gray-900"}`}>
+          <button className="relative p-2 rounded-md transition-colors duration-200 text-muted-foreground hover:bg-muted hover:text-foreground">
             <FaBell className="text-sm" />
-            <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+            <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-primary"></span>
           </button>
         </div>
 
-        <div className={`w-px h-6 hidden sm:block ${isDark ? "bg-gray-800" : "bg-gray-200"}`}></div>
+        <div className="w-px h-6 hidden sm:block bg-border"></div>
 
         {/* THEME TOGGLE BUTTON */}
         <button
           onClick={onToggleTheme}
-          className={`
-             w-8 h-8 rounded-md flex items-center justify-center
-            transition-colors duration-200
-            ${isDark
-              ? "text-gray-400 hover:bg-gray-800 hover:text-gray-200"
-              : "text-gray-500 hover:bg-gray-100 hover:text-gray-900"
-            }
-          `}
+          className="w-8 h-8 rounded-md flex items-center justify-center transition-colors duration-200 text-muted-foreground hover:bg-muted hover:text-foreground"
         >
-          <FontAwesomeIcon icon={isDark ? faSun : faMoon} className={`text-sm`} />
+          <FontAwesomeIcon icon={isDark ? faSun : faMoon} className="text-sm" />
         </button>
 
         {/* LOGOUT BUTTON */}
         <button
           onClick={() => navigate("/logout")}
-          className={`
-            flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors duration-200
-            ${isDark
-              ? "bg-transparent text-gray-400 hover:bg-gray-800 hover:text-red-400"
-              : "bg-transparent text-gray-600 hover:bg-gray-100 hover:text-red-600"
-            }
-          `}
+          className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors duration-200 bg-transparent text-muted-foreground hover:bg-muted hover:text-danger"
         >
-          <FaSignOutAlt className="text-[0.9rem]" />
+          <FaSignOutAlt className="text-sm" />
           <span className="hidden sm:inline">Logout</span>
         </button>
       </div>

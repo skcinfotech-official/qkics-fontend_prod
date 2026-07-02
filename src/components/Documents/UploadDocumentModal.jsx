@@ -165,7 +165,7 @@ export default function UploadDocumentModal({ isOpen, onClose, theme, onSuccess 
                                     : "bg-gray-100 border-gray-200 text-emerald-600"
                                 }`}
                         />
-                        <p className={`text-[10px] mt-2 font-medium ${isDark ? "text-neutral-500" : "text-gray-400"}`}>
+                        <p className={`text-2xs mt-2 font-medium ${isDark ? "text-neutral-500" : "text-gray-400"}`}>
                             * Documents uploaded here are always set to FREE access type.
                         </p>
                     </div>

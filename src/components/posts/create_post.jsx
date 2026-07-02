@@ -3,8 +3,9 @@ import { useState, useEffect } from "react";
 import axiosSecure from "../utils/axiosSecure";
 import useTags from "../hooks/useTags";
 import { useAlert } from "../../context/AlertContext";
+import { Button } from "../ui";
 
-function CreatePostModal({ onClose, onSuccess, isDark, post, knowledgeHub = false }) {
+function CreatePostModal({ onClose, onSuccess, post, knowledgeHub = false }) {
   const { showAlert } = useAlert();
   const [title, setTitle] = useState(post?.title || "");
   const [content, setContent] = useState("");
@@ -28,9 +29,6 @@ function CreatePostModal({ onClose, onSuccess, isDark, post, knowledgeHub = fals
 
   const { tags, loading: loadingTags } = useTags();
   const [loading, setLoading] = useState(false);
-
-  const bg = isDark ? "bg-neutral-900 text-white" : "bg-white text-black";
-  const border = isDark ? "border-neutral-700" : "border-neutral-300";
 
   const toggleTag = (tag) => {
     if (selectedTags.includes(tag.id)) {
@@ -181,11 +179,10 @@ function CreatePostModal({ onClose, onSuccess, isDark, post, knowledgeHub = fals
           formData.append("reorder_media", JSON.stringify(reorderData));
         }
 
-        const patchRes = await axiosSecure.patch(
+        await axiosSecure.patch(
           `/v1/community/posts/${post.id}/`,
           formData
         );
-        console.log("PATCH success:", patchRes.status, patchRes.data);
 
         const fresh = await fetchFreshPost(post.id);
         showAlert("Post updated!", "success");
@@ -203,7 +200,6 @@ function CreatePostModal({ onClose, onSuccess, isDark, post, knowledgeHub = fals
 
       onClose();
     } catch (err) {
-      console.log("Submit error:", err.response?.status, err.response?.data || err);
       if (err.response?.data) {
         showAlert("Action failed: " + JSON.stringify(err.response.data), "error");
       } else {
@@ -221,59 +217,60 @@ function CreatePostModal({ onClose, onSuccess, isDark, post, knowledgeHub = fals
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className={`w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 md:p-10 rounded-[2.5rem] shadow-2xl ${bg} border ${border} transition-all duration-300 mx-auto`}
+        className="w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 md:p-10 rounded-2xl shadow-2xl bg-card text-card-foreground border border-border transition-all duration-300 mx-auto"
       >
         <div className="flex justify-between items-start mb-8 text-left">
           <div className="text-left">
-            <h2 className="text-3xl font-black tracking-tighter uppercase text-left">
+            <h2 className="text-2xl font-black tracking-tighter uppercase text-left">
               {post ? "Edit Post" : "Create Post"}
             </h2>
-            <p className="text-xs font-black uppercase tracking-[0.2em] opacity-40 mt-1 text-left">
+            <p className="text-2xs font-black uppercase tracking-[0.2em] text-muted-foreground mt-1 text-left">
               Share your thoughts with the community
             </p>
           </div>
           <button
             onClick={onClose}
-            className={`h-10 w-10 rounded-2xl flex items-center justify-center transition-all ${isDark ? "bg-white/5 hover:bg-white/10 text-neutral-400" : "bg-black/5 hover:bg-black/10 text-neutral-500"}`}
+            className="h-10 w-10 rounded-xl flex items-center justify-center bg-muted text-muted-foreground hover:bg-muted/70 hover:text-foreground transition-all"
+            aria-label="Close"
           >✕</button>
         </div>
 
         <div className="space-y-6">
           <div>
-            <label className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-2 block text-left">Post Title</label>
+            <label className="text-2xs font-black uppercase tracking-widest text-muted-foreground mb-2 block text-left">Post Title</label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               maxLength={200}
-              className={`w-full px-4 py-3.5 rounded-2xl border transition-all outline-none focus:ring-2 focus:ring-red-600/20 ${isDark ? "bg-neutral-800 border-white/5 focus:border-red-600/50" : "bg-neutral-50 border-black/5 focus:border-red-600/30"}`}
+              className="w-full px-4 py-3.5 rounded-xl border border-input bg-muted/40 transition-all outline-none focus:ring-2 focus:ring-ring focus:border-primary"
               placeholder="e.g. The future of AI in 2026..."
             />
             <div className="flex justify-end mt-1">
-              <span className="text-[10px] font-bold opacity-40">{title.length}/200</span>
+              <span className="text-2xs font-bold text-muted-foreground">{title.length}/200</span>
             </div>
           </div>
 
           <div>
-            <label className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-2 block text-left">Content</label>
+            <label className="text-2xs font-black uppercase tracking-widest text-muted-foreground mb-2 block text-left">Content</label>
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
               rows={6}
               maxLength={10000}
-              className={`w-full px-4 py-3.5 rounded-2xl border transition-all outline-none focus:ring-2 focus:ring-red-600/20 resize-none ${isDark ? "bg-neutral-800 border-white/5 focus:border-red-600/50" : "bg-neutral-50 border-black/5 focus:border-red-600/30"}`}
+              className="w-full px-4 py-3.5 rounded-xl border border-input bg-muted/40 transition-all outline-none focus:ring-2 focus:ring-ring focus:border-primary resize-none"
               placeholder="What's on your mind?..."
             />
             <div className="flex justify-end mt-1">
-              <span className="text-[10px] font-bold opacity-40">{content.length}/10000</span>
+              <span className="text-2xs font-bold text-muted-foreground">{content.length}/10000</span>
             </div>
           </div>
 
           <div>
-            <label className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-3 block text-left">Tags (max 5)</label>
+            <label className="text-2xs font-black uppercase tracking-widest text-muted-foreground mb-3 block text-left">Tags (max 5)</label>
             {loadingTags ? (
               <div className="animate-pulse flex gap-2">
-                {[1, 2, 3].map(i => <div key={i} className="h-8 w-20 bg-neutral-800 rounded-full" />)}
+                {[1, 2, 3].map(i => <div key={i} className="h-8 w-20 bg-muted rounded-full" />)}
               </div>
             ) : (
               <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
@@ -283,9 +280,9 @@ function CreatePostModal({ onClose, onSuccess, isDark, post, knowledgeHub = fals
                     <button
                       key={tag.id}
                       onClick={() => toggleTag(tag)}
-                      className={`px-4 py-1.5 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 ${active
-                        ? "bg-red-600 text-white border-red-600 shadow-lg shadow-red-600/20"
-                        : isDark ? "bg-white/5 text-neutral-400 border-white/5 hover:border-white/20" : "bg-black/5 text-neutral-500 border-black/5 hover:border-black/20"
+                      className={`px-4 py-1.5 rounded-xl border text-2xs font-black uppercase tracking-widest transition-all active:scale-95 ${active
+                        ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20"
+                        : "bg-muted text-muted-foreground border-border hover:border-foreground/20"
                         }`}
                     >
                       {tag.name}
@@ -297,10 +294,10 @@ function CreatePostModal({ onClose, onSuccess, isDark, post, knowledgeHub = fals
           </div>
 
           <div>
-            <label className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-3 block text-left">Media attachments</label>
+            <label className="text-2xs font-black uppercase tracking-widest text-muted-foreground mb-3 block text-left">Media attachments</label>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
               {previews.map((m) => (
-                <div key={m.id} className="relative rounded-[1rem] overflow-hidden border border-white/5 group aspect-square">
+                <div key={m.id} className="relative rounded-xl overflow-hidden border border-border group aspect-square">
                   {m.media_type === "video" ? (
                     <video src={m.file} className="w-full h-full object-cover" />
                   ) : (
@@ -309,7 +306,7 @@ function CreatePostModal({ onClose, onSuccess, isDark, post, knowledgeHub = fals
                   <div className="absolute inset-0 bg-black/40 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
                     <button
                       onClick={() => removeMedia(m)}
-                      className="bg-red-600 text-white text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-xl shadow-2xl transform translate-y-0 md:translate-y-4 md:group-hover:translate-y-0 transition-transform"
+                      className="bg-primary text-primary-foreground text-2xs font-black uppercase tracking-widest px-4 py-2 rounded-xl shadow-2xl transform translate-y-0 md:translate-y-4 md:group-hover:translate-y-0 transition-transform"
                     >
                       Delete
                     </button>
@@ -317,10 +314,10 @@ function CreatePostModal({ onClose, onSuccess, isDark, post, knowledgeHub = fals
                 </div>
               ))}
 
-              <label className={`flex flex-col items-center justify-center border-2 border-dashed rounded-[1rem] cursor-pointer transition-all aspect-square ${isDark ? "border-white/10 hover:border-red-500/50 bg-white/5" : "border-black/10 hover:border-red-600/50 bg-black/5"}`}>
+              <label className="flex flex-col items-center justify-center border-2 border-dashed border-border rounded-xl cursor-pointer transition-all aspect-square bg-muted/40 hover:border-primary/50">
                 <div className="flex flex-col items-center">
                   <span className="text-xl mb-1">📸</span>
-                  <span className="text-[10px] font-black uppercase tracking-widest opacity-40">Add Media</span>
+                  <span className="text-2xs font-black uppercase tracking-widest text-muted-foreground">Add Media</span>
                 </div>
                 <input
                   type="file"
@@ -333,24 +330,13 @@ function CreatePostModal({ onClose, onSuccess, isDark, post, knowledgeHub = fals
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 pt-6 border-t border-white/5">
-            <button
-              onClick={onClose}
-              className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${isDark ? "text-neutral-400 hover:text-white" : "text-neutral-500 hover:text-black"}`}
-            >
+          <div className="flex justify-end gap-3 pt-6 border-t border-border">
+            <Button variant="ghost" onClick={onClose}>
               Cancel
-            </button>
-
-            <button
-              onClick={handleSubmit}
-              disabled={loading}
-              className={`px-10 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl transition-all active:scale-95 ${loading
-                ? "bg-neutral-500/20 text-neutral-500 cursor-not-allowed"
-                : "bg-red-600 text-white hover:bg-red-700 shadow-red-600/20 hover:shadow-red-600/40"
-                }`}
-            >
-              {loading ? "Saving..." : post ? "Update" : "Publish"}
-            </button>
+            </Button>
+            <Button onClick={handleSubmit} loading={loading} disabled={loading}>
+              {post ? "Update" : "Publish"}
+            </Button>
           </div>
         </div>
       </div>

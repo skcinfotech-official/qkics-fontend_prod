@@ -168,7 +168,7 @@ export default function CompanyPage() {
               {/* <div className="h-10 w-10 rounded-xl bg-red-600/10 flex items-center justify-center text-red-600">
                 <FaBuilding size={20} />
               </div> */}
-              <h1 className={`text-4xl md:text-5xl font-black tracking-tighter ${text}`}>
+              <h1 className={`text-2xl md:text-3xl font-bold tracking-tight ${text}`}>
                 Company <span className="text-red-600">Discovery</span>
               </h1>
             </div>
@@ -199,7 +199,7 @@ export default function CompanyPage() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2.5 px-6 py-2.5 md:px-8 md:py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${
+                  className={`flex items-center gap-2.5 px-6 py-2.5 md:px-8 md:py-3 rounded-xl text-2xs font-black uppercase tracking-widest transition-all duration-300 ${
                     activeTab === tab.id
                       ? "bg-red-600 text-white shadow-lg shadow-red-600/30"
                       : isDark ? "text-neutral-500 hover:text-white" : "text-neutral-500 hover:text-black"
@@ -241,14 +241,14 @@ export default function CompanyPage() {
                       <div className="text-center py-24 animate-fadeIn glass rounded-3xl border border-dashed border-red-500/10">
                         <FaRegNewspaper size={48} className="mx-auto mb-6 opacity-10 text-red-500" />
                         <p className={`text-lg font-bold opacity-30 ${text}`}>No company posts discovered yet.</p>
-                        <p className={`text-[10px] uppercase font-black tracking-widest opacity-20 mt-2 ${text}`}>Post insights to start the conversation</p>
+                        <p className={`text-2xs uppercase font-black tracking-widest opacity-20 mt-2 ${text}`}>Post insights to start the conversation</p>
                       </div>
                     )
                   )}
                   {loadingPosts && (
                     <div className="flex flex-col items-center justify-center py-12 gap-4">
                       <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
-                      <p className="text-[10px] font-black uppercase tracking-widest opacity-30">Synchronizing Posts...</p>
+                      <p className="text-2xs font-black uppercase tracking-widest opacity-30">Synchronizing Posts...</p>
                     </div>
                   )}
                 </div>
@@ -282,14 +282,14 @@ export default function CompanyPage() {
                   <div className="text-center py-24 animate-fadeIn glass rounded-3xl border border-dashed border-red-500/10">
                     <FaBuilding size={48} className="mx-auto mb-6 opacity-10 text-red-500" />
                     <p className={`text-lg font-bold opacity-30 ${text}`}>No organizations discovered yet.</p>
-                    <p className={`text-[10px] uppercase font-black tracking-widest opacity-20 mt-2 ${text}`}>Be the first to list your company</p>
+                    <p className={`text-2xs uppercase font-black tracking-widest opacity-20 mt-2 ${text}`}>Be the first to list your company</p>
                   </div>
                 )
               )}
               {loadingCompanies && (
                 <div className="flex flex-col items-center justify-center py-12 gap-4">
                   <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
-                  <p className="text-[10px] font-black uppercase tracking-widest opacity-30">Gathering Intelligence...</p>
+                  <p className="text-2xs font-black uppercase tracking-widest opacity-30">Gathering Intelligence...</p>
                 </div>
               )}
             </div>

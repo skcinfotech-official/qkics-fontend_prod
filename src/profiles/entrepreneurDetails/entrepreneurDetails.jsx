@@ -3,16 +3,22 @@
 import { useState, useEffect } from "react";
 import axiosSecure from "../../components/utils/axiosSecure";
 import { useAlert } from "../../context/AlertContext";
+import { FiEdit, FiCheck, FiX } from "react-icons/fi";
 
 import { useSelector } from "react-redux";
+
+const labelClass =
+  "mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground";
+
+const fieldClass =
+  "w-full rounded-lg border border-input bg-muted/40 px-3.5 py-2.5 text-sm font-medium text-foreground outline-none transition-all placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-ring/40 disabled:cursor-not-allowed disabled:opacity-60";
 
 export default function EntrepreneurDetails({
   entreData,
   setEntreData,
 }) {
-  const { theme, data: loggedUser } = useSelector((state) => state.user);
+  const { data: loggedUser } = useSelector((state) => state.user);
   const activeProfile = useSelector((state) => state.user.activeProfileData);
-  const isDark = theme === "dark";
 
   const isOwnProfile = loggedUser?.username === (activeProfile?.profile?.user?.username || activeProfile?.profile?.username);
   const readOnly = !isOwnProfile;
@@ -36,19 +42,6 @@ export default function EntrepreneurDetails({
     ["bootstrapped", "Bootstrapped"],
   ];
 
-  // Premium Styles
-  const inputClass = (enabled) =>
-    `w-full bg-transparent border-b-2 py-2 px-1 outline-none transition-all font-medium ${isDark
-      ? enabled
-        ? "border-red-600 text-white placeholder-white/30"
-        : "border-white/10 text-white/50"
-      : enabled
-        ? "border-red-600 text-black placeholder-black/30"
-        : "border-black/10 text-black/50"
-    }`;
-
-  const labelClass = "text-[10px] font-black uppercase tracking-[0.2em] opacity-40 mb-1 block";
-
   const handleSave = async () => {
     try {
       const payload = {
@@ -61,10 +54,7 @@ export default function EntrepreneurDetails({
         funding_stage: local.funding_stage,
       };
 
-      const res = await axiosSecure.patch(
-        "/v1/entrepreneurs/me/profile/",
-        payload
-      );
+      const res = await axiosSecure.patch("/v1/entrepreneurs/me/profile/", payload);
 
       setEntreData(res.data);
       setLocal(res.data);
@@ -77,46 +67,43 @@ export default function EntrepreneurDetails({
     }
   };
 
-
   return (
-    <div className={`premium-card p-8 md:p-12 ${isDark ? "bg-neutral-900" : "bg-white"}`}>
+    <div className="rounded-2xl border border-border bg-card p-6 md:p-8">
 
       {/* HEADER */}
-      <div className="flex justify-between items-center mb-8 pb-4 border-b border-white/5">
-        <h2 className="text-xl font-black uppercase tracking-tight">
-          <span className="hidden md:inline">Startup <span className="text-red-600">Details</span></span>
-          <span className="md:hidden">Professional <span className="text-red-600">Profile</span></span>
+      <div className="mb-6 flex items-center justify-between border-b border-border pb-4">
+        <h2 className="text-base font-bold tracking-tight text-foreground">
+          Startup <span className="text-primary">Details</span>
         </h2>
 
         {!readOnly && (
-          <div className="flex gap-3">
+          <div className="flex gap-2">
             {!editMode ? (
               <button
                 onClick={() => setEditMode(true)}
-                className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors ${isDark
-                  ? "bg-neutral-800 text-white hover:bg-neutral-700"
-                  : "bg-neutral-100 text-black hover:bg-neutral-200"}`}
+                className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted text-foreground transition-all hover:bg-primary hover:text-primary-foreground"
+                title="Edit details"
               >
-                Edit Details
+                <FiEdit size={15} />
               </button>
             ) : (
               <>
                 <button
                   onClick={() => {
                     setEditMode(false);
-                    setLocal({ ...entreData }); // ✅ reset on cancel
+                    setLocal({ ...entreData });
                   }}
-                  className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors ${isDark
-                    ? "text-white hover:bg-neutral-800"
-                    : "text-black hover:bg-neutral-100"}`}
+                  className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted text-muted-foreground transition-all hover:bg-danger hover:text-white"
+                  title="Cancel"
                 >
-                  Cancel
+                  <FiX size={17} />
                 </button>
                 <button
                   onClick={handleSave}
-                  className="px-6 py-2 rounded-xl bg-red-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-red-700 shadow-lg shadow-red-600/20"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground transition-all hover:bg-primary-hover"
+                  title="Save changes"
                 >
-                  Save Changes
+                  <FiCheck size={18} />
                 </button>
               </>
             )}
@@ -125,15 +112,15 @@ export default function EntrepreneurDetails({
       </div>
 
       {/* GRID */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 gap-4">
 
         <div className="md:col-span-2">
           <label className={labelClass}>Startup Name</label>
           <input
-            value={local.startup_name}
+            value={local.startup_name || ""}
             onChange={(v) => setLocal({ ...local, startup_name: v.target.value })}
             disabled={!editMode}
-            className={`${inputClass(editMode)} text-2xl font-bold`}
+            className={fieldClass}
             placeholder="Startup Name"
           />
         </div>
@@ -141,10 +128,10 @@ export default function EntrepreneurDetails({
         <div className="md:col-span-2">
           <label className={labelClass}>One Liner</label>
           <input
-            value={local.one_liner}
+            value={local.one_liner || ""}
             onChange={(v) => setLocal({ ...local, one_liner: v.target.value })}
             disabled={!editMode}
-            className={inputClass(editMode)}
+            className={fieldClass}
             placeholder="What do you do?"
           />
         </div>
@@ -153,30 +140,30 @@ export default function EntrepreneurDetails({
           <label className={labelClass}>Description</label>
           <textarea
             rows={4}
-            value={local.description}
+            value={local.description || ""}
             onChange={(v) => setLocal({ ...local, description: v.target.value })}
             disabled={!editMode}
-            className={`${inputClass(editMode)} resize-none`}
+            className={`${fieldClass} resize-none`}
           />
         </div>
 
         <div>
           <label className={labelClass}>Industry</label>
           <input
-            value={local.industry}
+            value={local.industry || ""}
             onChange={(v) => setLocal({ ...local, industry: v.target.value })}
             disabled={!editMode}
-            className={inputClass(editMode)}
+            className={fieldClass}
           />
         </div>
 
         <div>
           <label className={labelClass}>Location</label>
           <input
-            value={local.location}
+            value={local.location || ""}
             onChange={(v) => setLocal({ ...local, location: v.target.value })}
             disabled={!editMode}
-            className={inputClass(editMode)}
+            className={fieldClass}
           />
         </div>
 
@@ -184,14 +171,12 @@ export default function EntrepreneurDetails({
           <label className={labelClass}>Funding Stage</label>
           <select
             disabled={!editMode}
-            value={local.funding_stage}
-            onChange={(e) =>
-              setLocal({ ...local, funding_stage: e.target.value })
-            }
-            className={`${inputClass(editMode)} bg-transparent`}
+            value={local.funding_stage || ""}
+            onChange={(e) => setLocal({ ...local, funding_stage: e.target.value })}
+            className={fieldClass}
           >
             {fundingOptions.map(([value, label]) => (
-              <option key={value} value={value} className="text-black">
+              <option key={value} value={value}>
                 {label}
               </option>
             ))}
@@ -201,10 +186,10 @@ export default function EntrepreneurDetails({
         <div>
           <label className={labelClass}>Website</label>
           <input
-            value={local.website}
+            value={local.website || ""}
             onChange={(v) => setLocal({ ...local, website: v.target.value })}
             disabled={!editMode}
-            className={inputClass(editMode)}
+            className={fieldClass}
           />
         </div>
 

@@ -1,5 +1,6 @@
 // src/pages/booking.jsx
 import { useEffect, useState, useRef } from "react";
+import { FaSearch } from "react-icons/fa";
 import axiosSecure from "../components/utils/axiosSecure";
 
 import ExpertCard from "../components/profileFetch/expertBooking/ExpertCard";
@@ -8,9 +9,31 @@ import { resolveProfileRoute } from "../components/utils/getUserProfileRoute";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 
+function ExpertCardSkeleton() {
+  return (
+    <div className="rounded-2xl border border-border bg-card p-5 animate-pulse">
+      <div className="flex items-center gap-4">
+        <div className="h-16 w-16 rounded-2xl bg-muted" />
+        <div className="flex-1 space-y-2">
+          <div className="h-3.5 w-2/3 rounded bg-muted" />
+          <div className="h-2.5 w-1/2 rounded bg-muted" />
+          <div className="h-2.5 w-1/3 rounded bg-muted" />
+        </div>
+      </div>
+      <div className="mt-4 space-y-2">
+        <div className="h-2.5 w-full rounded bg-muted" />
+        <div className="h-2.5 w-4/5 rounded bg-muted" />
+      </div>
+      <div className="mt-5 flex items-center justify-between border-t border-border pt-4">
+        <div className="h-4 w-16 rounded bg-muted" />
+        <div className="h-8 w-20 rounded-xl bg-muted" />
+      </div>
+    </div>
+  );
+}
+
 export default function Booking() {
-  const { theme, data: loggedUser } = useSelector((state) => state.user);
-  const isDark = theme === "dark";
+  const { data: loggedUser } = useSelector((state) => state.user);
   const navigate = useNavigate();
 
   const [items, setItems] = useState([]);
@@ -73,7 +96,7 @@ export default function Booking() {
     const url = expert.profile_picture || expert.user?.profile_picture;
     const name = expert.user?.first_name || expert.user?.username || "User";
     if (!url) return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&length=1`;
-    return `${url}?t=${Date.now()}`;
+    return url;
   };
 
   const handleExpertClick = (expert) => {
@@ -81,73 +104,93 @@ export default function Booking() {
     navigate(resolveProfileRoute(expert.user, loggedUser));
   };
 
-  if (loading) {
-    return (
-      <div className={`min-h-screen flex flex-col items-center justify-center gap-4 ${isDark ? "bg-[#0a0a0a] text-white" : "bg-[#f8f9fa] text-black"}`}>
-        <div className="animate-spin rounded-full h-10 w-10 border-2 border-t-red-500 border-white/10" />
-        <p className="text-xs font-bold tracking-[0.2em] opacity-40 uppercase">Mapping Talent...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-red-500 font-bold uppercase tracking-widest bg-[#0a0a0a]">
-        {error}
-      </div>
-    );
-  }
+  const isEmpty = !loading && (!Array.isArray(items) || items.length === 0);
 
   return (
-    <div className={`min-h-screen px-4 py-4 max-w-7xl mx-auto md:pb-12 ${isDark ? "text-white" : "text-black"}`}>
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
-        <div>
-          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-4">
-            Our <span className="text-red-600">Professionals</span>
-          </h1>
-          <p className="opacity-50 font-medium max-w-xl leading-relaxed">
-            Connect with verified experts in the global QKICS community.
-          </p>
-        </div>
-        <div className="w-full md:w-auto">
-          <input
-            type="text"
-            placeholder="Search Professionals..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className={`w-full md:w-80 px-5 py-3 rounded-full text-sm font-bold border transition-all ${isDark
-                ? "bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-red-500 hover:bg-white/10"
-                : "bg-black/5 border-black/10 text-black placeholder:text-black/30 focus:border-red-500 hover:bg-black/10"
-              } outline-none`}
-          />
-        </div>
-      </div>
+    <div className="min-h-screen bg-background text-foreground">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-12">
 
-      {(!Array.isArray(items) || items.length === 0) ? (
-        <div className="py-20 text-center opacity-30">
-          <p className="text-sm font-black tracking-widest uppercase">
-            No experts discovered yet.
-          </p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 animate-fadeIn">
-          {items?.map((expert) => (
-            <ExpertCard
-              key={expert.id}
-              expert={expert}
-              isDark={isDark}
-              onClick={handleExpertClick}
-              resolveProfileImage={resolveProfileImage}
+        {/* HEADER */}
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between mb-8">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+              Our <span className="text-primary">Experts</span>
+            </h1>
+            <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground">
+              Book consultations with verified professionals across the global QKICS community.
+            </p>
+          </div>
+
+          {/* SEARCH */}
+          <div className="relative w-full lg:w-80">
+            <FaSearch className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Search by name or expertise..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full rounded-xl border border-input bg-muted/50 py-3 pl-11 pr-4 text-sm font-medium text-foreground placeholder:text-muted-foreground outline-none transition-all focus:border-primary focus:ring-2 focus:ring-ring/40 hover:bg-muted"
             />
-          ))}
+          </div>
         </div>
-      )}
 
-      {next && (
-        <div ref={loaderRef} className="py-8 flex justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-2 border-t-red-500 border-white/10" />
-        </div>
-      )}
+        {/* RESULT COUNT */}
+        {!loading && !error && !isEmpty && (
+          <p className="mb-5 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            {items.length} expert{items.length === 1 ? "" : "s"}
+            {searchQuery && <> for “<span className="text-foreground">{searchQuery}</span>”</>}
+          </p>
+        )}
+
+        {/* CONTENT */}
+        {error ? (
+          <div className="flex flex-col items-center justify-center gap-4 py-24">
+            <p className="text-sm font-bold text-danger">{error}</p>
+            <button
+              onClick={() => fetchExperts(searchQuery)}
+              className="rounded-xl bg-primary px-5 py-2.5 text-2xs font-black uppercase tracking-widest text-primary-foreground transition-all hover:bg-primary-hover"
+            >
+              Retry
+            </button>
+          </div>
+        ) : loading ? (
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, i) => <ExpertCardSkeleton key={i} />)}
+          </div>
+        ) : isEmpty ? (
+          <div className="flex flex-col items-center justify-center gap-2 py-24 text-center">
+            <p className="text-sm font-black uppercase tracking-widest text-muted-foreground">
+              No experts found
+            </p>
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="text-xs font-bold text-primary hover:underline"
+              >
+                Clear search
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 animate-fadeIn">
+            {items.map((expert) => (
+              <ExpertCard
+                key={expert.id}
+                expert={expert}
+                onClick={handleExpertClick}
+                resolveProfileImage={resolveProfileImage}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* INFINITE SCROLL SENTINEL */}
+        {next && !loading && (
+          <div ref={loaderRef} className="flex justify-center py-10">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-primary" />
+          </div>
+        )}
+      </div>
     </div>
   );
 }

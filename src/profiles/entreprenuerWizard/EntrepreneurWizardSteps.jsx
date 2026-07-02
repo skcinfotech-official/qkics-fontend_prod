@@ -115,7 +115,7 @@ function NavItem({ title, stepNum, active, onClick, isDark }) {
         }`}
     >
       <div className="font-bold text-sm uppercase tracking-wider">{title}</div>
-      <div className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40 mt-1">
+      <div className="text-2xs font-black uppercase tracking-[0.2em] opacity-40 mt-1">
         Step {stepNum}
       </div>
     </button>
@@ -210,7 +210,7 @@ function Step2({ form, setForm, isEditable, saving, prev, next, handleSaveDraft,
         />
 
         <div>
-          <label className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40 mb-2 block">
+          <label className="text-2xs font-black uppercase tracking-[0.2em] opacity-40 mb-2 block">
             Funding Stage
           </label>
           <select
@@ -373,7 +373,7 @@ function Input({ label, value, onChange, type = "text", placeholder = "", disabl
         : "border-black/10 text-black/50"
     }`;
 
-  const labelClass = "text-[10px] font-black uppercase tracking-[0.2em] opacity-40 mb-1 block";
+  const labelClass = "text-2xs font-black uppercase tracking-[0.2em] opacity-40 mb-1 block";
 
   return (
     <div>
@@ -401,7 +401,7 @@ function Textarea({ label, value, onChange, disabled, isDark }) {
         : "border-black/10 text-black/50"
     }`;
 
-  const labelClass = "text-[10px] font-black uppercase tracking-[0.2em] opacity-40 mb-1 block";
+  const labelClass = "text-2xs font-black uppercase tracking-[0.2em] opacity-40 mb-1 block";
 
   return (
     <div>

@@ -95,7 +95,7 @@ export default function Subscription() {
             <div className={`min-h-screen flex items-center justify-center ${bg}`}>
                 <div className="flex flex-col items-center gap-4">
                     <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
-                    <span className={`text-[10px] font-black uppercase tracking-[0.3em] opacity-30 ${text}`}>Loading Plans...</span>
+                    <span className={`text-2xs font-black uppercase tracking-[0.3em] opacity-30 ${text}`}>Loading Plans...</span>
                 </div>
             </div>
         );
@@ -107,7 +107,7 @@ export default function Subscription() {
 
                 {/* HEADER */}
                 <div className="text-center mb-4 animate-fadeIn">
-                    <h1 className={`text-4xl md:text-5xl font-black tracking-tighter mb-6 ${text}`}>
+                    <h1 className={`text-2xl md:text-3xl font-bold tracking-tight mb-6 ${text}`}>
                         Upgrade your <span className="text-red-600">Impact</span>
                     </h1>
                     <p className={`text-lg md:text-xl max-w-2xl mx-auto leading-relaxed ${muted}`}>
@@ -128,12 +128,12 @@ export default function Subscription() {
                             <div className="text-center md:text-left flex-1">
                                 <div className="flex items-center justify-center md:justify-start gap-2 mb-1">
                                     <h3 className={`text-xl font-black uppercase tracking-tight ${text}`}>Active Subscription</h3>
-                                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 text-[10px] font-black uppercase tracking-widest border border-emerald-500/20">Active</span>
+                                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 text-2xs font-black uppercase tracking-widest border border-emerald-500/20">Active</span>
                                 </div>
                                 <p className={`text-sm font-bold ${muted}`}>
                                     Plan: <span className={text}>{activeSubscription.plan_name || "Premium Plan"}</span>
                                 </p>
-                                <p className="text-[10px] font-bold uppercase tracking-widest opacity-40 mt-1">
+                                <p className="text-2xs font-bold uppercase tracking-widest opacity-40 mt-1">
                                     Expires: {new Date(activeSubscription.end_date).toLocaleDateString(undefined, {
                                         year: 'numeric',
                                         month: 'long',
@@ -169,7 +169,7 @@ export default function Subscription() {
                                       `}
                                 >
                                     {(isRecommended || isActivePlan) && (
-                                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-red-600 text-white text-[9px] font-black uppercase tracking-[0.2em] shadow-lg shadow-red-600/40 z-10">
+                                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-red-600 text-white text-2xs font-black uppercase tracking-[0.2em] shadow-lg shadow-red-600/40 z-10">
                                             {isActivePlan ? "Current Plan" : "Most Popular"}
                                         </div>
                                     )}

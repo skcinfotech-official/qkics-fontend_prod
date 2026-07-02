@@ -213,7 +213,7 @@ export default function TagsTable({ theme }) {
       {/* Filters Area */}
       <div className={`p-4 rounded-xl border flex flex-col sm:flex-row gap-4 justify-between items-center ${isDark ? "bg-[#111111] border-gray-800" : "bg-white border-gray-200 shadow-sm"}`}>
         <div className={`relative w-full sm:max-w-md flex items-center`}>
-          <FaSearch className={`absolute left-3 text-[0.8rem] ${isDark ? "text-gray-500" : "text-gray-400"}`} />
+          <FaSearch className={`absolute left-3 text-sm ${isDark ? "text-gray-500" : "text-gray-400"}`} />
           <input
             type="text"
             value={searchText}

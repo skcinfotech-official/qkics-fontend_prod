@@ -48,7 +48,7 @@ const ConfirmationAlert = ({
         <div className="mt-8 flex justify-center gap-4">
           <button
             onClick={onCancel}
-            className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${isDark ? "bg-white/5 text-white hover:bg-white/10" : "bg-neutral-100 text-black hover:bg-neutral-200"
+            className={`flex-1 py-3 rounded-xl text-2xs font-black uppercase tracking-widest transition-all ${isDark ? "bg-white/5 text-white hover:bg-white/10" : "bg-neutral-100 text-black hover:bg-neutral-200"
               }`}
           >
             {cancelText}
@@ -56,7 +56,7 @@ const ConfirmationAlert = ({
 
           <button
             onClick={onConfirm}
-            className="flex-1 py-3 rounded-xl bg-red-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-red-700 shadow-xl shadow-red-600/30 hover:scale-105 active:scale-95 transition-all"
+            className="flex-1 py-3 rounded-xl bg-red-600 text-white text-2xs font-black uppercase tracking-widest hover:bg-red-700 shadow-xl shadow-red-600/30 hover:scale-105 active:scale-95 transition-all"
           >
             {confirmText}
           </button>

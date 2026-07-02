@@ -1,89 +1,79 @@
-import { MdEdit, MdDelete } from "react-icons/md";
-import { MdOutlineSchedule } from "react-icons/md";
+import { MdEdit, MdDelete, MdOutlineSchedule } from "react-icons/md";
 
 export default function SlotCard({
   slot,
   onEdit,
   onDelete,
   onReschedule,
-  isDark,
 }) {
   const start = new Date(slot.start_datetime);
   const end = new Date(slot.end_datetime);
 
-  // ✅ BACKEND IS SOURCE OF TRUTH: Slot is available if at least one service is available
+  // Slot is available if at least one service is available
   const isAvailable = Boolean(slot.is_chat_available || slot.is_video_call_available);
 
   const sameDay = start.toLocaleDateString() === end.toLocaleDateString();
 
   return (
-    <div
-      className={`group p-6 rounded-3xl shadow-lg border transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 ${isDark
-        ? "bg-white/5 border-white/5 hover:border-red-500/30 text-white"
-        : "bg-white border-neutral-100 hover:border-red-500/30 text-black"
-        }`}
-    >
+    <div className="group flex flex-col rounded-2xl border border-border bg-card p-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-xl hover:shadow-primary/5">
       {/* HEADER */}
-      <div className="flex justify-between items-start mb-4">
-        <div className="flex flex-col">
-          <span className="text-xs font-black uppercase tracking-widest opacity-50 mb-1">Date & Time</span>
-          <div className="font-bold text-lg flex items-center gap-2">
-            <MdOutlineSchedule className={`text-red-500`} />
-            <span>
-              {start.toLocaleDateString(undefined, {
-                weekday: "short",
-                month: "short",
-                day: "numeric",
-              })}{" "}
-            </span>
-          </div>
-          <div className="text-sm font-medium opacity-80 pl-6">
-            {start.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-            {" – "}
-            {!sameDay && `${end.toLocaleDateString()} • `}
-            {end.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-          </div>
+      <div className="mb-4">
+        <span className="mb-1 block text-2xs font-bold uppercase tracking-wide text-muted-foreground">Date &amp; Time</span>
+        <div className="flex items-center gap-2 text-base font-bold text-foreground">
+          <MdOutlineSchedule className="text-primary" />
+          <span>
+            {start.toLocaleDateString(undefined, {
+              weekday: "short",
+              month: "short",
+              day: "numeric",
+            })}
+          </span>
+        </div>
+        <div className="pl-6 text-sm font-medium text-muted-foreground">
+          {start.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+          {" – "}
+          {!sameDay && `${end.toLocaleDateString()} • `}
+          {end.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
         </div>
       </div>
 
-      {/* DIVIDER */}
-      <div className={`h-px w-full my-4 ${isDark ? "bg-white/10" : "bg-black/5"}`}></div>
+      <div className="my-4 h-px w-full bg-border" />
 
       {/* INFO GRID */}
-      <div className="grid grid-cols-2 gap-y-4 gap-x-2 mb-4">
+      <div className="mb-4 grid grid-cols-2 gap-x-2 gap-y-4">
         <div>
-          <span className="text-[10px] font-black uppercase tracking-widest opacity-50 block mb-1">Chat Price</span>
-          <span className={`font-bold text-base ${Number(slot.chat_price) > 0 ? "text-red-600" : "text-neutral-400"}`}>
+          <span className="mb-1 block text-2xs font-bold uppercase tracking-wide text-muted-foreground">Chat Price</span>
+          <span className={`text-base font-bold ${Number(slot.chat_price) > 0 ? "text-primary" : "text-muted-foreground"}`}>
             {Number(slot.chat_price) > 0 ? `₹${slot.chat_price}` : "N/A"}
           </span>
         </div>
         <div>
-          <span className="text-[10px] font-black uppercase tracking-widest opacity-50 block mb-1">Video Price</span>
-          <span className={`font-bold text-base ${Number(slot.video_call_price) > 0 ? "text-red-600" : "text-neutral-400"}`}>
+          <span className="mb-1 block text-2xs font-bold uppercase tracking-wide text-muted-foreground">Video Price</span>
+          <span className={`text-base font-bold ${Number(slot.video_call_price) > 0 ? "text-primary" : "text-muted-foreground"}`}>
             {Number(slot.video_call_price) > 0 ? `₹${slot.video_call_price}` : "N/A"}
           </span>
         </div>
         <div className="col-span-2">
-          <span className="text-[10px] font-black uppercase tracking-widest opacity-50 block mb-1">Duration</span>
-          <span className={`font-bold text-sm opacity-90`}>{slot.duration_minutes} mins</span>
+          <span className="mb-1 block text-2xs font-bold uppercase tracking-wide text-muted-foreground">Duration</span>
+          <span className="text-sm font-bold text-foreground">{slot.duration_minutes} mins</span>
         </div>
       </div>
 
       {/* STATUS BADGES */}
-      <div className="flex flex-wrap gap-2 mb-6">
+      <div className="mb-5 flex flex-wrap gap-2">
         <span
-          className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${slot.status === "ACTIVE"
-            ? "bg-green-500/10 text-green-500 border-green-500/20"
-            : "bg-gray-500/10 text-gray-500 border-gray-500/20"
+          className={`rounded-full border px-3 py-1 text-2xs font-bold uppercase tracking-wide ${slot.status === "ACTIVE"
+            ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+            : "border-border bg-muted text-muted-foreground"
             }`}
         >
           {slot.status}
         </span>
 
         <span
-          className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${isAvailable
-            ? "bg-blue-500/10 text-blue-500 border-blue-500/20"
-            : "bg-red-500/10 text-red-500 border-red-500/20"
+          className={`rounded-full border px-3 py-1 text-2xs font-bold uppercase tracking-wide ${isAvailable
+            ? "border-primary/20 bg-primary-soft text-primary"
+            : "border-border bg-muted text-muted-foreground"
             }`}
         >
           {isAvailable ? "Available" : "Booked"}
@@ -91,22 +81,19 @@ export default function SlotCard({
       </div>
 
       {/* ACTIONS */}
-      <div className="flex gap-2">
+      <div className="mt-auto flex gap-2">
         {isAvailable ? (
           <>
             <button
               onClick={onEdit}
-              className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-colors ${isDark
-                  ? "bg-white/5 hover:bg-white/10 text-white"
-                  : "bg-neutral-100 hover:bg-neutral-200 text-black"
-                }`}
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-muted px-4 py-2.5 text-xs font-bold uppercase tracking-wide text-foreground transition-colors hover:bg-muted/70"
             >
               <MdEdit size={14} /> Edit
             </button>
 
             <button
               onClick={onDelete}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-colors bg-red-600/10 text-red-600 hover:bg-red-600 hover:text-white"
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-danger/10 px-4 py-2.5 text-xs font-bold uppercase tracking-wide text-danger transition-colors hover:bg-danger hover:text-white"
             >
               <MdDelete size={14} /> Delete
             </button>
@@ -114,7 +101,7 @@ export default function SlotCard({
         ) : (
           <button
             onClick={onReschedule}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-colors bg-blue-600/10 text-blue-600 hover:bg-blue-600 hover:text-white"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary-soft px-4 py-2.5 text-xs font-bold uppercase tracking-wide text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
           >
             <MdOutlineSchedule size={14} /> Reschedule
           </button>

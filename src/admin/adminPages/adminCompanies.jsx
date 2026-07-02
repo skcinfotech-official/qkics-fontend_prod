@@ -266,14 +266,14 @@ export default function AdminCompanies({ theme }) {
                 <div className={`p-6 rounded-xl border flex flex-col sm:flex-row justify-between items-center gap-6 ${isDark ? "bg-[#111111] border-gray-800" : "bg-white border-gray-200 shadow-sm"}`}>
                     <div className="flex flex-wrap gap-10">
                         <div className="flex flex-col">
-                            <span className={`text-[10px] font-black uppercase tracking-[0.2em] mb-1 opacity-50 ${textStyle}`}>Free Posts Limit</span>
+                            <span className={`text-2xs font-black uppercase tracking-[0.2em] mb-1 opacity-50 ${textStyle}`}>Free Posts Limit</span>
                             <span className={`text-3xl font-black ${isDark ? "text-blue-400" : "text-blue-600"}`}>
                                 {settings.free_posts_per_company} 
                                 <span className="text-sm font-medium ml-2">/ Organization</span>
                             </span>
                         </div>
                         <div className="flex flex-col">
-                            <span className={`text-[10px] font-black uppercase tracking-[0.2em] mb-1 opacity-50 ${textStyle}`}>Paid Post Price</span>
+                            <span className={`text-2xs font-black uppercase tracking-[0.2em] mb-1 opacity-50 ${textStyle}`}>Paid Post Price</span>
                             <span className={`text-3xl font-black ${isDark ? "text-emerald-400" : "text-emerald-600"}`}>
                                 ₹{settings.paid_post_price}
                                 <span className="text-sm font-medium ml-2">/ Extra Post</span>
@@ -282,7 +282,7 @@ export default function AdminCompanies({ theme }) {
                     </div>
                     <button 
                         onClick={() => setSettingsModal({ isOpen: true })}
-                        className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all border ${isDark ? "border-white/10 hover:bg-white/5 text-white" : "border-black/10 hover:bg-black/5 text-black"}`}
+                        className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-2xs font-black uppercase tracking-[0.2em] transition-all border ${isDark ? "border-white/10 hover:bg-white/5 text-white" : "border-black/10 hover:bg-black/5 text-black"}`}
                     >
                         <FaCog className={isDark ? "text-blue-400" : "text-blue-600"} />
                         Update Limits
@@ -293,7 +293,7 @@ export default function AdminCompanies({ theme }) {
             {/* Filters Area */}
             <div className={`p-4 rounded-xl border flex flex-col sm:flex-row gap-4 justify-between items-center ${isDark ? "bg-[#111111] border-gray-800" : "bg-white border-gray-200 shadow-sm"}`}>
                 <div className="relative w-full sm:max-w-md">
-                    <FaSearch className={`absolute left-3 top-1/2 -translate-y-1/2 text-[0.8rem] ${isDark ? "text-gray-500" : "text-gray-400"}`} />
+                    <FaSearch className={`absolute left-3 top-1/2 -translate-y-1/2 text-sm ${isDark ? "text-gray-500" : "text-gray-400"}`} />
                     <input
                         type="text"
                         placeholder="Search companies by name..."
@@ -343,29 +343,29 @@ export default function AdminCompanies({ theme }) {
                                                 </div>
                                                 <div>
                                                     <p className={`font-bold ${textStyle}`}>{renderSafe(company.name)}</p>
-                                                    <p className="text-[0.7rem] font-medium text-blue-500">@{renderSafe(company.slug)}</p>
+                                                    <p className="text-xs font-medium text-blue-500">@{renderSafe(company.slug)}</p>
                                                 </div>
                                             </div>
                                         </td>
                                         <td className="py-3 px-5">
                                             <div className="flex flex-col gap-1">
-                                                <div className="flex items-center gap-2 text-[0.75rem]">
+                                                <div className="flex items-center gap-2 text-xs">
                                                     <FaBriefcase className="text-gray-400" />
                                                     <span className={textStyle}>{renderSafe(company.industry)}</span>
                                                 </div>
-                                                <div className="flex items-center gap-2 text-[0.75rem]">
+                                                <div className="flex items-center gap-2 text-xs">
                                                     <FaMapMarkerAlt className="text-gray-400" />
                                                     <span className={textStyle}>{renderSafe(company.location)}</span>
                                                 </div>
                                             </div>
                                         </td>
                                         <td className="py-3 px-5">
-                                            <span className={`text-[0.75rem] font-medium ${textStyle}`}>
+                                            <span className={`text-xs font-medium ${textStyle}`}>
                                                 {renderSafe(company.owner)}
                                             </span>
                                         </td>
                                         <td className="py-3 px-5 text-center">
-                                            <span className={`px-2.5 py-1 rounded-full text-[0.65rem] font-black uppercase tracking-widest ${getStatusStyle(String(company.status))}`}>
+                                            <span className={`px-2.5 py-1 rounded-full text-2xs font-black uppercase tracking-widest ${getStatusStyle(String(company.status))}`}>
                                                 {renderSafe(company.status)}
                                             </span>
                                         </td>
@@ -410,7 +410,7 @@ export default function AdminCompanies({ theme }) {
                 {/* Pagination */}
                 {!loading && (prevCursor || nextCursor) && (
                     <div className={`px-5 py-4 border-t flex items-center justify-between ${isDark ? "border-gray-800" : "border-gray-100"}`}>
-                         <p className={`text-[0.7rem] font-black uppercase tracking-widest opacity-40 ${textStyle}`}>
+                         <p className={`text-xs font-black uppercase tracking-widest opacity-40 ${textStyle}`}>
                             Total: {totalCount} Organizations
                         </p>
                         <div className="flex gap-2">
@@ -448,7 +448,7 @@ export default function AdminCompanies({ theme }) {
                                 </div>
                                 <div>
                                     <h2 className={`text-2xl font-black tracking-tighter ${textStyle}`}>{renderSafe(viewModal.company.name)}</h2>
-                                    <span className={`px-2 py-0.5 rounded text-[0.65rem] font-black uppercase tracking-widest ${getStatusStyle(renderSafe(viewModal.company.status))}`}>
+                                    <span className={`px-2 py-0.5 rounded text-2xs font-black uppercase tracking-widest ${getStatusStyle(renderSafe(viewModal.company.status))}`}>
                                         {renderSafe(viewModal.company.status)}
                                     </span>
                                 </div>
@@ -461,15 +461,15 @@ export default function AdminCompanies({ theme }) {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
                             <div className="space-y-4">
                                 <div>
-                                    <p className={`text-[10px] font-black uppercase tracking-widest ${labelStyle}`}>Industry</p>
+                                    <p className={`text-2xs font-black uppercase tracking-widest ${labelStyle}`}>Industry</p>
                                     <p className={`text-sm font-bold ${textStyle}`}>{renderSafe(viewModal.company.industry)}</p>
                                 </div>
                                 <div>
-                                    <p className={`text-[10px] font-black uppercase tracking-widest ${labelStyle}`}>Location</p>
+                                    <p className={`text-2xs font-black uppercase tracking-widest ${labelStyle}`}>Location</p>
                                     <p className={`text-sm font-bold ${textStyle}`}>{renderSafe(viewModal.company.location)}</p>
                                 </div>
                                 <div>
-                                    <p className={`text-[10px] font-black uppercase tracking-widest ${labelStyle}`}>Website</p>
+                                    <p className={`text-2xs font-black uppercase tracking-widest ${labelStyle}`}>Website</p>
                                     {viewModal.company.website ? (
                                         <a href={viewModal.company.website} target="_blank" rel="noopener noreferrer" className="text-sm font-bold text-blue-500 hover:underline flex items-center gap-1">
                                             <FaGlobe size={12} /> {viewModal.company.website.replace(/^https?:\/\//, "")}
@@ -480,23 +480,23 @@ export default function AdminCompanies({ theme }) {
 
                             <div className="space-y-4">
                                 <div>
-                                    <p className={`text-[10px] font-black uppercase tracking-widest ${labelStyle}`}>Owner (Username/Email)</p>
+                                    <p className={`text-2xs font-black uppercase tracking-widest ${labelStyle}`}>Owner (Username/Email)</p>
                                     <p className={`text-sm font-bold ${textStyle}`}>
                                         {renderSafe(viewModal.company.owner)}
                                     </p>
                                 </div>
                                 <div>
-                                    <p className={`text-[10px] font-black uppercase tracking-widest ${labelStyle}`}>Slug URL</p>
+                                    <p className={`text-2xs font-black uppercase tracking-widest ${labelStyle}`}>Slug URL</p>
                                     <p className="text-sm font-mono opacity-60">/company/{renderSafe(viewModal.company.slug)}</p>
                                 </div>
                                 <div>
-                                    <p className={`text-[10px] font-black uppercase tracking-widest ${labelStyle}`}>Created At</p>
+                                    <p className={`text-2xs font-black uppercase tracking-widest ${labelStyle}`}>Created At</p>
                                     <p className={`text-sm font-bold ${textStyle}`}>{new Date(viewModal.company.created_at).toLocaleString()}</p>
                                 </div>
                             </div>
 
                             <div className="md:col-span-2">
-                                <p className={`text-[10px] font-black uppercase tracking-widest ${labelStyle} mb-2`}>Description</p>
+                                <p className={`text-2xs font-black uppercase tracking-widest ${labelStyle} mb-2`}>Description</p>
                                 <div className={`p-4 rounded-2xl border ${isDark ? "bg-white/5 border-white/5 text-neutral-300" : "bg-black/5 border-black/5 text-neutral-700"} text-sm leading-relaxed`}>
                                     {viewModal.company.description || "No description provided."}
                                 </div>
@@ -504,7 +504,7 @@ export default function AdminCompanies({ theme }) {
 
                             <div className="md:col-span-2 pt-4">
                                 <div className="flex justify-between items-end mb-4">
-                                    <p className={`text-[10px] font-black uppercase tracking-widest ${labelStyle}`}>Company Members ({totalMembers})</p>
+                                    <p className={`text-2xs font-black uppercase tracking-widest ${labelStyle}`}>Company Members ({totalMembers})</p>
                                 </div>
                                 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
@@ -519,7 +519,7 @@ export default function AdminCompanies({ theme }) {
                                             </div>
                                             <div className="truncate">
                                                 <p className={`text-xs font-bold truncate ${textStyle}`}>{member.user?.full_name || member.user?.username || "Unknown"}</p>
-                                                <p className="text-[10px] opacity-50 truncate">{member.user?.email}</p>
+                                                <p className="text-2xs opacity-50 truncate">{member.user?.email}</p>
                                             </div>
                                         </div>
                                     ))}
@@ -531,7 +531,7 @@ export default function AdminCompanies({ theme }) {
                                         <button 
                                             onClick={() => fetchMembers(viewModal.company.id, memberNextCursor)}
                                             disabled={fetchingMembers}
-                                            className="px-4 py-1.5 text-[10px] font-black uppercase tracking-widest bg-blue-600/10 text-blue-500 rounded-lg hover:bg-blue-600/20 transition-all disabled:opacity-50"
+                                            className="px-4 py-1.5 text-2xs font-black uppercase tracking-widest bg-blue-600/10 text-blue-500 rounded-lg hover:bg-blue-600/20 transition-all disabled:opacity-50"
                                         >
                                             {fetchingMembers ? "Loading..." : "Load More Members"}
                                         </button>
@@ -550,7 +550,7 @@ export default function AdminCompanies({ theme }) {
                         <div className="flex justify-end pt-8 border-t border-black/5 dark:border-white/5">
                             <button
                                 onClick={() => setViewModal({ isOpen: false, company: null })}
-                                className="px-8 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] bg-neutral-200 dark:bg-neutral-800 text-black dark:text-white hover:opacity-80 transition-all"
+                                className="px-8 py-2.5 rounded-xl text-2xs font-black uppercase tracking-[0.2em] bg-neutral-200 dark:bg-neutral-800 text-black dark:text-white hover:opacity-80 transition-all"
                             >
                                 Close View
                             </button>
@@ -576,7 +576,7 @@ export default function AdminCompanies({ theme }) {
                         <form onSubmit={handleUpdateCompany} className="space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label className={`block text-[10px] font-black uppercase tracking-widest mb-2 ${labelStyle}`}>Company Name</label>
+                                    <label className={`block text-2xs font-black uppercase tracking-widest mb-2 ${labelStyle}`}>Company Name</label>
                                     <input
                                         type="text"
                                         value={formData.name}
@@ -585,7 +585,7 @@ export default function AdminCompanies({ theme }) {
                                     />
                                 </div>
                                 <div>
-                                    <label className={`block text-[10px] font-black uppercase tracking-widest mb-2 ${labelStyle}`}>Industry</label>
+                                    <label className={`block text-2xs font-black uppercase tracking-widest mb-2 ${labelStyle}`}>Industry</label>
                                     <input
                                         type="text"
                                         value={formData.industry}
@@ -594,7 +594,7 @@ export default function AdminCompanies({ theme }) {
                                     />
                                 </div>
                                 <div>
-                                    <label className={`block text-[10px] font-black uppercase tracking-widest mb-2 ${labelStyle}`}>Status</label>
+                                    <label className={`block text-2xs font-black uppercase tracking-widest mb-2 ${labelStyle}`}>Status</label>
                                     <select
                                         value={formData.status}
                                         onChange={(e) => setFormData({ ...formData, status: e.target.value })}
@@ -607,7 +607,7 @@ export default function AdminCompanies({ theme }) {
                                     </select>
                                 </div>
                                 <div>
-                                    <label className={`block text-[10px] font-black uppercase tracking-widest mb-2 ${labelStyle}`}>Location</label>
+                                    <label className={`block text-2xs font-black uppercase tracking-widest mb-2 ${labelStyle}`}>Location</label>
                                     <input
                                         type="text"
                                         value={formData.location}
@@ -616,7 +616,7 @@ export default function AdminCompanies({ theme }) {
                                     />
                                 </div>
                                 <div className="md:col-span-2">
-                                    <label className={`block text-[10px] font-black uppercase tracking-widest mb-2 ${labelStyle}`}>Website</label>
+                                    <label className={`block text-2xs font-black uppercase tracking-widest mb-2 ${labelStyle}`}>Website</label>
                                     <div className="relative">
                                         <FaGlobe className={`absolute left-4 top-1/2 -translate-y-1/2 ${labelStyle}`} />
                                         <input
@@ -629,7 +629,7 @@ export default function AdminCompanies({ theme }) {
                                     </div>
                                 </div>
                                 <div className="md:col-span-2">
-                                    <label className={`block text-[10px] font-black uppercase tracking-widest mb-2 ${labelStyle}`}>Description</label>
+                                    <label className={`block text-2xs font-black uppercase tracking-widest mb-2 ${labelStyle}`}>Description</label>
                                     <textarea
                                         rows="4"
                                         value={formData.description}
@@ -641,7 +641,7 @@ export default function AdminCompanies({ theme }) {
 
                             {/* Members Section in Edit */}
                             <div className="pt-4">
-                                <label className={`block text-[10px] font-black uppercase tracking-widest mb-4 ${labelStyle}`}>Manage Members ({totalMembers})</label>
+                                <label className={`block text-2xs font-black uppercase tracking-widest mb-4 ${labelStyle}`}>Manage Members ({totalMembers})</label>
                                 
                                 <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
                                     {members.map((member) => (
@@ -656,7 +656,7 @@ export default function AdminCompanies({ theme }) {
                                                 </div>
                                                 <div className="truncate">
                                                     <p className={`text-xs font-bold truncate ${textStyle}`}>{member.user?.full_name || member.user?.username || "Unknown"}</p>
-                                                    <p className="text-[10px] opacity-50 truncate">{member.user?.email}</p>
+                                                    <p className="text-2xs opacity-50 truncate">{member.user?.email}</p>
                                                 </div>
                                             </div>
                                             <button 
@@ -678,7 +678,7 @@ export default function AdminCompanies({ theme }) {
                                             type="button"
                                             onClick={() => fetchMembers(editModal.company.id, memberNextCursor)}
                                             disabled={fetchingMembers}
-                                            className="px-4 py-1.5 text-[10px] font-black uppercase tracking-widest bg-blue-600/10 text-blue-500 rounded-lg hover:bg-blue-600/20 transition-all disabled:opacity-50"
+                                            className="px-4 py-1.5 text-2xs font-black uppercase tracking-widest bg-blue-600/10 text-blue-500 rounded-lg hover:bg-blue-600/20 transition-all disabled:opacity-50"
                                         >
                                             {fetchingMembers ? "Loading..." : "Load More Members"}
                                         </button>
@@ -697,14 +697,14 @@ export default function AdminCompanies({ theme }) {
                                 <button
                                     type="button"
                                     onClick={() => setEditModal({ isOpen: false, company: null })}
-                                    className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all ${isDark ? "bg-white/5 text-white hover:bg-white/10" : "bg-black/5 text-black hover:bg-black/10"}`}
+                                    className={`px-6 py-2.5 rounded-xl text-2xs font-black uppercase tracking-[0.2em] transition-all ${isDark ? "bg-white/5 text-white hover:bg-white/10" : "bg-black/5 text-black hover:bg-black/10"}`}
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={submitting}
-                                    className="px-8 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] bg-blue-600 text-white shadow-xl shadow-blue-600/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+                                    className="px-8 py-2.5 rounded-xl text-2xs font-black uppercase tracking-[0.2em] bg-blue-600 text-white shadow-xl shadow-blue-600/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
                                 >
                                     {submitting ? (
                                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -756,7 +756,7 @@ export default function AdminCompanies({ theme }) {
                         <form onSubmit={handleUpdateSettings} className="space-y-6">
                             <div className="space-y-4">
                                 <div>
-                                    <label className={`block text-[10px] font-black uppercase tracking-widest mb-2 ${labelStyle}`}>Free Posts Limit</label>
+                                    <label className={`block text-2xs font-black uppercase tracking-widest mb-2 ${labelStyle}`}>Free Posts Limit</label>
                                     <input
                                         type="number"
                                         value={settings.free_posts_per_company}
@@ -764,10 +764,10 @@ export default function AdminCompanies({ theme }) {
                                         className={`w-full px-4 py-2.5 rounded-xl border outline-none transition-all ${isDark ? "bg-[#0a0a0a] border-gray-800 text-white focus:border-blue-500" : "bg-gray-50 border-gray-200 text-black focus:border-blue-500"}`}
                                         min="0"
                                     />
-                                    <p className="text-[10px] mt-1 opacity-50">Number of posts allowed for free per company.</p>
+                                    <p className="text-2xs mt-1 opacity-50">Number of posts allowed for free per company.</p>
                                 </div>
                                 <div>
-                                    <label className={`block text-[10px] font-black uppercase tracking-widest mb-2 ${labelStyle}`}>Paid Post Price (₹)</label>
+                                    <label className={`block text-2xs font-black uppercase tracking-widest mb-2 ${labelStyle}`}>Paid Post Price (₹)</label>
                                     <input
                                         type="number"
                                         value={settings.paid_post_price}
@@ -776,7 +776,7 @@ export default function AdminCompanies({ theme }) {
                                         min="0"
                                         step="0.01"
                                     />
-                                    <p className="text-[10px] mt-1 opacity-50">Price for each post beyond the free limit.</p>
+                                    <p className="text-2xs mt-1 opacity-50">Price for each post beyond the free limit.</p>
                                 </div>
                             </div>
 
@@ -784,14 +784,14 @@ export default function AdminCompanies({ theme }) {
                                 <button
                                     type="button"
                                     onClick={() => setSettingsModal({ isOpen: false })}
-                                    className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all ${isDark ? "bg-white/5 text-white hover:bg-white/10" : "bg-black/5 text-black hover:bg-black/10"}`}
+                                    className={`px-6 py-2.5 rounded-xl text-2xs font-black uppercase tracking-[0.2em] transition-all ${isDark ? "bg-white/5 text-white hover:bg-white/10" : "bg-black/5 text-black hover:bg-black/10"}`}
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={savingSettings}
-                                    className="px-8 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] bg-blue-600 text-white shadow-xl shadow-blue-600/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+                                    className="px-8 py-2.5 rounded-xl text-2xs font-black uppercase tracking-[0.2em] bg-blue-600 text-white shadow-xl shadow-blue-600/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
                                 >
                                     {savingSettings ? (
                                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>

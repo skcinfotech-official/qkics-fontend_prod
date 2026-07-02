@@ -1,4 +1,4 @@
-// src/components/auth/SignupModal.jsx
+// src/components/auth/Signup.jsx
 import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { useDispatch } from "react-redux";
@@ -6,8 +6,9 @@ import { API_BASE_URL } from "../../config/api";
 import { loginUser, fetchUserProfile } from "../../redux/slices/userSlice";
 import { useAlert } from "../../context/AlertContext";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { Button, Input } from "../ui";
 
-function SignupModal({ onClose, openLogin, isDark }) {
+function SignupModal({ onClose, openLogin }) {
   const dispatch = useDispatch();
   const { showAlert } = useAlert();
 
@@ -28,8 +29,6 @@ function SignupModal({ onClose, openLogin, isDark }) {
   const [showPassword2, setShowPassword2] = useState(false);
 
   const [loading, setLoading] = useState(false);
-
-  const bg = isDark ? "bg-neutral-800 text-white" : "bg-white text-black";
 
   // USERNAME VALIDATION
   const handleUsernameChange = async (value) => {
@@ -54,8 +53,8 @@ function SignupModal({ onClose, openLogin, isDark }) {
       });
 
       if (!res.data.available) setUsernameErr("Username already taken");
-    } catch (err) {
-      console.log("Username validation error:", err);
+    } catch {
+      /* network hiccup — server-side validation still guards on submit */
     }
   };
 
@@ -78,8 +77,8 @@ function SignupModal({ onClose, openLogin, isDark }) {
       });
 
       if (!res.data.available) setEmailErr("Email already exists");
-    } catch (err) {
-      console.log("Email validation error:", err);
+    } catch {
+      /* network hiccup — server-side validation still guards on submit */
     }
   };
 
@@ -103,8 +102,8 @@ function SignupModal({ onClose, openLogin, isDark }) {
 
         if (!res.data.available) setPhoneErr("Phone already exists");
       }
-    } catch (err) {
-      console.log("Phone validation error:", err);
+    } catch {
+      /* network hiccup — server-side validation still guards on submit */
     }
   };
 
@@ -163,18 +162,12 @@ function SignupModal({ onClose, openLogin, isDark }) {
 
       await dispatch(fetchUserProfile());
 
-      // ✅ No window.location.reload() — Redux is already updated.
-      // React will re-render from the new user state automatically.
+      // No window.location.reload() — Redux is already updated; React re-renders.
       showAlert("Signup successful!", "success");
       onClose();
     } catch (err) {
-      console.log("SIGNUP ERROR FULL →", err);
-      console.log("SIGNUP ERROR RESPONSE →", err.response);
-
       showAlert(
-        err.response?.data?.message ||
-        err.response?.data?.message ||
-        "Signup failed. Try again.",
+        err.response?.data?.message || "Signup failed. Try again.",
         "error"
       );
     }
@@ -182,10 +175,8 @@ function SignupModal({ onClose, openLogin, isDark }) {
     setLoading(false);
   };
 
-  // ✅ FIX #3: Store handleSignup in a ref so the keydown listener always
-  // calls the latest version without re-registering itself every render.
-  // The effect runs only once (empty dep array) — no more stacked listeners
-  // or stale closure double-submit bug.
+  // Keep the keydown listener calling the latest handleSignup without
+  // re-registering (avoids stacked listeners / stale-closure double submit).
   const handleSignupRef = useRef(handleSignup);
   useEffect(() => {
     handleSignupRef.current = handleSignup;
@@ -197,108 +188,104 @@ function SignupModal({ onClose, openLogin, isDark }) {
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, []); // ← empty array: registers once, never stacks
+  }, []);
 
   return (
-    <div className={`p-6 rounded-2xl shadow-xl w-[90%] max-w-sm space-y-3 ${bg}`}>
-      <div className="flex justify-between items-center mb-6">
+    <div className="w-full max-w-sm p-6 rounded-2xl shadow-xl space-y-3 bg-card text-card-foreground border border-border">
+      <div className="flex justify-between items-center mb-3">
         <h2 className="text-2xl font-black uppercase tracking-tighter">Sign Up</h2>
         <button
           onClick={onClose}
-          className={`h-8 w-8 rounded-full flex items-center justify-center transition-colors ${isDark ? "hover:bg-white/10 text-neutral-400" : "hover:bg-black/5 text-neutral-500"
-            }`}
-        >✕</button>
+          className="h-8 w-8 rounded-full flex items-center justify-center text-muted-foreground hover:bg-muted transition-colors"
+          aria-label="Close"
+        >
+          ✕
+        </button>
       </div>
 
       {/* USERNAME */}
-      <input
+      <Input
         type="text"
         placeholder="Username"
         value={username}
         onChange={(e) => handleUsernameChange(e.target.value)}
-        className={`w-full px-3 py-2 rounded border ${isDark ? "bg-neutral-700 border-neutral-600" : "bg-neutral-50"
-          }`}
+        error={usernameErr}
       />
-      {usernameErr && <p className="text-red-500 text-xs">{usernameErr}</p>}
 
       {/* PASSWORD */}
       <div className="relative">
-        <input
+        <Input
           type={showPassword ? "text" : "password"}
           placeholder="Password"
           value={password}
           onChange={(e) => validatePassword(e.target.value)}
-          className={`w-full px-3 py-2 pr-10 rounded border ${isDark ? "bg-neutral-700 border-neutral-600" : "bg-neutral-50"
-            }`}
+          className="pr-10"
+          error={passwordErr}
         />
         <button
           type="button"
           onClick={(e) => { e.preventDefault(); setShowPassword(!showPassword); }}
-          className="absolute inset-y-0 right-3 flex items-center text-neutral-500 hover:text-neutral-400 transition-colors"
+          className="absolute top-0 h-11 right-3 flex items-center text-muted-foreground hover:text-foreground transition-colors"
+          aria-label={showPassword ? "Hide password" : "Show password"}
         >
           {showPassword ? <FaEyeSlash /> : <FaEye />}
         </button>
       </div>
-      {passwordErr && <p className="text-red-500 text-xs">{passwordErr}</p>}
 
+      {/* CONFIRM PASSWORD */}
       <div className="relative">
-        <input
+        <Input
           type={showPassword2 ? "text" : "password"}
           placeholder="Confirm Password"
           value={password2}
           onChange={(e) => setPassword2(e.target.value)}
-          className={`w-full px-3 py-2 pr-10 rounded border ${isDark ? "bg-neutral-700 border-neutral-600" : "bg-neutral-50"
-            }`}
+          className="pr-10"
         />
         <button
           type="button"
           onClick={(e) => { e.preventDefault(); setShowPassword2(!showPassword2); }}
-          className="absolute inset-y-0 right-3 flex items-center text-neutral-500 hover:text-neutral-400 transition-colors"
+          className="absolute top-0 h-11 right-3 flex items-center text-muted-foreground hover:text-foreground transition-colors"
+          aria-label={showPassword2 ? "Hide password" : "Show password"}
         >
           {showPassword2 ? <FaEyeSlash /> : <FaEye />}
         </button>
       </div>
 
       {/* EMAIL */}
-      <input
+      <Input
         type="email"
         placeholder="Email"
         value={email}
         onChange={(e) => handleEmailChange(e.target.value)}
-        className={`w-full px-3 py-2 rounded border ${isDark ? "bg-neutral-700 border-neutral-600" : "bg-neutral-50"
-          }`}
+        error={emailErr}
         required
       />
-      {emailErr && <p className="text-red-500 text-xs">{emailErr}</p>}
 
       {/* PHONE */}
-      <input
+      <Input
         type="text"
         placeholder="Phone (optional)"
         value={phone}
         onChange={(e) => handlePhoneChange(e.target.value)}
-        className={`w-full px-3 py-2 rounded border ${isDark ? "bg-neutral-700 border-neutral-600" : "bg-neutral-50"
-          }`}
+        error={phoneErr}
       />
-      {phoneErr && <p className="text-red-500 text-xs">{phoneErr}</p>}
 
-      <button
+      <Button
         onClick={handleSignup}
-        disabled={loading}
-        className={`w-full py-3.5 rounded-xl text-xs font-black uppercase tracking-widest shadow-xl transition-all active:scale-95 ${loading
-          ? "bg-neutral-500/20 text-neutral-500 cursor-not-allowed"
-          : "bg-red-600 text-white hover:bg-red-700 shadow-red-600/20 hover:shadow-red-600/40"
-          }`}
+        loading={loading}
+        fullWidth
+        size="lg"
+        className="uppercase tracking-widest font-black"
       >
         {loading ? "Creating..." : "Create Account"}
-      </button>
+      </Button>
 
       <div className="pt-2 text-center">
-        <button onClick={() => {
-          openLogin();
-        }} className={`text-[10px] font-black uppercase tracking-widest hover:underline ${isDark ? "text-neutral-400 hover:text-white" : "text-neutral-500 hover:text-black"
-          }`}>
-          Already have an account? <span className="text-red-600">Login Here</span>
+        <button
+          onClick={openLogin}
+          className="text-2xs font-black uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors"
+        >
+          Already have an account? <span className="text-primary">Login Here</span>
         </button>
       </div>
     </div>

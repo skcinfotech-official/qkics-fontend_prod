@@ -112,7 +112,7 @@ function NavItem({ title, stepNum, active, onClick, isDark }) {
         }`}
     >
       <div className="font-bold text-sm uppercase tracking-wider">{title}</div>
-      <div className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40 mt-1">Step {stepNum}</div>
+      <div className="text-2xs font-black uppercase tracking-[0.2em] opacity-40 mt-1">Step {stepNum}</div>
     </button>
   );
 }
@@ -399,7 +399,7 @@ function Input({ label, value, onChange, type = "text", placeholder = "", disabl
         : "border-black/10 text-black/50"
     }`;
 
-  const labelClass = "text-[10px] font-black uppercase tracking-[0.2em] opacity-40 mb-1 block";
+  const labelClass = "text-2xs font-black uppercase tracking-[0.2em] opacity-40 mb-1 block";
 
   return (
     <div className={className}>
@@ -424,7 +424,7 @@ function CredentialCard({ title, items, onAdd, renderItem, isDark }) {
         <h3 className="text-sm font-black uppercase tracking-widest opacity-60">{title}</h3>
         <button
           onClick={onAdd}
-          className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${isDark ? "bg-red-600/10 text-red-500 hover:bg-red-600 hover:text-white" : "bg-red-600 text-white hover:bg-red-700"
+          className={`px-4 py-1.5 rounded-xl text-2xs font-black uppercase tracking-widest transition-all ${isDark ? "bg-red-600/10 text-red-500 hover:bg-red-600 hover:text-white" : "bg-red-600 text-white hover:bg-red-700"
             }`}
         >
           Add New

@@ -9,8 +9,8 @@ export default function AdminLayout({ user, status, theme, role, onToggleTheme }
   // 1. WHILE LOADING — show spinner only during actual fetch
   if (status === "loading") {
     return (
-      <div className={`h-screen w-screen flex items-center justify-center transition-colors duration-200 ${theme === "dark" ? "bg-gray-900 text-white" : "bg-gray-50 text-gray-900"}`}>
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-600"></div>
+      <div className="h-screen w-full flex items-center justify-center bg-background text-foreground transition-colors duration-200">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -30,13 +30,10 @@ export default function AdminLayout({ user, status, theme, role, onToggleTheme }
 
   return (
     <div className={isDark ? "dark" : ""}>
-      <div className={`
-        h-screen flex overflow-hidden font-sans transition-colors duration-200
-        ${isDark ? "bg-[#0a0a0a] text-gray-200" : "bg-[#f8fafc] text-gray-800"}
-      `}>
+      <div className="h-screen flex overflow-hidden font-sans bg-background text-foreground transition-colors duration-200">
 
         {/* LEFT SIDEBAR */}
-        <AdminSidebar role={role} isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} theme={theme} />
+        <AdminSidebar role={role} isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
 
         {/* RIGHT SIDE AREA */}
         <div className="flex flex-col flex-1 min-w-0 transition-all duration-200 relative z-10 w-full">

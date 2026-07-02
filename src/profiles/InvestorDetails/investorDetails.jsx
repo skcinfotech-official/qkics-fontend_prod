@@ -1,4 +1,4 @@
-  import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import axiosSecure from "../../components/utils/axiosSecure";
 import { useAlert } from "../../context/AlertContext";
 import { FaSearch, FaCheck } from "react-icons/fa";
@@ -7,13 +7,18 @@ import useClickOutside from "../../components/hooks/useClickOutside";
 
 import { useSelector } from "react-redux";
 
+const labelClass =
+  "mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground";
+
+const fieldClass =
+  "w-full rounded-lg border border-input bg-muted/40 px-3.5 py-2.5 text-sm font-medium text-foreground outline-none transition-all placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-ring/40 disabled:cursor-not-allowed disabled:opacity-60";
+
 export default function InvestorDetails({
   investorData,
   setInvestorData,
 }) {
-  const { theme, data: loggedUser } = useSelector((state) => state.user);
+  const { data: loggedUser } = useSelector((state) => state.user);
   const activeProfile = useSelector((state) => state.user.activeProfileData);
-  const isDark = theme === "dark";
 
   const isOwnProfile = loggedUser?.username === (activeProfile?.profile?.user?.username || activeProfile?.profile?.username);
   const readOnly = !isOwnProfile;
@@ -66,19 +71,6 @@ export default function InvestorDetails({
     ["corporate", "Corporate VC"],
   ];
 
-  // Premium Input Styles
-  const inputClass = (enabled) =>
-    `w-full bg-transparent border-b-2 py-2 px-1 outline-none transition-all font-medium ${isDark
-      ? enabled
-        ? "border-red-600 text-white placeholder-white/30"
-        : "border-white/10 text-white/50"
-      : enabled
-        ? "border-red-600 text-black placeholder-black/30"
-        : "border-black/10 text-black/50"
-    }`;
-
-  const labelClass = "text-[10px] font-black uppercase tracking-[0.2em] opacity-40 mb-1 block";
-
   const handleSave = async () => {
     try {
       const payload = {
@@ -96,10 +88,7 @@ export default function InvestorDetails({
         preferred_stages: local.preferred_stages.map((s) => s.id),
       };
 
-      const res = await axiosSecure.patch(
-        "/v1/investors/me/profile/",
-        payload
-      );
+      const res = await axiosSecure.patch("/v1/investors/me/profile/", payload);
 
       setInvestorData(res.data);
       setLocal(normalize(res.data));
@@ -113,13 +102,12 @@ export default function InvestorDetails({
   };
 
   return (
-    <div className={`premium-card p-8 md:p-12 ${isDark ? "bg-neutral-900" : "bg-white"}`}>
+    <div className="rounded-2xl border border-border bg-card p-6 md:p-8">
 
       {/* HEADER */}
-      <div className="flex justify-between items-center mb-8 pb-4 border-b border-white/5">
-        <h2 className="text-xl font-black uppercase tracking-tight">
-          <span className="hidden md:inline">Investor <span className="text-red-600">Profile</span></span>
-          <span className="md:hidden">Professional <span className="text-red-600">Profile</span></span>
+      <div className="mb-6 flex items-center justify-between border-b border-border pb-4">
+        <h2 className="text-base font-bold tracking-tight text-foreground">
+          Investor <span className="text-primary">Profile</span>
         </h2>
 
         {!readOnly && (
@@ -127,12 +115,10 @@ export default function InvestorDetails({
             {!editMode ? (
               <button
                 onClick={() => setEditMode(true)}
-                className={`h-10 w-10 flex items-center justify-center rounded-xl transition-all ${isDark
-                  ? "bg-neutral-800 text-white hover:bg-neutral-700"
-                  : "bg-neutral-100 text-black hover:bg-neutral-200"}`}
-                title="Edit Details"
+                className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted text-foreground transition-all hover:bg-primary hover:text-primary-foreground"
+                title="Edit details"
               >
-                <FiEdit size={16} />
+                <FiEdit size={15} />
               </button>
             ) : (
               <>
@@ -141,17 +127,17 @@ export default function InvestorDetails({
                     setEditMode(false);
                     setLocal(normalize(investorData));
                   }}
-                  className={`h-10 w-10 flex items-center justify-center rounded-xl transition-all bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white`}
+                  className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted text-muted-foreground transition-all hover:bg-danger hover:text-white"
                   title="Cancel"
                 >
-                  <FiX size={18} />
+                  <FiX size={17} />
                 </button>
                 <button
                   onClick={handleSave}
-                  className="h-10 w-10 flex items-center justify-center rounded-xl bg-green-500/10 text-green-500 hover:bg-green-500 hover:text-white transition-all shadow-lg shadow-green-500/10"
-                  title="Save Changes"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground transition-all hover:bg-primary-hover"
+                  title="Save changes"
                 >
-                  <FiCheckIcon size={20} />
+                  <FiCheckIcon size={18} />
                 </button>
               </>
             )}
@@ -160,15 +146,15 @@ export default function InvestorDetails({
       </div>
 
       {/* CONTENT GRID */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 gap-4">
 
         <div className="md:col-span-2">
           <label className={labelClass}>Display Name</label>
           <input
-            value={local.display_name}
+            value={local.display_name || ""}
             disabled={!editMode}
             onChange={(e) => setLocal({ ...local, display_name: e.target.value })}
-            className={`${inputClass(editMode)} text-2xl font-bold`}
+            className={fieldClass}
             placeholder="e.g. Acme Ventures"
           />
         </div>
@@ -176,10 +162,10 @@ export default function InvestorDetails({
         <div className="md:col-span-2">
           <label className={labelClass}>One Liner</label>
           <input
-            value={local.one_liner}
+            value={local.one_liner || ""}
             disabled={!editMode}
             onChange={(e) => setLocal({ ...local, one_liner: e.target.value })}
-            className={inputClass(editMode)}
+            className={fieldClass}
             placeholder="Brief description..."
           />
         </div>
@@ -188,22 +174,21 @@ export default function InvestorDetails({
           <label className={labelClass}>Investment Thesis</label>
           <textarea
             rows={3}
-            value={local.investment_thesis}
+            value={local.investment_thesis || ""}
             disabled={!editMode}
             onChange={(e) => setLocal({ ...local, investment_thesis: e.target.value })}
-            className={`${inputClass(editMode)} resize-none`}
+            className={`${fieldClass} resize-none`}
             placeholder="Detailed thesis..."
           />
         </div>
 
         {/* INDUSTRIES & STAGES */}
-        <div className="md:col-span-2 space-y-6">
+        <div className="space-y-5 md:col-span-2">
           <MultiSelect
             label="Focus Industries"
             items={allIndustries}
             selected={local.focus_industries}
             editMode={editMode}
-            labelClass={labelClass}
             onToggle={(item) =>
               setLocal({
                 ...local,
@@ -217,7 +202,6 @@ export default function InvestorDetails({
             items={allStages}
             selected={local.preferred_stages}
             editMode={editMode}
-            labelClass={labelClass}
             onToggle={(item) =>
               setLocal({
                 ...local,
@@ -227,25 +211,25 @@ export default function InvestorDetails({
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4 md:col-span-2">
+        <div className="grid grid-cols-2 gap-5 md:col-span-2">
           <div>
             <label className={labelClass}>Min Check ($)</label>
             <input
               type="number"
-              value={local.check_size_min}
+              value={local.check_size_min || ""}
               onChange={(e) => setLocal({ ...local, check_size_min: e.target.value })}
               disabled={!editMode}
-              className={inputClass(editMode)}
+              className={fieldClass}
             />
           </div>
           <div>
             <label className={labelClass}>Max Check ($)</label>
             <input
               type="number"
-              value={local.check_size_max}
+              value={local.check_size_max || ""}
               onChange={(e) => setLocal({ ...local, check_size_max: e.target.value })}
               disabled={!editMode}
-              className={inputClass(editMode)}
+              className={fieldClass}
             />
           </div>
         </div>
@@ -253,10 +237,10 @@ export default function InvestorDetails({
         <div>
           <label className={labelClass}>Location</label>
           <input
-            value={local.location}
+            value={local.location || ""}
             onChange={(e) => setLocal({ ...local, location: e.target.value })}
             disabled={!editMode}
-            className={inputClass(editMode)}
+            className={fieldClass}
           />
         </div>
 
@@ -264,30 +248,30 @@ export default function InvestorDetails({
           <label className={labelClass}>Investor Type</label>
           <select
             disabled={!editMode}
-            value={local.investor_type}
+            value={local.investor_type || ""}
             onChange={(e) => setLocal({ ...local, investor_type: e.target.value })}
-            className={`${inputClass(editMode)} bg-transparent`}
+            className={fieldClass}
           >
             {investorTypes.map(([value, label]) => (
-              <option key={value} value={value} className="text-black">
+              <option key={value} value={value}>
                 {label}
               </option>
             ))}
           </select>
         </div>
 
-        <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4">
           <div>
             <label className={labelClass}>Website</label>
-            <input value={local.website_url} onChange={(e) => setLocal({ ...local, website_url: e.target.value })} disabled={!editMode} className={inputClass(editMode)} />
+            <input value={local.website_url || ""} onChange={(e) => setLocal({ ...local, website_url: e.target.value })} disabled={!editMode} className={fieldClass} />
           </div>
           <div>
             <label className={labelClass}>LinkedIn</label>
-            <input value={local.linkedin_url} onChange={(e) => setLocal({ ...local, linkedin_url: e.target.value })} disabled={!editMode} className={inputClass(editMode)} />
+            <input value={local.linkedin_url || ""} onChange={(e) => setLocal({ ...local, linkedin_url: e.target.value })} disabled={!editMode} className={fieldClass} />
           </div>
           <div>
             <label className={labelClass}>Twitter</label>
-            <input value={local.twitter_url} onChange={(e) => setLocal({ ...local, twitter_url: e.target.value })} disabled={!editMode} className={inputClass(editMode)} />
+            <input value={local.twitter_url || ""} onChange={(e) => setLocal({ ...local, twitter_url: e.target.value })} disabled={!editMode} className={fieldClass} />
           </div>
         </div>
 
@@ -296,12 +280,10 @@ export default function InvestorDetails({
   );
 }
 
-function MultiSelect({ label, items, selected, editMode, onToggle, labelClass }) {
+function MultiSelect({ label, items, selected, editMode, onToggle }) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchText, setSearchText] = useState("");
   const dropdownRef = useRef(null);
-  const theme = useSelector((state) => state.user.theme);
-  const isDark = theme === "dark";
 
   useClickOutside(dropdownRef, () => setIsOpen(false));
 
@@ -314,27 +296,24 @@ function MultiSelect({ label, items, selected, editMode, onToggle, labelClass })
       <label className={labelClass}>{label}</label>
 
       {!editMode ? (
-        <div className="flex flex-wrap gap-2 mt-2">
+        <div className="mt-1 flex flex-wrap gap-2">
           {selected.length ? (
             selected.map((i) => (
               <span
                 key={i.id}
-                className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide bg-blue-500/10 border border-blue-400/20 text-blue-500"
+                className="rounded-full bg-primary-soft px-3 py-1 text-2xs font-bold uppercase tracking-wide text-primary"
               >
                 {i.name}
               </span>
             ))
           ) : (
-            <span className="opacity-30 text-xs italic">Not specified</span>
+            <span className="text-xs italic text-muted-foreground">Not specified</span>
           )}
         </div>
       ) : (
-        <div className="relative mt-2" ref={dropdownRef}>
+        <div className="relative" ref={dropdownRef}>
           <div
-            className={`w-full p-2 rounded-lg border text-sm cursor-pointer flex justify-between items-center ${isDark
-              ? "bg-[#0a0a0a] border-gray-800 text-gray-200"
-              : "bg-gray-50 border-gray-200 text-gray-900"
-              }`}
+            className="flex w-full cursor-pointer items-center justify-between rounded-lg border border-input bg-muted/40 px-3.5 py-2.5 text-sm text-foreground"
             onClick={() => setIsOpen(!isOpen)}
           >
             <span className="truncate pr-4 font-medium">
@@ -342,74 +321,48 @@ function MultiSelect({ label, items, selected, editMode, onToggle, labelClass })
                 ? selected.map((opt) => opt.name).join(", ")
                 : `Select ${label}`}
             </span>
-            <span className="shrink-0">&#9662;</span>
+            <span className="shrink-0 text-muted-foreground">&#9662;</span>
           </div>
 
           {isOpen && (
-            <div
-              className={`absolute z-10 mt-1 w-full rounded-lg border shadow-lg max-h-60 flex flex-col ${isDark ? "bg-[#111111] border-gray-800" : "bg-white border-gray-200"
-                }`}
-            >
-              <div
-                className={`p-2 border-b ${isDark ? "border-gray-800" : "border-gray-200"
-                  }`}
-              >
-                <div
-                  className={`flex items-center rounded px-2 py-1 ${isDark ? "bg-[#0a0a0a]" : "bg-gray-100"
-                    }`}
-                >
-                  <FaSearch
-                    className={`text-xs ${isDark ? "text-gray-500" : "text-gray-400"
-                      }`}
-                  />
+            <div className="absolute z-10 mt-1 flex max-h-60 w-full flex-col rounded-lg border border-border bg-card shadow-lg">
+              <div className="border-b border-border p-2">
+                <div className="flex items-center gap-2 rounded-md bg-muted px-2 py-1.5">
+                  <FaSearch className="text-xs text-muted-foreground" />
                   <input
                     type="text"
-                    className={`w-full bg-transparent border-none text-sm px-2 focus:outline-none ${isDark ? "text-gray-200" : "text-gray-900"
-                      }`}
+                    className="w-full border-none bg-transparent px-1 text-sm text-foreground focus:outline-none"
                     placeholder={`Search ${label}...`}
                     value={searchText}
                     onChange={(e) => setSearchText(e.target.value)}
                   />
                 </div>
               </div>
-              <div className="overflow-y-auto custom-scrollbar flex-1 p-1">
+              <div className="custom-scrollbar flex-1 overflow-y-auto p-1">
                 {filteredOptions.length > 0 ? (
                   filteredOptions.map((opt) => {
                     const isSelected = selected.some((s) => s.id === opt.id);
                     return (
                       <div
                         key={opt.id}
-                        className={`flex items-center gap-2 p-2 rounded cursor-pointer text-sm font-medium ${isSelected
-                          ? isDark
-                            ? "bg-red-900/30 text-red-400"
-                            : "bg-red-50 text-red-600"
-                          : isDark
-                            ? "hover:bg-gray-800 text-gray-300"
-                            : "hover:bg-gray-100 text-gray-700"
+                        className={`flex cursor-pointer items-center gap-2 rounded-md p-2 text-sm font-medium transition-colors ${isSelected
+                          ? "bg-primary-soft text-primary"
+                          : "text-foreground hover:bg-muted"
                           }`}
                         onClick={() => onToggle(opt)}
                       >
                         <div
-                          className={`w-4 h-4 rounded border flex items-center justify-center ${isSelected
-                            ? "bg-red-600 border-red-600"
-                            : isDark
-                              ? "border-gray-600"
-                              : "border-gray-300"
+                          className={`flex h-4 w-4 items-center justify-center rounded border ${isSelected ? "border-primary bg-primary" : "border-input"
                             }`}
                         >
-                          {isSelected && (
-                            <FaCheck className="text-white text-[0.6rem]" />
-                          )}
+                          {isSelected && <FaCheck className="text-2xs text-primary-foreground" />}
                         </div>
                         {opt.name}
                       </div>
                     );
                   })
                 ) : (
-                  <div
-                    className={`p-3 text-center text-sm ${isDark ? "text-gray-500" : "text-gray-400"
-                      }`}
-                  >
+                  <div className="p-3 text-center text-sm text-muted-foreground">
                     No matching {label.toLowerCase()} found.
                   </div>
                 )}
@@ -421,3 +374,6 @@ function MultiSelect({ label, items, selected, editMode, onToggle, labelClass })
     </div>
   );
 }
+
+
+

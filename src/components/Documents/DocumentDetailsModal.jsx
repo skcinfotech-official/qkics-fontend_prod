@@ -88,7 +88,7 @@ export default function DocumentDetailsModal({ uuid, onClose, theme }) {
                 <FiCalendar />
               </span>
               <div>
-                <p className="text-[10px] text-gray-500 uppercase font-bold tracking-tighter">Published</p>
+                <p className="text-2xs text-gray-500 uppercase font-bold tracking-tighter">Published</p>
                 <p className="font-semibold">{new Date(doc.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</p>
               </div>
             </div>
@@ -97,7 +97,7 @@ export default function DocumentDetailsModal({ uuid, onClose, theme }) {
                 <FiShield />
               </span>
               <div>
-                <p className="text-[10px] text-gray-500 uppercase font-bold tracking-tighter">Access</p>
+                <p className="text-2xs text-gray-500 uppercase font-bold tracking-tighter">Access</p>
                 <p className={`font-semibold ${doc.access_type === 'PREMIUM' ? 'text-amber-500' : 'text-emerald-500'}`}>{doc.access_type}</p>
               </div>
             </div>

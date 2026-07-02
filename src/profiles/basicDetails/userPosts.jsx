@@ -1,10 +1,7 @@
 import { useState, useRef } from "react";
-import { BiLike, BiSolidLike } from "react-icons/bi";
-import { HiPencilAlt, HiTrash } from "react-icons/hi";
 import { savePostViewState } from "../../redux/slices/postViewSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { FaEllipsisH } from "react-icons/fa";
 
 import useLike from "../../components/hooks/useLike";
 import CreatePostModal from "../../components/posts/create_post";
@@ -17,7 +14,7 @@ import { updatePost, addPost, setEditingPost, setCreateModalOpen, removePost } f
 
 import PostCard from "../../components/posts/PostCard";
 import ModalOverlay from "../../components/ui/ModalOverlay";
-import SponsorCard from "../../components/ui/SponsorCard";
+import { Button } from "../../components/ui";
 import { getAccessToken } from "../../redux/store/tokenManager";
 
 export default function UserPosts() {
@@ -25,20 +22,16 @@ export default function UserPosts() {
   const dispatch = useDispatch();
 
   const { items: posts, editingPost, isCreateModalOpen: openCreate } = useSelector((state) => state.posts);
-  const { theme, data: loggedUser } = useSelector((state) => state.user);
+  const { data: loggedUser } = useSelector((state) => state.user);
   const activeProfile = useSelector((state) => state.user.activeProfileData);
 
-  const isDark = theme === "dark";
   const profileUser = activeProfile?.profile?.user || activeProfile?.profile || {};
   const isOwnProfile = loggedUser?.username === (profileUser.username || activeProfile?.profile?.username);
   const readOnly = !isOwnProfile;
 
   const setPosts = (callback) => {
-    // This setter is needed for useLike.jsx which expects a state setter.
-    // We'll simulate it by dispatching updates.
     if (typeof callback === "function") {
       const updatedPosts = callback(posts);
-      // useLike only updates the specific post's like status
       const changedPost = updatedPosts.find((p, i) => p !== posts[i]);
       if (changedPost) {
         dispatch(updatePost(changedPost));
@@ -71,31 +64,15 @@ export default function UserPosts() {
     });
   };
 
-  // 🌟 Get token from TokenManager
   const token = getAccessToken();
 
-  // 🌟 Correct useLike usage
   const { handleLike } = useLike(setPosts, token, () => {
-    // setShowLogin is not defined here, but we can navigate to login
     navigate("/login");
   });
 
   const [menuOpen, setMenuOpen] = useState(null);
   const menuRef = useRef(null);
   useClickOutside(menuRef, () => setMenuOpen(null));
-  const [expandedPost, setExpandedPost] = useState(null);
-
-  const cardBg = isDark ? "bg-[#2c2c2c]" : "bg-white";
-  const text = isDark ? "text-[#eaeaea]" : "text-[#111111]";
-  const borderColor = isDark ? "border-white/15" : "border-black/10";
-
-  const formatDate = (d) =>
-    d
-      ? new Date(d).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-      })
-      : "";
 
   /* -----------------------
       OPEN COMMENTS PAGE
@@ -115,60 +92,52 @@ export default function UserPosts() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-      {/* LEFT: Posts */}
-      <div className="lg:col-span-8 w-full max-w-2xl mx-auto">
-        {/* HEADER */}
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold">My Posts</h2>
+    <div className="mx-auto w-full max-w-2xl">
+      {/* HEADER */}
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="text-base font-bold tracking-tight text-foreground">
+          {readOnly ? "Posts" : "My Posts"}
+        </h2>
 
-          {!readOnly && (
-            <button
-              onClick={() => {
-                if (!token) return navigate("/login");
-                handleSetEditingPost(null);
-                handleSetOpenCreate(true);
-              }}
-              className="px-4 py-1.5 rounded-md bg-red-600 text-white hover:bg-red-700"
-            >
-              Create Post
-            </button>
-          )}
-
-        </div>
-
-        {!posts || posts.length === 0 ? (
-          <div className="py-20 text-center opacity-30">
-            <p className="font-bold tracking-widest text-sm uppercase">No posts yet</p>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {posts.map((post) => (
-              <PostCard
-                key={post.id}
-                post={{ ...post, author: post.author || profileUser }} // Ensure author exists
-                loggedUser={loggedUser}
-                isDark={isDark}
-                onLike={(id) => handleLike(id)}
-                onDelete={internalHandleDelete}
-                onEdit={(p) => {
-                  handleSetEditingPost(p);
-                  handleSetOpenCreate(true);
-                }}
-                onCommentClick={(p) => handleOpenPost(p.id)}
-                onTagClick={(tag) => navigate(`/search?q=${tag}&type=posts`)}
-                onProfileClick={() => { }} // Already on profile
-                showMenu={!readOnly}
-              />
-            ))}
-          </div>
+        {!readOnly && (
+          <Button
+            size="sm"
+            onClick={() => {
+              if (!token) return navigate("/login");
+              handleSetEditingPost(null);
+              handleSetOpenCreate(true);
+            }}
+          >
+            Create Post
+          </Button>
         )}
       </div>
 
-      {/* RIGHT: Ads */}
-      <aside className="hidden lg:block lg:col-span-4 space-y-8 pt-12">
-        <SponsorCard isDark={isDark} />
-      </aside>
+      {!posts || posts.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-border py-20 text-center">
+          <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground">No posts yet</p>
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {posts.map((post) => (
+            <PostCard
+              key={post.id}
+              post={{ ...post, author: post.author || profileUser }}
+              loggedUser={loggedUser}
+              onLike={(id) => handleLike(id)}
+              onDelete={internalHandleDelete}
+              onEdit={(p) => {
+                handleSetEditingPost(p);
+                handleSetOpenCreate(true);
+              }}
+              onCommentClick={(p) => handleOpenPost(p.id)}
+              onTagClick={(tag) => navigate(`/search?q=${tag}&type=posts`)}
+              onProfileClick={() => { }}
+              showMenu={!readOnly}
+            />
+          ))}
+        </div>
+      )}
 
       {/* POST MODAL */}
       {openCreate && (
@@ -177,7 +146,6 @@ export default function UserPosts() {
           handleSetEditingPost(null);
         }}>
           <CreatePostModal
-            isDark={isDark}
             post={editingPost}
             onClose={() => {
               handleSetOpenCreate(false);

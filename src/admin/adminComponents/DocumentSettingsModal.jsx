@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import axiosSecure from "../../components/utils/axiosSecure";
 import { FiX, FiSave } from "react-icons/fi";
+import { Button } from "../../components/ui";
 
-export default function DocumentSettingsModal({ isOpen, onClose, settings, onSuccess, isDark }) {
+export default function DocumentSettingsModal({ isOpen, onClose, settings, onSuccess }) {
     const [formData, setFormData] = useState({
         monthly_upload_limit: 5,
         monthly_download_limit: 20,
@@ -45,29 +46,28 @@ export default function DocumentSettingsModal({ isOpen, onClose, settings, onSuc
         }
     };
 
+    const fieldClass =
+        "w-full px-4 py-2.5 rounded-lg border text-sm transition-colors outline-none bg-muted/40 border-input text-foreground focus:border-primary focus:ring-ring";
+
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div
-                className={`w-full max-w-md rounded-2xl overflow-hidden shadow-2xl ${isDark ? "bg-[#111111] border border-gray-800 text-gray-200" : "bg-white text-gray-900"
-                    }`}
-            >
+            <div className="w-full max-w-md rounded-2xl overflow-hidden shadow-2xl bg-card border border-border text-card-foreground">
                 <div className="relative p-6 pb-2">
                     <button
                         onClick={onClose}
-                        className={`absolute top-5 right-5 p-2 rounded-full transition-colors ${isDark ? "hover:bg-gray-800 text-gray-400" : "hover:bg-gray-100 text-gray-500"
-                            }`}
+                        className="absolute top-5 right-5 p-2 rounded-full transition-colors text-muted-foreground hover:bg-muted"
                     >
                         <FiX className="text-xl" />
                     </button>
                     <h3 className="text-lg font-bold">Document Settings</h3>
-                    <p className={`text-sm mt-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                    <p className="text-sm mt-1 text-muted-foreground">
                         Update download and upload limits
                     </p>
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-4">
                     <div>
-                        <label className={`block text-xs font-semibold uppercase tracking-wider mb-2 ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+                        <label className="block text-xs font-semibold uppercase tracking-wider mb-2 text-muted-foreground">
                             Monthly Upload Limit
                         </label>
                         <input
@@ -77,15 +77,12 @@ export default function DocumentSettingsModal({ isOpen, onClose, settings, onSuc
                             min="0"
                             value={formData.monthly_upload_limit}
                             onChange={handleChange}
-                            className={`w-full px-4 py-2.5 rounded-lg border text-sm transition-colors outline-none ${isDark
-                                    ? "bg-[#0a0a0a] border-gray-800 focus:border-blue-500 text-white"
-                                    : "bg-gray-50 border-gray-200 focus:border-blue-500 text-gray-900"
-                                }`}
+                            className={fieldClass}
                         />
                     </div>
 
                     <div>
-                        <label className={`block text-xs font-semibold uppercase tracking-wider mb-2 ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+                        <label className="block text-xs font-semibold uppercase tracking-wider mb-2 text-muted-foreground">
                             Monthly Download Limit
                         </label>
                         <input
@@ -95,43 +92,25 @@ export default function DocumentSettingsModal({ isOpen, onClose, settings, onSuc
                             min="0"
                             value={formData.monthly_download_limit}
                             onChange={handleChange}
-                            className={`w-full px-4 py-2.5 rounded-lg border text-sm transition-colors outline-none ${isDark
-                                    ? "bg-[#0a0a0a] border-gray-800 focus:border-blue-500 text-white"
-                                    : "bg-gray-50 border-gray-200 focus:border-blue-500 text-gray-900"
-                                }`}
+                            className={fieldClass}
                         />
                     </div>
 
                     {error && (
-                        <div className={`mt-2 p-3 rounded-lg border text-sm flex items-center gap-2 ${isDark ? "bg-red-900/20 border-red-900/30 text-red-400" : "bg-red-50 border-red-100 text-red-600"
-                            }`}>
+                        <div className="mt-2 p-3 rounded-lg border text-sm flex items-center gap-2 bg-danger/10 border-danger/30 text-danger">
                             <FiX className="flex-shrink-0" />
                             {error}
                         </div>
                     )}
 
-                    <div className="flex justify-end gap-3 mt-4 pt-4 border-t border-gray-200 dark:border-gray-800">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className={`px-5 py-2 font-medium rounded-lg transition-colors ${isDark
-                                    ? "hover:bg-gray-800 text-gray-300"
-                                    : "hover:bg-gray-100 text-gray-700"
-                                }`}
-                        >
+                    <div className="flex justify-end gap-3 mt-4 pt-4 border-t border-border">
+                        <Button type="button" variant="ghost" onClick={onClose}>
                             Cancel
-                        </button>
-                        <button
-                            type="submit"
-                            disabled={isSubmitting}
-                            className={`px-5 py-2 font-medium rounded-lg flex items-center gap-2 transition-transform active:scale-95 ${isSubmitting
-                                    ? "bg-blue-400 cursor-not-allowed text-white"
-                                    : "bg-blue-600 hover:bg-blue-700 text-white"
-                                }`}
-                        >
+                        </Button>
+                        <Button type="submit" loading={isSubmitting}>
                             <FiSave />
-                            {isSubmitting ? "Saving..." : "Save Settings"}
-                        </button>
+                            Save Settings
+                        </Button>
                     </div>
                 </form>
             </div>

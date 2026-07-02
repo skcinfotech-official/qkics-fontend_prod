@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import axiosSecure from "../utils/axiosSecure";
 import { resolveMedia } from "../utils/mediaUrl";
 
-export default function SponsorCard({ isDark }) {
+export default function SponsorCard() {
     const [sponsors, setSponsors] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -15,9 +15,8 @@ export default function SponsorCard({ isDark }) {
                 if (data && Array.isArray(data)) {
                     setSponsors(data);
                 }
-            } catch (err) {
-                // If it fails (possibly due to adblock), we just log it silently or show nothing
-                console.warn("Promotional content could not be loaded.");
+            } catch {
+                // If it fails (possibly due to adblock), show nothing
             } finally {
                 setLoading(false);
             }
@@ -27,8 +26,8 @@ export default function SponsorCard({ isDark }) {
 
     if (loading) {
         return (
-            <div className={`premium-card overflow-hidden group ${isDark ? "bg-neutral-900" : "bg-white"} animate-pulse`}>
-                <div className="h-64 bg-neutral-800/10 dark:bg-neutral-800/30" />
+            <div className="premium-card overflow-hidden group bg-card animate-pulse">
+                <div className="h-64 bg-muted" />
             </div>
         );
     }
@@ -40,13 +39,13 @@ export default function SponsorCard({ isDark }) {
     return (
         <div className="flex flex-col gap-8">
             {sponsors.map((item) => (
-                <SponsorItem key={item.id || item.uuid} item={item} isDark={isDark} />
+                <SponsorItem key={item.id || item.uuid} item={item} />
             ))}
         </div>
     );
 }
 
-function SponsorItem({ item, isDark }) {
+function SponsorItem({ item }) {
     const [mediaError, setMediaError] = useState(false);
 
     let mediaSrc = resolveMedia(item.file_url);
@@ -61,11 +60,11 @@ function SponsorItem({ item, isDark }) {
     }
 
     return (
-        <div className={`premium-card overflow-hidden group ${isDark ? "bg-neutral-900" : "bg-white"}`}>
+        <div className="premium-card overflow-hidden group bg-card">
             <div className="p-6">
                 <div className="flex items-center gap-2 mb-4">
-                    <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />
-                    <p className="text-[10px] font-black uppercase tracking-widest opacity-40">
+                    <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+                    <p className="text-2xs font-black uppercase tracking-widest text-muted-foreground">
                         {item.placement ? item.placement.replace(/_/g, " ") : "Promoted"}
                     </p>
                 </div>
@@ -85,21 +84,18 @@ function SponsorItem({ item, isDark }) {
                             src={mediaSrc}
                             alt="featured"
                             className="w-full aspect-video object-cover transition-transform duration-500 group-hover:scale-105"
-                            onError={(e) => {
-                                console.error("Image failed to load:", mediaSrc);
-                                setMediaError(true);
-                            }}
+                            onError={() => setMediaError(true)}
                         />
                     )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
                 </div>
-                <h4 className="font-bold text-lg leading-tight mb-2">{item.title}</h4>
-                <p className="opacity-60 text-sm mb-6 leading-relaxed">{item.description}</p>
+                <h4 className="font-bold text-lg leading-tight mb-2 text-foreground">{item.title}</h4>
+                <p className="text-muted-foreground text-sm mb-6 leading-relaxed">{item.description}</p>
                 <a
                     href={item.redirect_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`block text-center w-full py-3 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-red-600 hover:text-white transition-all ${isDark ? "bg-white/5 text-white" : "bg-neutral-100 text-black"}`}
+                    className="block text-center w-full py-3 rounded-xl text-xs font-bold uppercase tracking-wider bg-muted text-foreground hover:bg-primary hover:text-primary-foreground transition-all"
                 >
                     {item.button_text || "Explore Now"}
                 </a>

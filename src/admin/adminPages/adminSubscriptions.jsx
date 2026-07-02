@@ -73,7 +73,7 @@ export default function AdminSubscriptions({ theme }) {
       {/* Filters Area */}
       <div className={`p-4 rounded-xl border flex flex-col sm:flex-row gap-4 justify-between items-center ${isDark ? "bg-[#111111] border-gray-800" : "bg-white border-gray-200 shadow-sm"}`}>
         <div className={`relative w-full sm:max-w-md flex items-center`}>
-          <FaSearch className={`absolute left-3 text-[0.8rem] ${isDark ? "text-gray-500" : "text-gray-400"}`} />
+          <FaSearch className={`absolute left-3 text-sm ${isDark ? "text-gray-500" : "text-gray-400"}`} />
           <input
             type="text"
             value={searchText}
@@ -115,7 +115,7 @@ export default function AdminSubscriptions({ theme }) {
                       {plan.duration_days} days
                     </td>
                     <td className="py-3 px-5 text-center">
-                      <span className={`px-2.5 py-1 rounded-full text-[0.7rem] font-medium capitalize ${plan.is_active
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-medium capitalize ${plan.is_active
                           ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
                           : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400"
                         }`}>

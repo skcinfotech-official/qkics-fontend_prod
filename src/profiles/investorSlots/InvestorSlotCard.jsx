@@ -58,7 +58,7 @@ export default function InvestorSlotCard({
       {/* STATUS BADGES */}
       <div className="flex flex-wrap gap-2 mb-6">
         <span
-          className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${slot.status === "ACTIVE"
+          className={`px-3 py-1 rounded-full text-2xs font-black uppercase tracking-widest border ${slot.status === "ACTIVE"
             ? "bg-green-500/10 text-green-500 border-green-500/20"
             : "bg-gray-500/10 text-gray-500 border-gray-500/20"
             }`}
@@ -67,7 +67,7 @@ export default function InvestorSlotCard({
         </span>
 
         <span
-          className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${isAvailable
+          className={`px-3 py-1 rounded-full text-2xs font-black uppercase tracking-widest border ${isAvailable
             ? "bg-blue-500/10 text-blue-500 border-blue-500/20"
             : "bg-red-500/10 text-red-500 border-red-500/20"
             }`}

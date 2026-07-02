@@ -1,15 +1,12 @@
 import { useState } from "react";
 import axiosSecure from "../../components/utils/axiosSecure";
-import useThemeClasses from "../../components/utils/useThemeClasses";
+import { Button } from "../../components/ui";
 
 export default function SubscriptionFormModal({
   plan,
   onClose,
   onSuccess,
-  isDark,
 }) {
-  const { bg, input, border } = useThemeClasses(isDark);
-
   const [form, setForm] = useState({
     name: plan?.name || "",
     price: plan?.price || "",
@@ -51,6 +48,9 @@ export default function SubscriptionFormModal({
     }
   };
 
+  const fieldClass =
+    "w-full px-3 py-2 rounded-lg border outline-none bg-muted/40 border-input text-foreground focus:ring-ring focus:border-primary";
+
   return (
     <div
       className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
@@ -59,7 +59,7 @@ export default function SubscriptionFormModal({
       }
     >
       <div
-        className={`p-6 rounded-xl w-[520px] shadow-lg border ${bg} ${border}`}
+        className="p-6 rounded-xl w-full max-w-[520px] mx-4 max-h-[90vh] overflow-y-auto shadow-lg border border-border bg-card text-card-foreground"
         onMouseDown={(e) => e.stopPropagation()}
       >
         <h3 className="text-lg font-semibold mb-4">
@@ -77,7 +77,7 @@ export default function SubscriptionFormModal({
               name="name"
               value={form.name}
               onChange={handleChange}
-              className={`w-full px-3 py-2 rounded-lg border outline-none ${input} ${border}`}
+              className={fieldClass}
             />
           </div>
 
@@ -90,7 +90,7 @@ export default function SubscriptionFormModal({
               name="price"
               value={form.price}
               onChange={handleChange}
-              className={`w-full px-3 py-2 rounded-lg border outline-none ${input} ${border}`}
+              className={fieldClass}
             />
           </div>
 
@@ -103,7 +103,7 @@ export default function SubscriptionFormModal({
               name="duration_days"
               value={form.duration_days}
               onChange={handleChange}
-              className={`w-full px-3 py-2 rounded-lg border outline-none ${input} ${border}`}
+              className={fieldClass}
             />
           </div>
 
@@ -116,7 +116,7 @@ export default function SubscriptionFormModal({
               name="premium_doc_limit_per_month"
               value={form.premium_doc_limit_per_month}
               onChange={handleChange}
-              className={`w-full px-3 py-2 rounded-lg border outline-none ${input} ${border}`}
+              className={fieldClass}
             />
           </div>
 
@@ -129,7 +129,7 @@ export default function SubscriptionFormModal({
               name="free_consultation_count"
               value={form.free_consultation_count}
               onChange={handleChange}
-              className={`w-full px-3 py-2 rounded-lg border outline-none ${input} ${border}`}
+              className={fieldClass}
             />
           </div>
 
@@ -142,7 +142,7 @@ export default function SubscriptionFormModal({
               name="free_chat_per_month"
               value={form.free_chat_per_month}
               onChange={handleChange}
-              className={`w-full px-3 py-2 rounded-lg border outline-none ${input} ${border}`}
+              className={fieldClass}
             />
           </div>
 
@@ -153,6 +153,7 @@ export default function SubscriptionFormModal({
               name="is_active"
               checked={form.is_active}
               onChange={handleChange}
+              className="accent-primary"
             />
             <span className="font-medium">Active</span>
           </label>
@@ -160,19 +161,12 @@ export default function SubscriptionFormModal({
 
         {/* ACTIONS */}
         <div className="flex justify-end gap-3 mt-6">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 rounded-lg text-sm border border-grey-400 bg-grey-400/10 text-grey-700 dark:border-grey-500 dark:bg-grey-500/20 dark:text-grey-300"
-          >
+          <Button variant="ghost" onClick={onClose}>
             Cancel
-          </button>
-
-          <button
-            onClick={handleSubmit}
-            className="px-4 py-2 rounded-lg text-sm border border-green-400 bg-green-400/10 text-green-700 dark:border-green-500 dark:bg-green-500/20 dark:text-green-300"
-          >
+          </Button>
+          <Button onClick={handleSubmit}>
             Save
-          </button>
+          </Button>
         </div>
       </div>
     </div>

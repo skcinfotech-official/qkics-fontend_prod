@@ -17,6 +17,11 @@ export const useUserLayout = () => {
   return ctx;
 };
 
+// Non-throwing variant for components (e.g. Navbar) that may render outside the
+// provider. Returns null instead of throwing, so it can be called unconditionally
+// (no try/catch around a hook → no rules-of-hooks violation).
+export const useUserLayoutOptional = () => useContext(UserLayoutContext);
+
 export function UserLayoutProvider({ children }) {
   // ── Modal visibility ──────────────────────────────────────────────────────
   const [showLogin, setShowLogin]           = useState(false);

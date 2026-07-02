@@ -1,6 +1,6 @@
 // src/pages/KnowledgeHubFeed.jsx
 import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams, Navigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams, Navigate } from "react-router-dom";
 import { FaPlus } from "react-icons/fa6";
 import { MdOutlineFileDownload } from "react-icons/md";
 import { useSelector } from "react-redux";
@@ -22,8 +22,7 @@ import PostCard from "../components/posts/PostCard";
 import SponsorCard from "../components/ui/SponsorCard";
 
 function KnowledgeHubFeed() {
-    const { theme, data: loggedUser } = useSelector((state) => state.user);
-    const isDark = theme === "dark";
+    const { data: loggedUser } = useSelector((state) => state.user);
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
 
@@ -31,11 +30,6 @@ function KnowledgeHubFeed() {
 
     const { showConfirm } = useConfirm();
     const { showAlert } = useAlert();
-
-    // THEME COLORS (Now using CSS variables from index.css)
-    const bg = isDark ? "bg-[#0a0a0a]" : "bg-[#f8f9fa]";
-    const text = isDark ? "text-neutral-100" : "text-neutral-900";
-    const borderColor = isDark ? "border-white/5" : "border-black/5";
 
     // LOCAL STATES
     const [showCreatePost, setShowCreatePost] = useState(false);
@@ -115,22 +109,22 @@ function KnowledgeHubFeed() {
             a.click();
             a.remove();
             window.URL.revokeObjectURL(blobUrl);
-        } catch (err) {
-            console.error("Download failed", err);
+        } catch {
+            showAlert("Download failed", "error");
         }
     };
 
     return (
-        <div className={`min-h-screen ${bg} md:pb-10  lg:pt-0`}>
-            <div className="max-w-7xl mx-auto px-4 grid grid-cols-12 gap-8">
+        <div className="min-h-screen bg-background text-foreground md:pb-10">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 flex gap-6 xl:gap-8">
 
-                {/* LEFT SIDEBAR */}
-                <aside className="hidden lg:block lg:col-span-3">
+                {/* LEFT SIDEBAR — appears at lg */}
+                <aside className="hidden lg:block w-60 xl:w-64 shrink-0">
                     <div className="sticky top-24 space-y-6">
 
-                        <div className="flex flex-col mt-5 gap-2">
-                            <h1 className="text-xl font-bold uppercase tracking-widest text-red-600">Knowledge Hub</h1>
-                            <p className={`text-xs uppercase tracking-widest font-black opacity-40 mb-2 ${isDark ? "text-white" : "text-black"}`}>Researched Based Feed</p>
+                        <div className="flex flex-col gap-2">
+                            <h1 className="text-xl font-bold uppercase tracking-widest text-primary">Knowledge Hub</h1>
+                            <p className="text-xs uppercase tracking-widest font-black text-muted-foreground mb-2">Researched Based Feed</p>
                         </div>
 
                         {/* Create Post Button */}
@@ -140,7 +134,7 @@ function KnowledgeHubFeed() {
                                 setEditingPost(null);
                                 setShowCreatePost(true);
                             }}
-                            className="w-full group flex items-center gap-4 px-6 py-4 rounded-2xl bg-red-600 text-white font-bold shadow-xl shadow-red-600/20 hover:bg-red-700 transition-all active:scale-[0.98]"
+                            className="w-full group flex items-center gap-4 px-6 py-4 rounded-2xl bg-primary text-primary-foreground font-bold shadow-xl shadow-primary/20 hover:bg-primary-hover transition-all active:scale-[0.98]"
                         >
                             <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20 group-hover:bg-white/30 transition-colors">
                                 <FaPlus size={18} />
@@ -149,18 +143,18 @@ function KnowledgeHubFeed() {
                         </button>
 
                         {/* Tags Card */}
-                        <div className={`premium-card p-6 ${isDark ? "bg-neutral-900" : "bg-white"}`}>
+                        <div className="premium-card p-6 bg-card">
                             <div className="flex items-center justify-between mb-6">
-                                <h3 className="text-xs font-bold uppercase tracking-[0.2em] opacity-40">Top Categories</h3>
+                                <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">Top Categories</h3>
                                 {searchQuery && (
-                                    <button onClick={() => applySearch("")} className="text-[10px] text-red-500 font-bold hover:underline">RESET</button>
+                                    <button onClick={() => applySearch("")} className="text-2xs text-primary font-bold hover:underline">RESET</button>
                                 )}
                             </div>
 
                             <div className="space-y-2 max-h-[40vh] overflow-y-auto no-scrollbar">
                                 {loadingTags ? (
                                     <div className="space-y-2 animate-pulse">
-                                        {[1, 2, 3, 4, 5].map(i => <div key={i} className="h-10 rounded-xl bg-neutral-800/50" />)}
+                                        {[1, 2, 3, 4, 5].map(i => <div key={i} className="h-10 rounded-xl bg-muted" />)}
                                     </div>
                                 ) : (
                                     <>
@@ -169,8 +163,8 @@ function KnowledgeHubFeed() {
                                                 key={tag.id}
                                                 onClick={() => applySearch(tag.name)}
                                                 className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-all group border ${searchQuery === tag.name
-                                                    ? "bg-red-500/10 border-red-500/50 text-red-500"
-                                                    : "border-transparent hover:bg-neutral-800 hover:text-white"
+                                                    ? "bg-primary-soft border-primary/50 text-primary"
+                                                    : "border-transparent hover:bg-muted text-foreground"
                                                     }`}
                                             >
                                                 <span className="opacity-50 group-hover:opacity-100 transition-opacity mr-2">#</span>
@@ -181,7 +175,7 @@ function KnowledgeHubFeed() {
                                         {tags.length > 8 && (
                                             <button
                                                 onClick={() => setShowAllTags(!showAllTags)}
-                                                className="w-full py-3 mt-4 text-xs font-bold text-center border border-dashed border-neutral-800 rounded-xl hover:bg-neutral-800 transition-colors"
+                                                className="w-full py-3 mt-4 text-xs font-bold text-center border border-dashed border-border rounded-xl hover:bg-muted transition-colors"
                                             >
                                                 {showAllTags ? "SHOW LESS" : "EXPLORE ALL"}
                                             </button>
@@ -192,24 +186,25 @@ function KnowledgeHubFeed() {
                             </div>
 
                         </div>
-                        <footer className="px-10 text-[10px] font-bold opacity-30 uppercase tracking-[0.2em] space-y-2">
+                        <footer className="px-10 text-2xs font-bold text-muted-foreground uppercase tracking-[0.2em] space-y-2">
                             <div className="flex gap-4">
-                                <a href="#" className="hover:text-red-500 transition-colors">Privacy</a>
-                                <a href="#" className="hover:text-red-500 transition-colors">Terms</a>
-                                <a href="#" className="hover:text-red-500 transition-colors">Safety</a>
+                                <Link to="/privacy-policy" className="hover:text-primary transition-colors">Privacy</Link>
+                                <Link to="/terms-conditions" className="hover:text-primary transition-colors">Terms</Link>
+                                <Link to="/refund-policy" className="hover:text-primary transition-colors">Refund</Link>
+                                <a href="#" className="hover:text-primary transition-colors">Safety</a>
                             </div>
                             <p className="px-3">© 2026 QKICS GLOBAL</p>
                         </footer>
                     </div>
                 </aside>
 
-                {/* MAIN FEED */}
-                <main className="col-span-12 lg:col-span-6 py-4 space-y-6">
+                {/* MAIN FEED — always visible, dominant width */}
+                <main className="flex-1 min-w-0 max-w-2xl pb-4 space-y-6">
 
                     {/* HEADER MOBILE */}
                     <div className="lg:hidden flex flex-col gap-1 mb-4">
-                        <h1 className="text-xl font-bold uppercase tracking-widest text-red-600">Knowledge Hub</h1>
-                        <p className={`text-xs uppercase tracking-widest font-black opacity-40 ${isDark ? "text-white" : "text-black"}`}>Researched Based Feed</p>
+                        <h1 className="text-xl font-bold uppercase tracking-widest text-primary">Knowledge Hub</h1>
+                        <p className="text-xs uppercase tracking-widest font-black text-muted-foreground">Researched Based Feed</p>
                     </div>
 
                     {/* MOBILE TAGS */}
@@ -217,7 +212,7 @@ function KnowledgeHubFeed() {
                         <div className="overflow-x-auto pb-4 flex gap-3 no-scrollbar pr-14">
                             {loadingTags ? (
                                 <div className="flex gap-2">
-                                    {[1, 2, 3, 4].map(i => <div key={i} className="w-24 h-8 rounded-full bg-neutral-800/50 animate-pulse" />)}
+                                    {[1, 2, 3, 4].map(i => <div key={i} className="w-24 h-8 rounded-full bg-muted animate-pulse" />)}
                                 </div>
                             ) : (
                                 tags.map((tag) => (
@@ -225,8 +220,8 @@ function KnowledgeHubFeed() {
                                         key={tag.id}
                                         onClick={() => applySearch(tag.name)}
                                         className={`whitespace-nowrap px-5 py-2 rounded-full border text-xs font-bold transition-all shrink-0 ${searchQuery === tag.name
-                                            ? "bg-red-500 text-white border-red-500 shadow-lg shadow-red-500/20"
-                                            : `${isDark ? "bg-neutral-900 border-white/5" : "bg-white border-black/5"} opacity-80`
+                                            ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20"
+                                            : "bg-card border-border text-foreground/80"
                                             }`}
                                     >
                                         #{tag.name}
@@ -235,8 +230,8 @@ function KnowledgeHubFeed() {
                             )}
                         </div>
                         {searchQuery && (
-                            <div className="absolute right-0 top-0 bottom-4 z-10 flex items-center pl-6 bg-gradient-to-l from-[#0a0a0a]">
-                                <button onClick={() => applySearch("")} className="bg-red-500 text-white text-[10px] font-black px-4 py-2 rounded-full shadow-xl">CLEAR</button>
+                            <div className="absolute right-0 top-0 bottom-4 z-10 flex items-center pl-6 bg-gradient-to-l from-background">
+                                <button onClick={() => applySearch("")} className="bg-primary text-primary-foreground text-2xs font-black px-4 py-2 rounded-full shadow-xl">CLEAR</button>
                             </div>
                         )}
                     </div>
@@ -248,7 +243,6 @@ function KnowledgeHubFeed() {
                                     key={post.id}
                                     post={post}
                                     loggedUser={loggedUser}
-                                    isDark={isDark}
                                     onLike={handleLike}
                                     onDelete={handleDelete}
                                     onEdit={(p) => { setEditingPost(p); setShowCreatePost(true); }}
@@ -268,17 +262,17 @@ function KnowledgeHubFeed() {
                         {posts.length === 0 ? (
                             <p className="font-bold tracking-widest text-sm">NO RESEARCH POSTS YET</p>
                         ) : next ? (
-                            <div className="animate-spin rounded-full h-8 w-8 border-2 border-t-red-500 border-white/10" />
+                            <div className="animate-spin rounded-full h-8 w-8 border-2 border-t-primary border-muted" />
                         ) : (
                             <p className="font-bold tracking-widest text-sm uppercase">End of Exploration</p>
                         )}
                     </div>
                 </main>
 
-                {/* RIGHT SIDEBAR */}
-                <aside className="hidden lg:block lg:col-span-3">
-                    <div className="space-y-8 py-4">
-                        <SponsorCard isDark={isDark} />
+                {/* RIGHT SIDEBAR — appears at xl */}
+                <aside className="hidden xl:block w-72 shrink-0">
+                    <div className="sticky top-24 space-y-6 py-4">
+                        <SponsorCard />
                     </div>
                 </aside>
             </div>
@@ -286,7 +280,6 @@ function KnowledgeHubFeed() {
             {showCreatePost && (
                 <ModalOverlay close={() => { setShowCreatePost(false); setEditingPost(null); }}>
                     <CreatePostModal
-                        isDark={isDark}
                         post={editingPost}
                         knowledgeHub={true}
                         onClose={() => { setShowCreatePost(false); setEditingPost(null); }}
@@ -304,13 +297,13 @@ function KnowledgeHubFeed() {
 
             {showLogin && (
                 <ModalOverlay close={() => setShowLogin(false)}>
-                    <LoginModal isDark={isDark} onClose={() => setShowLogin(false)} openSignup={() => { setShowLogin(false); setShowSignup(true); }} />
+                    <LoginModal onClose={() => setShowLogin(false)} openSignup={() => { setShowLogin(false); setShowSignup(true); }} />
                 </ModalOverlay>
             )}
 
             {showSignup && (
                 <ModalOverlay close={() => setShowSignup(false)}>
-                    <SignupModal isDark={isDark} onClose={() => setShowSignup(false)} openLogin={() => { setShowSignup(false); setShowLogin(true); }} />
+                    <SignupModal onClose={() => setShowSignup(false)} openLogin={() => { setShowSignup(false); setShowLogin(true); }} />
                 </ModalOverlay>
             )}
 
@@ -318,15 +311,15 @@ function KnowledgeHubFeed() {
                 <div className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center animate-fadeIn" onClick={() => { setPreviewImage(null); setZoom(1); }}>
                     <div className="relative max-w-[95vw] max-h-[95vh] animate-scaleIn" onClick={(e) => e.stopPropagation()}>
                         <div className="absolute -top-12 right-0 flex gap-4">
-                            <button onClick={() => downloadImage(previewImage)} className="bg-white/10 text-white rounded-xl px-4 py-2 flex items-center gap-2 hover:bg-red-500 transition-all font-bold text-xs"><MdOutlineFileDownload size={18} /> SAVE</button>
-                            <button onClick={() => { setPreviewImage(null); setZoom(1); }} className="bg-white/10 text-white rounded-xl px-4 py-2 hover:bg-neutral-800 transition-all font-bold text-xs">CLOSE</button>
+                            <button onClick={() => downloadImage(previewImage)} className="bg-white/10 text-white rounded-xl px-4 py-2 flex items-center gap-2 hover:bg-primary transition-all font-bold text-xs"><MdOutlineFileDownload size={18} /> SAVE</button>
+                            <button onClick={() => { setPreviewImage(null); setZoom(1); }} className="bg-white/10 text-white rounded-xl px-4 py-2 hover:bg-white/20 transition-all font-bold text-xs">CLOSE</button>
                         </div>
                         <img src={previewImage} alt="Preview" className="rounded-2xl shadow-2xl max-w-full max-h-[85vh] object-contain transition-transform duration-300" style={{ transform: `scale(${zoom})` }} onDoubleClick={() => setZoom((z) => (z === 1 ? 2 : 1))} />
                     </div>
                 </div>
             )}
 
-            <button onClick={() => { if (!loggedUser) return setShowLogin(true); setEditingPost(null); setShowCreatePost(true); }} className="lg:hidden fixed bottom-24 right-6 z-40 bg-red-600 text-white h-14 w-14 rounded-2xl shadow-2xl shadow-red-600/30 flex items-center justify-center text-xl hover:bg-red-700 active:scale-90 transition-all">
+            <button onClick={() => { if (!loggedUser) return setShowLogin(true); setEditingPost(null); setShowCreatePost(true); }} className="lg:hidden fixed bottom-24 right-6 z-40 bg-primary text-primary-foreground h-14 w-14 rounded-2xl shadow-2xl shadow-primary/30 flex items-center justify-center text-xl hover:bg-primary-hover active:scale-90 transition-all">
                 <FaPlus />
             </button>
         </div>

@@ -25,40 +25,37 @@ const timeAgo = (dateString) => {
     return "just now";
 };
 
-export default function CompanyPostCard({ post, isDark, onDelete, onEdit, isOwner }) {
+export default function CompanyPostCard({ post, onDelete, onEdit, isOwner }) {
     const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
     const [showOptions, setShowOptions] = useState(false);
     const optionsRef = useRef(null);
 
     useClickOutside(optionsRef, () => setShowOptions(false));
 
-    const text = isDark ? "text-neutral-100" : "text-neutral-900";
-    
-    // Safety check for media
     const media = post.media || (post.image ? [{ file: post.image, media_type: "image" }] : []);
 
     return (
-        <article className={`premium-card overflow-hidden ${isDark ? "bg-neutral-900" : "bg-white"} animate-fadeIn`}>
-            <header className="p-6 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                    <Link 
+        <article className="overflow-hidden rounded-2xl border border-border bg-card animate-fadeIn">
+            <header className="flex items-center justify-between p-5">
+                <div className="flex items-center gap-3">
+                    <Link
                         to={`/company/${post.company?.slug}`}
-                        className="h-12 w-12 rounded-xl overflow-hidden bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center border border-black/5 dark:border-white/5 hover:scale-105 transition-transform"
+                        className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-xl border border-border bg-muted transition-transform hover:scale-105"
                     >
                         {post.company?.logo ? (
-                            <img src={resolveMedia(post.company.logo)} alt="Company Logo" className="w-full h-full object-cover" />
+                            <img src={resolveMedia(post.company.logo)} alt="Company Logo" className="h-full w-full object-cover" />
                         ) : (
-                            <FaBuilding className="text-red-600" size={20} />
+                            <FaBuilding className="text-primary" size={18} />
                         )}
                     </Link>
                     <div>
-                        <Link 
+                        <Link
                             to={`/company/${post.company?.slug}`}
-                            className={`text-sm font-black uppercase tracking-widest hover:text-red-600 transition-colors ${text}`}
+                            className="text-sm font-bold text-foreground transition-colors hover:text-primary"
                         >
                             {post.company?.name || "Organisation Insight"}
                         </Link>
-                        <p className="text-[10px] font-bold opacity-40 tracking-tighter">{timeAgo(post.created_at)}</p>
+                        <p className="text-2xs font-medium text-muted-foreground">{timeAgo(post.created_at)}</p>
                     </div>
                 </div>
 
@@ -66,29 +63,24 @@ export default function CompanyPostCard({ post, isDark, onDelete, onEdit, isOwne
                     <div className="relative" ref={optionsRef}>
                         <button
                             onClick={() => setShowOptions(!showOptions)}
-                            className={`h-9 w-9 flex items-center justify-center rounded-xl transition-all ${
-                                showOptions 
-                                    ? "bg-red-600 text-white shadow-lg shadow-red-600/20" 
-                                    : isDark ? "hover:bg-white/5 text-neutral-400" : "hover:bg-black/5 text-neutral-500"
-                            }`}
+                            className={`flex h-9 w-9 items-center justify-center rounded-xl transition-all ${showOptions
+                                ? "bg-primary text-primary-foreground shadow-sm"
+                                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                                }`}
                         >
                             <HiDotsHorizontal size={18} />
                         </button>
 
                         {showOptions && (
-                            <div className={`absolute right-0 mt-2 w-40 rounded-2xl shadow-2xl border p-1.5 z-40 animate-pop origin-top-right ${
-                                isDark ? "bg-[#111] border-neutral-800 shadow-black/80" : "bg-white border-black/5 shadow-xl"
-                            }`}>
+                            <div className="absolute right-0 z-40 mt-2 w-40 origin-top-right animate-pop rounded-xl border border-border bg-card p-1.5 shadow-xl">
                                 <button
                                     onClick={() => {
                                         onEdit?.(post);
                                         setShowOptions(false);
                                     }}
-                                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                                        isDark ? "text-neutral-300 hover:bg-white/5 hover:text-white" : "text-neutral-600 hover:bg-black/5 hover:text-black"
-                                    }`}
+                                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-2xs font-bold uppercase tracking-wide text-foreground transition-all hover:bg-muted"
                                 >
-                                    <HiPencilAlt size={16} className="text-red-500" />
+                                    <HiPencilAlt size={16} className="text-primary" />
                                     Edit Post
                                 </button>
                                 <button
@@ -96,9 +88,7 @@ export default function CompanyPostCard({ post, isDark, onDelete, onEdit, isOwne
                                         onDelete?.(post.id);
                                         setShowOptions(false);
                                     }}
-                                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                                        isDark ? "text-red-400 hover:bg-red-500/10" : "text-red-600 hover:bg-red-50"
-                                    }`}
+                                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-2xs font-bold uppercase tracking-wide text-danger transition-all hover:bg-danger/10"
                                 >
                                     <HiTrash size={16} />
                                     Delete Post
@@ -110,38 +100,38 @@ export default function CompanyPostCard({ post, isDark, onDelete, onEdit, isOwne
             </header>
 
             {/* Content Section */}
-            <div className="px-6 pb-6">
+            <div className="px-5 pb-5">
                 {post.title && (
-                    <h2 className={`text-lg font-bold mb-1 leading-tight tracking-tight ${text}`}>
+                    <h2 className="mb-1 text-base font-bold leading-tight tracking-tight text-foreground">
                         {post.title}
                     </h2>
                 )}
-                
-                <p className={`text-sm leading-relaxed opacity-80 font-medium whitespace-pre-wrap ${text}`}>
+
+                <p className="whitespace-pre-wrap text-sm font-medium leading-relaxed text-foreground/80">
                     {post.content}
                 </p>
 
                 {/* Media Gallery */}
                 {media.length > 0 && (
-                    <div className="relative mt-4 overflow-hidden rounded-2xl group bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center min-h-[300px] max-h-[500px]">
+                    <div className="group relative mt-4 flex max-h-[500px] min-h-[300px] items-center justify-center overflow-hidden rounded-2xl bg-muted">
                         {media.length > 1 && (
-                            <div className="absolute top-4 right-4 z-30 bg-black/60 text-white text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full backdrop-blur-md">
+                            <div className="absolute right-4 top-4 z-30 rounded-full bg-black/60 px-2.5 py-1 text-2xs font-bold uppercase tracking-wide text-white backdrop-blur-md">
                                 {currentMediaIndex + 1} / {media.length}
                             </div>
                         )}
 
-                        <div className="w-full h-full relative flex items-center justify-center">
+                        <div className="relative flex h-full w-full items-center justify-center">
                             {media[currentMediaIndex].media_type === "video" ? (
                                 <video
                                     src={media[currentMediaIndex].file}
                                     controls
-                                    className="relative z-10 w-full h-full block max-h-[500px] object-contain bg-black"
+                                    className="relative z-10 block h-full max-h-[500px] w-full bg-black object-contain"
                                 />
                             ) : (
                                 <img
                                     src={media[currentMediaIndex].file}
                                     alt="Post visual"
-                                    className="relative z-10 w-full h-full block max-h-[500px] object-contain"
+                                    className="relative z-10 block h-full max-h-[500px] w-full object-contain"
                                     loading="lazy"
                                 />
                             )}
@@ -152,7 +142,7 @@ export default function CompanyPostCard({ post, isDark, onDelete, onEdit, isOwne
                                 {currentMediaIndex > 0 && (
                                     <button
                                         onClick={() => setCurrentMediaIndex(prev => prev - 1)}
-                                        className="absolute left-3 top-1/2 -translate-y-1/2 z-30 w-8 h-8 flex items-center justify-center bg-white/90 dark:bg-black/50 text-black dark:text-white rounded-full opacity-0 group-hover:opacity-100 transition-all hover:scale-110 shadow-lg"
+                                        className="absolute left-3 top-1/2 z-30 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-card text-foreground opacity-0 shadow-lg transition-all hover:scale-110 group-hover:opacity-100"
                                     >
                                         <FaChevronLeft size={12} />
                                     </button>
@@ -160,7 +150,7 @@ export default function CompanyPostCard({ post, isDark, onDelete, onEdit, isOwne
                                 {currentMediaIndex < media.length - 1 && (
                                     <button
                                         onClick={() => setCurrentMediaIndex(prev => prev + 1)}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 z-30 w-8 h-8 flex items-center justify-center bg-white/90 dark:bg-black/50 text-black dark:text-white rounded-full opacity-0 group-hover:opacity-100 transition-all hover:scale-110 shadow-lg"
+                                        className="absolute right-3 top-1/2 z-30 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-card text-foreground opacity-0 shadow-lg transition-all hover:scale-110 group-hover:opacity-100"
                                     >
                                         <FaChevronRight size={12} />
                                     </button>
@@ -170,16 +160,6 @@ export default function CompanyPostCard({ post, isDark, onDelete, onEdit, isOwne
                     </div>
                 )}
             </div>
-            
-            {/* Simple Footer Bar
-            <div className={`py-4 px-5 border-t flex justify-between items-center ${isDark ? "border-white/5 bg-white/5" : "border-black/5 bg-black/5"}`}>
-                <span className="text-[9px] font-black uppercase tracking-widest opacity-40">Verified Organization Content</span>
-                <div className="flex gap-2 h-1 w-16">
-                    <div className="flex-1 bg-red-600 rounded-full h-full"></div>
-                    <div className="flex-1 bg-red-600/30 rounded-full h-full"></div>
-                    <div className="flex-1 bg-red-600/10 rounded-full h-full"></div>
-                </div>
-            </div> */}
         </article>
     );
 }

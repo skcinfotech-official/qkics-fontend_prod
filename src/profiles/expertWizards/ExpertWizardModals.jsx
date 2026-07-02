@@ -55,7 +55,7 @@ function Input({
         : "border-black/10 text-black/50"
     }`;
 
-  const labelClass = "text-[10px] font-black uppercase tracking-[0.2em] opacity-40 mb-1 block";
+  const labelClass = "text-2xs font-black uppercase tracking-[0.2em] opacity-40 mb-1 block";
 
   return (
     <div>
@@ -131,7 +131,7 @@ function AddExperienceModal({ onClose, onCreate, isDark }) {
         />
 
         <div>
-          <label className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40 mb-1 block">Employment Type</label>
+          <label className="text-2xs font-black uppercase tracking-[0.2em] opacity-40 mb-1 block">Employment Type</label>
           <select
             className={`w-full bg-transparent border-b-2 py-2 px-1 outline-none transition-all font-medium ${isDark ? "border-white/10 text-white bg-neutral-900" : "border-black/10 text-black bg-white"}`}
             value={form.employment_type}
@@ -170,7 +170,7 @@ function AddExperienceModal({ onClose, onCreate, isDark }) {
         />
 
         <div className="md:col-span-2">
-          <label className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40 mb-1 block">Description</label>
+          <label className="text-2xs font-black uppercase tracking-[0.2em] opacity-40 mb-1 block">Description</label>
           <textarea
             className={`w-full bg-transparent border-b-2 py-2 px-1 outline-none transition-all font-medium resize-none ${isDark ? "border-white/10 text-white" : "border-black/10 text-black"}`}
             rows={4}
@@ -284,7 +284,7 @@ function AddEducationModal({ onClose, onCreate, isDark }) {
 
         {/* Description */}
         <div className="md:col-span-2">
-          <label className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40 mb-1 block">Description</label>
+          <label className="text-2xs font-black uppercase tracking-[0.2em] opacity-40 mb-1 block">Description</label>
           <textarea
             className={`w-full bg-transparent border-b-2 py-2 px-1 outline-none transition-all font-medium resize-none ${isDark ? "border-white/10 text-white" : "border-black/10 text-black"}`}
             rows={4}
@@ -481,7 +481,7 @@ function AddHonorModal({ onClose, onCreate, isDark }) {
         />
 
         <div className="md:col-span-2">
-          <label className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40 mb-1 block">Description</label>
+          <label className="text-2xs font-black uppercase tracking-[0.2em] opacity-40 mb-1 block">Description</label>
           <textarea
             className={`w-full bg-transparent border-b-2 py-2 px-1 outline-none transition-all font-medium resize-none ${isDark ? "border-white/10 text-white" : "border-black/10 text-black"}`}
             rows={4}
@@ -537,7 +537,7 @@ function SubmitNoteModal({ onClose, onSubmit, isDark }) {
       <h2 className="text-xl font-semibold mb-4">Submit Application for Verification</h2>
 
       <div className="mb-4">
-        <label className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40 mb-1 block">
+        <label className="text-2xs font-black uppercase tracking-[0.2em] opacity-40 mb-1 block">
           Admin Review Note (optional)
         </label>
         <textarea

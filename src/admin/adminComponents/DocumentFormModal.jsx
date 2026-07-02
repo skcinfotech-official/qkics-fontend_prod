@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import axiosSecure from "../../components/utils/axiosSecure";
+import { Button } from "../../components/ui";
 
-export default function DocumentFormModal({ document, onClose, onSuccess, isDark }) {
+export default function DocumentFormModal({ document, onClose, onSuccess }) {
   const isEdit = Boolean(document);
 
   const [title, setTitle] = useState("");
@@ -68,15 +69,12 @@ export default function DocumentFormModal({ document, onClose, onSuccess, isDark
     }
   };
 
+  const fieldClass =
+    "w-full px-3 py-2 rounded border mt-1 bg-muted/40 border-input text-foreground focus:ring-ring focus:border-primary outline-none";
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div
-        className={`w-full max-w-3xl rounded-xl p-6 shadow-xl border ${
-          isDark
-            ? "bg-neutral-900 border-neutral-700 text-white"
-            : "bg-white border-neutral-200 text-neutral-800"
-        }`}
-      >
+      <div className="w-full max-w-3xl rounded-xl p-6 shadow-xl border border-border bg-card text-card-foreground">
         <h3 className="text-lg font-bold mb-4">
           {isEdit ? "Update Document" : "Upload Document"}
         </h3>
@@ -89,11 +87,7 @@ export default function DocumentFormModal({ document, onClose, onSuccess, isDark
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
-              className={`w-full px-3 py-2 rounded border mt-1 ${
-                isDark
-                  ? "bg-neutral-800 border-neutral-700"
-                  : "bg-neutral-100 border-neutral-300"
-              }`}
+              className={fieldClass}
             />
           </div>
 
@@ -103,11 +97,7 @@ export default function DocumentFormModal({ document, onClose, onSuccess, isDark
               rows="3"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className={`w-full px-3 py-2 rounded border mt-1 ${
-                isDark
-                  ? "bg-neutral-800 border-neutral-700"
-                  : "bg-neutral-100 border-neutral-300"
-              }`}
+              className={fieldClass}
             />
           </div>
 
@@ -116,11 +106,7 @@ export default function DocumentFormModal({ document, onClose, onSuccess, isDark
             <select
               value={accessType}
               onChange={(e) => setAccessType(e.target.value)}
-              className={`w-full px-3 py-2 rounded border mt-1 ${
-                isDark
-                  ? "bg-neutral-800 border-neutral-700"
-                  : "bg-neutral-100 border-neutral-300"
-              }`}
+              className={fieldClass}
             >
               <option value="FREE">FREE</option>
               <option value="PREMIUM">PREMIUM</option>
@@ -137,25 +123,17 @@ export default function DocumentFormModal({ document, onClose, onSuccess, isDark
               accept="application/pdf"
               onChange={(e) => setFile(e.target.files[0])}
               required={!isEdit}
-              className="mt-1 border px-3 rounded py-2"
+              className="mt-1 border border-input px-3 rounded py-2 text-foreground"
             />
           </div>
 
           <div className="flex justify-end gap-3 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 rounded-lg border opacity-80"
-            >
+            <Button type="button" variant="ghost" onClick={onClose}>
               Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-4 py-2 rounded-lg bg-blue-600 text-white disabled:opacity-50"
-            >
-              {loading ? "Saving..." : isEdit ? "Update" : "Upload"}
-            </button>
+            </Button>
+            <Button type="submit" loading={loading}>
+              {isEdit ? "Update" : "Upload"}
+            </Button>
           </div>
         </form>
       </div>

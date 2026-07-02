@@ -118,7 +118,7 @@ export default function AdminUsers({ theme }) {
             {/* Filters Area */}
             <div className={`p-4 rounded-xl border flex flex-col sm:flex-row gap-4 justify-between items-center ${isDark ? "bg-[#111111] border-gray-800" : "bg-white border-gray-200 shadow-sm"}`}>
                 <div className={`relative w-full sm:max-w-md flex items-center`}>
-                    <FaSearch className={`absolute left-3 text-[0.8rem] ${isDark ? "text-gray-500" : "text-gray-400"}`} />
+                    <FaSearch className={`absolute left-3 text-sm ${isDark ? "text-gray-500" : "text-gray-400"}`} />
                     <input
                         type="text"
                         placeholder="Search users by name, username, email..."
@@ -172,7 +172,7 @@ export default function AdminUsers({ theme }) {
                                                 </div>
                                                 <div>
                                                     <p className={`font-medium ${isDark ? "text-gray-200" : "text-gray-900"}`}>{user.first_name || user.last_name ? `${user.first_name} ${user.last_name}` : "—"}</p>
-                                                    <p className={`text-[0.75rem] ${isDark ? "text-gray-500" : "text-gray-500"}`}>@{user.username}</p>
+                                                    <p className={`text-xs ${isDark ? "text-gray-500" : "text-gray-500"}`}>@{user.username}</p>
                                                 </div>
                                             </div>
                                         </td>
@@ -180,26 +180,26 @@ export default function AdminUsers({ theme }) {
                                             <div className="flex flex-col gap-1">
                                                 <div className="flex items-center gap-2">
                                                     <FaEnvelope className="text-gray-400 text-xs" />
-                                                    <span className={`text-[0.8rem] ${isDark ? "text-gray-300" : "text-gray-700"} truncate max-w-[150px]`}>{user.email || "—"}</span>
+                                                    <span className={`text-sm ${isDark ? "text-gray-300" : "text-gray-700"} truncate max-w-[150px]`}>{user.email || "—"}</span>
                                                 </div>
                                                 <div className="flex items-center gap-2">
                                                     <FaPhone className="text-gray-400 text-xs" />
-                                                    <span className={`text-[0.8rem] ${isDark ? "text-gray-300" : "text-gray-700"}`}>{user.phone || "—"}</span>
+                                                    <span className={`text-sm ${isDark ? "text-gray-300" : "text-gray-700"}`}>{user.phone || "—"}</span>
                                                 </div>
                                             </div>
                                         </td>
                                         <td className="py-3 px-5">
-                                            <span className={`px-2.5 py-1 rounded-full text-[0.7rem] font-medium capitalize ${getRoleStyle(user.user_type)}`}>
+                                            <span className={`px-2.5 py-1 rounded-full text-xs font-medium capitalize ${getRoleStyle(user.user_type)}`}>
                                                 {user.user_type}
                                             </span>
                                         </td>
                                         <td className="py-3 px-5 whitespace-nowrap">
-                                            <span className={`text-[0.8rem] ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+                                            <span className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
                                                 {new Date(user.date_joined).toLocaleDateString()}
                                             </span>
                                         </td>
                                         <td className="py-3 px-5 text-center">
-                                            <span className={`px-2.5 py-1 rounded-full text-[0.7rem] font-medium capitalize ${getStatusStyle(user.is_active)}`}>
+                                            <span className={`px-2.5 py-1 rounded-full text-xs font-medium capitalize ${getStatusStyle(user.is_active)}`}>
                                                 {user.is_active ? "Active" : "Inactive"}
                                             </span>
                                         </td>
@@ -282,10 +282,10 @@ export default function AdminUsers({ theme }) {
                                     <h3 className="text-xl font-bold tracking-tight">{viewModal.user.first_name || viewModal.user.last_name ? `${viewModal.user.first_name} ${viewModal.user.last_name}` : viewModal.user.username}</h3>
                                     <p className={`text-sm ${isDark ? "text-gray-500" : "text-gray-500"}`}>@{viewModal.user.username}</p>
                                     <div className="mt-1 flex items-center gap-2">
-                                        <span className={`px-2 py-0.5 rounded text-[0.65rem] font-bold uppercase ${getRoleStyle(viewModal.user.user_type)}`}>
+                                        <span className={`px-2 py-0.5 rounded text-2xs font-bold uppercase ${getRoleStyle(viewModal.user.user_type)}`}>
                                             {viewModal.user.user_type}
                                         </span>
-                                        <span className={`px-2 py-0.5 rounded text-[0.65rem] font-bold uppercase ${getStatusStyle(viewModal.user.is_active)}`}>
+                                        <span className={`px-2 py-0.5 rounded text-2xs font-bold uppercase ${getStatusStyle(viewModal.user.is_active)}`}>
                                             {viewModal.user.is_active ? "Active" : "Inactive"}
                                         </span>
                                     </div>
@@ -305,7 +305,7 @@ export default function AdminUsers({ theme }) {
                                             <FaEnvelope className="text-sm" />
                                         </div>
                                         <div>
-                                            <p className={`text-[0.65rem] uppercase font-bold tracking-wider ${isDark ? "text-gray-500" : "text-gray-500"}`}>Email</p>
+                                            <p className={`text-2xs uppercase font-bold tracking-wider ${isDark ? "text-gray-500" : "text-gray-500"}`}>Email</p>
                                             <p className="text-sm font-medium">{viewModal.user.email || "Not provided"}</p>
                                         </div>
                                     </div>
@@ -314,7 +314,7 @@ export default function AdminUsers({ theme }) {
                                             <FaPhone className="text-sm" />
                                         </div>
                                         <div>
-                                            <p className={`text-[0.65rem] uppercase font-bold tracking-wider ${isDark ? "text-gray-500" : "text-gray-500"}`}>Phone Number</p>
+                                            <p className={`text-2xs uppercase font-bold tracking-wider ${isDark ? "text-gray-500" : "text-gray-500"}`}>Phone Number</p>
                                             <p className="text-sm font-medium">{viewModal.user.phone || "Not provided"}</p>
                                         </div>
                                     </div>
@@ -328,7 +328,7 @@ export default function AdminUsers({ theme }) {
                                         <FaCalendarAlt className="text-sm" />
                                     </div>
                                     <div>
-                                        <p className={`text-[0.65rem] uppercase font-bold tracking-wider ${isDark ? "text-gray-500" : "text-gray-500"}`}>Joined On</p>
+                                        <p className={`text-2xs uppercase font-bold tracking-wider ${isDark ? "text-gray-500" : "text-gray-500"}`}>Joined On</p>
                                         <p className="text-sm font-medium">{new Date(viewModal.user.date_joined).toLocaleDateString()}</p>
                                     </div>
                                 </div>
@@ -337,7 +337,7 @@ export default function AdminUsers({ theme }) {
                                         <FaCalendarAlt className="text-sm" />
                                     </div>
                                     <div>
-                                        <p className={`text-[0.65rem] uppercase font-bold tracking-wider ${isDark ? "text-gray-500" : "text-gray-500"}`}>Last Login</p>
+                                        <p className={`text-2xs uppercase font-bold tracking-wider ${isDark ? "text-gray-500" : "text-gray-500"}`}>Last Login</p>
                                         <p className="text-sm font-medium">{viewModal.user.last_login ? new Date(viewModal.user.last_login).toLocaleDateString() : "Never"}</p>
                                     </div>
                                 </div>

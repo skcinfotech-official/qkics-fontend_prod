@@ -3,7 +3,6 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import "./index.css";
 import App from "./App.jsx";
-import "./tailwind.css";
 import { AlertProvider } from "./context/AlertContext";
 import { ConfirmProvider } from "./context/ConfirmContext";
 import { NotificationProvider } from "./context/NotificationContext";

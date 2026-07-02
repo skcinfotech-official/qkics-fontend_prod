@@ -125,7 +125,7 @@ export default function AdminEntrepreneurApplications({ theme }) {
             {/* Filters Area */}
             <div className={`p-4 rounded-xl border flex flex-col sm:flex-row gap-4 justify-between items-center ${isDark ? "bg-[#111111] border-gray-800" : "bg-white border-gray-200 shadow-sm"}`}>
                 <div className={`relative w-full sm:max-w-md flex items-center`}>
-                    <FaSearch className={`absolute left-3 text-[0.8rem] ${isDark ? "text-gray-500" : "text-gray-400"}`} />
+                    <FaSearch className={`absolute left-3 text-sm ${isDark ? "text-gray-500" : "text-gray-400"}`} />
                     <input
                         type="text"
                         placeholder="Search startups, names, industries..."
@@ -177,7 +177,7 @@ export default function AdminEntrepreneurApplications({ theme }) {
                                                 </div>
                                                 <div>
                                                     <p className={`font-medium ${isDark ? "text-gray-200" : "text-gray-900"}`}>{app.user?.first_name} {app.user?.last_name}</p>
-                                                    <p className={`text-[0.75rem] ${isDark ? "text-gray-500" : "text-gray-500"}`}>@{app.user?.username}</p>
+                                                    <p className={`text-xs ${isDark ? "text-gray-500" : "text-gray-500"}`}>@{app.user?.username}</p>
                                                 </div>
                                             </div>
                                         </td>
@@ -186,7 +186,7 @@ export default function AdminEntrepreneurApplications({ theme }) {
                                                 <p className={`font-medium ${isDark ? "text-gray-300" : "text-gray-800"}`}>{app.startup_name}</p>
                                                 {app.verified_by_admin && <FaCheckCircle className="text-blue-500 text-xs" title="Verified by Admin" />}
                                             </div>
-                                            <p className={`text-[0.7rem] uppercase font-semibold mt-0.5 truncate max-w-[180px] ${isDark ? "text-gray-500" : "text-gray-500"}`}>
+                                            <p className={`text-xs uppercase font-semibold mt-0.5 truncate max-w-[180px] ${isDark ? "text-gray-500" : "text-gray-500"}`}>
                                                 {app.industry} • {app.location}
                                             </p>
                                         </td>
@@ -199,7 +199,7 @@ export default function AdminEntrepreneurApplications({ theme }) {
                                             </span>
                                         </td>
                                         <td className="py-3 px-5 text-center">
-                                            <span className={`px-2.5 py-1 rounded-full text-[0.7rem] font-medium capitalize ${getStatusStyle(app.application_status)}`}>
+                                            <span className={`px-2.5 py-1 rounded-full text-xs font-medium capitalize ${getStatusStyle(app.application_status)}`}>
                                                 {app.application_status}
                                             </span>
                                         </td>

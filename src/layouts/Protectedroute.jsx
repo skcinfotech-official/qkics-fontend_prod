@@ -30,7 +30,7 @@ export default function ProtectedRoute() {
   if (status === "loading") {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-t-red-500 border-neutral-800" />
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-t-primary border-muted" />
       </div>
     );
   }
@@ -45,7 +45,7 @@ export default function ProtectedRoute() {
   if (!user && hasRefreshToken) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-t-red-500 border-neutral-800" />
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-t-primary border-muted" />
       </div>
     );
   }

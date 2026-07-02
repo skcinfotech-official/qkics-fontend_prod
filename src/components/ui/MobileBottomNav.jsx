@@ -44,7 +44,7 @@ function MobileBottomNav({ theme, isLoggedIn, setShowLogin }) {
                 <Link to="/" className="flex-1 h-full">
                     <div className={getNavClass("/")}>
                         <FaHome size={22} className={location.pathname === "/" ? "scale-110" : ""} />
-                        <span className="text-[7px] font-black uppercase tracking-[0.05em]">Home</span>
+                        <span className="text-3xs font-black uppercase tracking-[0.05em]">Home</span>
                         {location.pathname === "/" && (
                             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-[2px] bg-red-600 rounded-full" />
                         )}
@@ -58,7 +58,7 @@ function MobileBottomNav({ theme, isLoggedIn, setShowLogin }) {
                 >
                     <div className={getNavClass("/experts")}>
                         <FaUsersGear size={22} className={location.pathname === "/experts" ? "scale-110" : ""} />
-                        <span className="text-[7px] font-black uppercase tracking-[0.05em]">Experts</span>
+                        <span className="text-3xs font-black uppercase tracking-[0.05em]">Experts</span>
                         {location.pathname === "/experts" && (
                             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-[2px] bg-red-600 rounded-full" />
                         )}
@@ -72,7 +72,7 @@ function MobileBottomNav({ theme, isLoggedIn, setShowLogin }) {
                 >
                     <div className={getNavClass("/entrepreneur-connect")}>
                         <FaHandshake size={22} className={location.pathname === "/entrepreneur-connect" ? "scale-110" : ""} />
-                        <span className="text-[7px] font-black uppercase tracking-[0.05em]">Connect</span>
+                        <span className="text-3xs font-black uppercase tracking-[0.05em]">Connect</span>
                         {location.pathname === "/entrepreneur-connect" && (
                             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-[2px] bg-red-600 rounded-full" />
                         )}
@@ -86,7 +86,7 @@ function MobileBottomNav({ theme, isLoggedIn, setShowLogin }) {
                 >
                     <div className={getNavClass("/knowledge-hub")}>
                         <FaLightbulb size={22} className={location.pathname === "/knowledge-hub" ? "scale-110" : ""} />
-                        <span className="text-[7px] font-black uppercase tracking-[0.05em]">Hub</span>
+                        <span className="text-3xs font-black uppercase tracking-[0.05em]">Hub</span>
                         {location.pathname === "/knowledge-hub" && (
                             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-[2px] bg-red-600 rounded-full" />
                         )}
@@ -100,7 +100,7 @@ function MobileBottomNav({ theme, isLoggedIn, setShowLogin }) {
                 >
                     <div className={getNavClass("/document")}>
                         <FaFileAlt size={22} className={location.pathname === "/document" ? "scale-110" : ""} />
-                        <span className="text-[7px] font-black uppercase tracking-[0.05em]">Documents</span>
+                        <span className="text-3xs font-black uppercase tracking-[0.05em]">Documents</span>
                         {location.pathname === "/document" && (
                             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-[2px] bg-red-600 rounded-full" />
                         )}
@@ -114,7 +114,7 @@ function MobileBottomNav({ theme, isLoggedIn, setShowLogin }) {
                 >
                     <div className={getNavClass("/company")}>
                         <FaBuilding size={22} className={location.pathname === "/company" ? "scale-110" : ""} />
-                        <span className="text-[7px] font-black uppercase tracking-[0.05em]">Company</span>
+                        <span className="text-3xs font-black uppercase tracking-[0.05em]">Company</span>
                         {location.pathname === "/company" && (
                             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-[2px] bg-red-600 rounded-full" />
                         )}

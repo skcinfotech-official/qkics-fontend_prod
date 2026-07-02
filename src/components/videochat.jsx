@@ -265,8 +265,8 @@ export default function VideoCallComponent({ call_room_id, token, onCallEnd }) {
       <header className="flex items-center justify-between px-3 sm:px-5 py-2 sm:py-3 bg-neutral-900/80 backdrop-blur border-b border-neutral-800 z-20">
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 rounded-full bg-red-500/10 border border-red-500/30 shrink-0">
-            <FaCircle className="text-red-500 text-[8px] animate-pulse" />
-            <span className="text-[10px] sm:text-xs font-medium text-red-300">LIVE</span>
+            <FaCircle className="text-red-500 text-3xs animate-pulse" />
+            <span className="text-2xs sm:text-xs font-medium text-red-300">LIVE</span>
           </div>
           <h1 className="text-xs sm:text-sm font-medium text-neutral-200 truncate hidden xs:block sm:block">
             Meeting in progress
@@ -274,7 +274,7 @@ export default function VideoCallComponent({ call_room_id, token, onCallEnd }) {
         </div>
         <div className="flex items-center gap-2 sm:gap-4 shrink-0">
           {remaining !== null && remaining <= 60 && remaining > 0 && (
-            <div className="animate-bounce px-2 py-1 rounded bg-amber-500/20 border border-amber-500/40 text-[10px] sm:text-xs text-amber-300 font-bold uppercase tracking-wider">
+            <div className="animate-bounce px-2 py-1 rounded bg-amber-500/20 border border-amber-500/40 text-2xs sm:text-xs text-amber-300 font-bold uppercase tracking-wider">
               The meeting will be end soon
             </div>
           )}
@@ -340,7 +340,7 @@ export default function VideoCallComponent({ call_room_id, token, onCallEnd }) {
                 <FaVideoSlash className="text-neutral-600 text-lg sm:text-xl" />
               </div>
             )}
-            <span className="absolute bottom-1 left-1 sm:left-2 text-[9px] sm:text-[10px] font-medium px-1 sm:px-1.5 py-0.5 rounded bg-black/60">
+            <span className="absolute bottom-1 left-1 sm:left-2 text-2xs sm:text-2xs font-medium px-1 sm:px-1.5 py-0.5 rounded bg-black/60">
               You
             </span>
           </div>
@@ -467,7 +467,7 @@ export default function VideoCallComponent({ call_room_id, token, onCallEnd }) {
 
             {activePanel === "notes" && (
               <div className="flex-1 flex flex-col p-4 gap-3 pb-24 sm:pb-4">
-                <p className="text-[11px] text-neutral-500 uppercase tracking-wide">
+                <p className="text-xs text-neutral-500 uppercase tracking-wide">
                   Private — only you can see these
                 </p>
                 <textarea
@@ -602,7 +602,7 @@ function ConfirmationModal({ isOpen, onConfirm, onCancel, title, message }) {
 }
 
 function ToolbarButton({ onClick, active = true, highlight = false, icon, label, badge = 0, disabled = false }) {
-  const base = "relative flex flex-col items-center justify-center w-11 sm:w-14 h-10 sm:h-12 rounded-full transition text-[10px] gap-0.5";
+  const base = "relative flex flex-col items-center justify-center w-11 sm:w-14 h-10 sm:h-12 rounded-full transition text-2xs gap-0.5";
   const style = highlight
     ? "bg-blue-600 hover:bg-blue-500 text-white"
     : active
@@ -620,7 +620,7 @@ function ToolbarButton({ onClick, active = true, highlight = false, icon, label,
     >
       <span className="text-sm sm:text-base">{icon}</span>
       {badge > 0 && (
-        <span className="absolute -top-1 -right-1 min-w-[16px] sm:min-w-[18px] h-[16px] sm:h-[18px] px-1 rounded-full bg-red-500 text-[9px] sm:text-[10px] font-semibold flex items-center justify-center">
+        <span className="absolute -top-1 -right-1 min-w-[16px] sm:min-w-[18px] h-[16px] sm:h-[18px] px-1 rounded-full bg-red-500 text-2xs sm:text-2xs font-semibold flex items-center justify-center">
           {badge > 9 ? "9+" : badge}
         </span>
       )}

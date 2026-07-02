@@ -85,7 +85,7 @@ export default function InvestorSlots({ theme: propTheme }) {
         <div className={`premium-card p-8 md:p-12 mb-8 ${isDark ? "bg-neutral-900" : "bg-white"}`}>
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div>
-              <h1 className={`text-3xl md:text-4xl font-black tracking-tight mb-2 ${isDark ? "text-white" : "text-black"}`}>
+              <h1 className={`text-2xl md:text-3xl font-bold tracking-tight mb-2 ${isDark ? "text-white" : "text-black"}`}>
                 Manage <span className="text-red-600">Booking Slots</span>
               </h1>
               <p className={`text-sm ${isDark ? "text-neutral-400" : "text-neutral-500"}`}>

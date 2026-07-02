@@ -60,11 +60,11 @@ export default function MyDownloads({ theme, searchQuery = "" }) {
           </div>
           <div>
             <h2 className={`text-xl font-black tracking-tight `}>Download History</h2>
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-40">Asset Collective</p>
+            <p className="text-2xs font-bold uppercase tracking-[0.2em] opacity-40">Asset Collective</p>
           </div>
         </div>
         <div className="text-right hidden sm:block">
-          <p className="text-[10px] font-black uppercase tracking-widest opacity-30 mb-0.5">Total Assets</p>
+          <p className="text-2xs font-black uppercase tracking-widest opacity-30 mb-0.5">Total Assets</p>
           <p className={`text-sm font-black `}>{downloads.length}</p>
         </div>
       </div>
@@ -73,9 +73,9 @@ export default function MyDownloads({ theme, searchQuery = "" }) {
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className={`${isDark ? "bg-white/5" : "bg-black/5"}`}>
-              <th className="p-6 text-[10px] font-black uppercase tracking-widest opacity-40">Document Intelligence</th>
-              <th className="p-6 text-[10px] font-black uppercase tracking-widest opacity-40 text-center">Status</th>
-              <th className="p-6 text-[10px] font-black uppercase tracking-widest opacity-40 text-right">Timestamp</th>
+              <th className="p-6 text-2xs font-black uppercase tracking-widest opacity-40">Document Intelligence</th>
+              <th className="p-6 text-2xs font-black uppercase tracking-widest opacity-40 text-center">Status</th>
+              <th className="p-6 text-2xs font-black uppercase tracking-widest opacity-40 text-right">Timestamp</th>
             </tr>
           </thead>
           <tbody className={`divide-y ${isDark ? "divide-white/5" : "divide-black/5"}`}>
@@ -91,7 +91,7 @@ export default function MyDownloads({ theme, searchQuery = "" }) {
                     </div>
                   </td>
                   <td className="p-6 text-center">
-                    <span className={`text-[10px] font-black uppercase tracking-[0.2em] px-4 py-1.5 rounded-full border shadow-sm transition-all duration-500 ${d.access_type_snapshot === "PREMIUM"
+                    <span className={`text-2xs font-black uppercase tracking-[0.2em] px-4 py-1.5 rounded-full border shadow-sm transition-all duration-500 ${d.access_type_snapshot === "PREMIUM"
                       ? "bg-amber-500/10 text-amber-500 border-amber-500/10"
                       : "bg-emerald-500/10 text-emerald-500 border-emerald-500/10"
                       }`}>
@@ -100,10 +100,10 @@ export default function MyDownloads({ theme, searchQuery = "" }) {
                   </td>
                   <td className="p-6 text-right">
                     <div className="flex flex-col">
-                      <span className={`text-[11px] font-black `}>
+                      <span className={`text-xs font-black `}>
                         {new Date(d.downloaded_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                       </span>
-                      <span className="text-[10px] font-bold opacity-30 uppercase tracking-tighter">
+                      <span className="text-2xs font-bold opacity-30 uppercase tracking-tighter">
                         {new Date(d.downloaded_at).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
                       </span>
                     </div>
@@ -113,7 +113,7 @@ export default function MyDownloads({ theme, searchQuery = "" }) {
             ) : (
               <tr>
                 <td colSpan="3" className="p-20 text-center">
-                  <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-20 italic">No assets discovered in your local collection yet.</p>
+                  <p className="text-2xs font-black uppercase tracking-[0.3em] opacity-20 italic">No assets discovered in your local collection yet.</p>
                 </td>
               </tr>
             )}

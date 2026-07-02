@@ -18,7 +18,7 @@ import "./chatPage.css";
 
 function TypingDots() {
   return (
-    <span className="flex gap-1">
+    <span className="flex items-center gap-1">
       <span className="dot" />
       <span className="dot" />
       <span className="dot" />
@@ -26,7 +26,6 @@ function TypingDots() {
   );
 }
 
-// ✅ WhatsApp-style date formatting
 function formatMessageDate(dateStr) {
   const date = new Date(dateStr);
   const now = new Date();
@@ -41,11 +40,17 @@ function formatMessageDate(dateStr) {
   });
 }
 
+function avatarFor(person) {
+  return (
+    person?.profile_picture ||
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(person?.first_name || person?.username || "User")}&background=random`
+  );
+}
+
 export default function ChatPage() {
   const { roomId } = useParams();
   const navigate = useNavigate();
-  const { theme, data: user } = useSelector((state) => state.user);
-  const isDark = theme === "dark";
+  const { data: user } = useSelector((state) => state.user);
 
   const [chatRooms, setChatRooms] = useState([]);
   const [selectedRoom, setSelectedRoom] = useState(null);
@@ -61,7 +66,6 @@ export default function ChatPage() {
 
   const messagesEndRef = useRef(null);
   const typingTimeout = useRef(null);
-  // ✅ FIX #6: Track which message IDs we've already sent read receipts for
   const readMessageIds = useRef(new Set());
 
   const [showMenu, setShowMenu] = useState(false);
@@ -77,15 +81,9 @@ export default function ChatPage() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // ✅ FIX #5: Read token from a ref that stays current so the WebSocket
-  //    reconnects with a fresh token if it rotates during the session.
   const tokenRef = useRef(getAccessToken());
-  // We pass the current value to the hook; when the token changes the hook
-  // will close and reopen via its [roomId, token] dep.
   const [token, setToken] = useState(tokenRef.current);
 
-  // If the access token is refreshed elsewhere (e.g. axiosSecure interceptor),
-  // pick it up so the socket can reconnect with the new token.
   useEffect(() => {
     const interval = setInterval(() => {
       const fresh = getAccessToken();
@@ -93,7 +91,7 @@ export default function ChatPage() {
         tokenRef.current = fresh;
         setToken(fresh);
       }
-    }, 30_000); // check every 30s — tokens typically last 5–15 min
+    }, 30_000);
     return () => clearInterval(interval);
   }, []);
 
@@ -111,7 +109,6 @@ export default function ChatPage() {
   );
 
   const otherUser = getOtherParticipant(selectedRoom);
-  const text = isDark ? "text-white" : "text-black";
 
   /* ---------------- websocket ---------------- */
   const { send: sendWS, isReady } = useChatSocket({
@@ -119,11 +116,9 @@ export default function ChatPage() {
     token,
     onMessage: (msg) => {
       setMessages((prev) => {
-        const isMe =
-          msg.sender === user?.username || msg.sender_id === user?.id;
+        const isMe = msg.sender === user?.username || msg.sender_id === user?.id;
         const incomingMsg = { ...msg, is_mine: isMe };
 
-        // Replace optimistic placeholder for my own messages
         if (isMe) {
           const optimisticIndex = prev.findIndex(
             (m) => m.isOptimistic && m.is_mine && m.text === incomingMsg.text
@@ -135,7 +130,6 @@ export default function ChatPage() {
           }
         }
 
-        // General deduplication by ID
         if (msg.id && prev.some((m) => m.id === msg.id)) {
           return prev;
         }
@@ -143,7 +137,6 @@ export default function ChatPage() {
         return [...prev, incomingMsg];
       });
 
-      // ✅ Update online status of sender (if not me)
       const isMe = msg.sender === user?.username || msg.sender_id === user?.id;
       if (!isMe) {
         setOnlineUsers((prev) => {
@@ -158,7 +151,6 @@ export default function ChatPage() {
       if (data.user === user?.username) return;
       setTypingUser(data.is_typing ? data.user : null);
 
-      // ✅ Also mark user as online when typing
       if (data.is_typing && data.user) {
         setOnlineUsers((prev) => ({ ...prev, [data.user]: true }));
       }
@@ -166,7 +158,6 @@ export default function ChatPage() {
     onUserStatus: (data) => {
       setOnlineUsers((prev) => {
         const updates = {};
-        // Store by whatever identifier the server provides
         if (data.user_id) updates[data.user_id] = data.online;
         if (data.user) updates[data.user] = data.online;
         if (data.username) updates[data.username] = data.online;
@@ -175,20 +166,12 @@ export default function ChatPage() {
     },
   });
 
-  // ✅ FIX #3: Robust isUserOnline check. It handles both basic Users and
-  //    Profile objects (Expert/Investor/Advisor) by checking all potential
-  //    identifiers against our online status map.
   const isUserOnline = useCallback(
     (participant) => {
       if (!participant) return false;
-      
-      // Check ID (might be profile ID or User ID depending on role)
       const pid = participant.id;
-      // Check nested User ID (common in expert/advisor profiles)
       const uid = participant.user?.id || participant.user_id;
-      // Check username (socket often uses this string)
       const uname = participant.username || participant.user?.username;
-
       return (
         (pid && onlineUsers[pid]) ||
         (uid && onlineUsers[uid]) ||
@@ -207,7 +190,6 @@ export default function ChatPage() {
     fetchChatRooms();
   }, []);
 
-  // ✅ FIX #6: Only send read receipts for messages we haven't processed yet
   useEffect(() => {
     if (!isReady) return;
     messages.forEach((msg) => {
@@ -218,7 +200,6 @@ export default function ChatPage() {
     });
   }, [messages, isReady, sendWS]);
 
-  // ✅ FIX #9: Clear typing timeout on unmount
   useEffect(() => {
     return () => {
       clearTimeout(typingTimeout.current);
@@ -226,7 +207,6 @@ export default function ChatPage() {
   }, []);
 
   /* ---------------- api ---------------- */
-  // ✅ FIX #4: Added catch blocks with error state for user feedback
   const fetchChatRooms = async () => {
     try {
       setLoadingRooms(true);
@@ -235,8 +215,7 @@ export default function ChatPage() {
       setChatRooms(res.data || []);
 
       if (res.data?.length) {
-        const room =
-          res.data.find((r) => String(r.id) === roomId) || res.data[0];
+        const room = res.data.find((r) => String(r.id) === roomId) || res.data[0];
         setSelectedRoom(room);
         fetchMessages(room.id);
       }
@@ -252,7 +231,6 @@ export default function ChatPage() {
     try {
       setLoadingMessages(true);
       setMessagesError(null);
-      // Clear read-receipt cache when switching rooms
       readMessageIds.current = new Set();
       const res = await axiosSecure.get(`/v1/chat/rooms/${id}/messages/`);
       setMessages(res.data || []);
@@ -280,7 +258,6 @@ export default function ChatPage() {
   const sendMessage = () => {
     if (!newMessage.trim() || !selectedRoom || !isReady) return;
 
-    // ✅ FIX #7: Use explicit `isOptimistic: true` flag instead of ID-length hack
     const optimistic = {
       id: Date.now(),
       isOptimistic: true,
@@ -298,149 +275,89 @@ export default function ChatPage() {
 
   const filteredRooms = chatRooms.filter((room) => {
     const other = getOtherParticipant(room);
-    const name =
-      `${other?.first_name || ""} ${other?.last_name || ""}`.toLowerCase();
+    const name = `${other?.first_name || ""} ${other?.last_name || ""}`.toLowerCase();
     return name.includes(searchQuery.toLowerCase());
   });
 
   /* ============================ UI ============================ */
 
   return (
-    <div
-      className={`flex h-[calc(100vh-136px)] md:h-[calc(100vh-80px)] overflow-hidden max-w-7xl mx-auto w-full ${
-        isDark ? "bg-[#0a0a0a]" : "bg-[#f8f9fa]"
-      }`}
-    >
+    <div className="mx-auto flex h-[calc(100vh-136px)] w-full max-w-7xl overflow-hidden bg-background text-foreground md:h-[calc(100vh-80px)]">
+
       {/* ================= LEFT SIDEBAR ================= */}
-      <aside
-        className={`w-full md:w-80 lg:w-[400px] flex flex-col border-r transition-all duration-500 ${
-          isDark
-            ? "border-white/5 bg-[#0a0a0a]"
-            : "border-black/5 bg-white"
-        } ${selectedRoom && "hidden md:flex"}`}
-      >
-        <div className="p-8 pb-6">
-          <h2 className={`text-3xl font-black tracking-tighter mb-6 ${text}`}>
-            Intel <span className="text-red-600">Feed</span>
-          </h2>
-          <div
-            className={`flex items-center gap-3 rounded-2xl px-5 py-3.5 border transition-all ${
-              isDark
-                ? "bg-white/5 border-white/5 focus-within:border-red-500/50"
-                : "bg-neutral-100 border-black/5 focus-within:border-red-500/50"
-            }`}
-          >
-            <MdSearch size={20} className="opacity-30" />
+      <aside className={`flex w-full flex-col border-r border-border bg-card md:w-80 lg:w-96 ${selectedRoom && "hidden md:flex"}`}>
+        <div className="border-b border-border px-5 py-4">
+          <h2 className="mb-3 text-lg font-bold tracking-tight">Messages</h2>
+          <div className="flex items-center gap-2 rounded-xl border border-input bg-muted/40 px-3.5 py-2.5 transition-all focus-within:border-primary focus-within:ring-2 focus-within:ring-ring/40">
+            <MdSearch size={18} className="shrink-0 text-muted-foreground" />
             <input
-              className={`bg-transparent outline-none w-full text-sm font-bold placeholder:opacity-40 placeholder:font-bold ${text}`}
-              placeholder="FILTER DISPATCHES..."
+              className="w-full bg-transparent text-sm font-medium text-foreground outline-none placeholder:text-muted-foreground"
+              placeholder="Search conversations..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-4 space-y-2 pb-8">
+        <div className="flex-1 space-y-1 overflow-y-auto p-2 custom-scrollbar">
           {loadingRooms ? (
-            [1, 2, 3].map((n) => (
-              <div
-                key={n}
-                className="flex items-center gap-4 p-4 rounded-2xl animate-pulse"
-              >
-                <div
-                  className={`h-14 w-14 rounded-2xl ${
-                    isDark ? "bg-white/5" : "bg-neutral-200"
-                  }`}
-                />
+            [1, 2, 3, 4].map((n) => (
+              <div key={n} className="flex animate-pulse items-center gap-3 rounded-xl p-3">
+                <div className="h-12 w-12 shrink-0 rounded-full bg-muted" />
                 <div className="flex-1 space-y-2">
-                  <div
-                    className={`h-4 w-24 rounded ${
-                      isDark ? "bg-white/5" : "bg-neutral-200"
-                    }`}
-                  />
-                  <div
-                    className={`h-3 w-32 rounded ${
-                      isDark ? "bg-white/5" : "bg-neutral-200"
-                    }`}
-                  />
+                  <div className="h-3.5 w-24 rounded bg-muted" />
+                  <div className="h-3 w-32 rounded bg-muted" />
                 </div>
               </div>
             ))
           ) : roomsError ? (
-            // ✅ FIX #4: Show error with retry
-            <div className="py-16 text-center px-4">
-              <p className="text-red-500 text-xs font-bold mb-3">{roomsError}</p>
+            <div className="px-4 py-16 text-center">
+              <p className="mb-3 text-sm font-bold text-danger">{roomsError}</p>
               <button
                 onClick={fetchChatRooms}
-                className="text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-xl bg-red-600 text-white hover:bg-red-700 transition"
+                className="rounded-xl bg-primary px-4 py-2 text-2xs font-bold uppercase tracking-wide text-primary-foreground transition hover:bg-primary-hover"
               >
                 Retry
               </button>
             </div>
           ) : filteredRooms.length === 0 ? (
-            <div className="py-20 text-center opacity-20">
-              <p className="text-[10px] font-black uppercase tracking-[0.3em]">
-                No frequency found
-              </p>
+            <div className="py-20 text-center">
+              <p className="text-sm font-bold text-muted-foreground">No conversations yet</p>
             </div>
           ) : (
             filteredRooms.map((room) => {
               const other = getOtherParticipant(room);
               const isActive = selectedRoom?.id === room.id;
-              // ✅ FIX #3: Use the fixed isUserOnline (no longer always-true)
               const isOnline = isUserOnline(other);
 
               return (
-                <div
+                <button
                   key={room.id}
                   onClick={() => {
                     setSelectedRoom(room);
                     fetchMessages(room.id);
                   }}
-                  className={`flex items-center gap-4 p-4 rounded-2xl cursor-pointer transition-all duration-300 group ${
-                    isActive
-                      ? "bg-red-600 text-white shadow-xl shadow-red-600/20 translate-x-1"
-                      : "hover:bg-black/5 dark:hover:bg-white/5"
-                  }`}
-                >
-                  <div
-                    className={`relative h-14 w-14 flex-shrink-0 rounded-2xl overflow-hidden shadow-lg transition-transform duration-500 group-hover:scale-105 ${
-                      !isActive && "border border-black/5 dark:border-white/5"
+                  className={`flex w-full items-center gap-3 rounded-xl p-3 text-left transition-all ${isActive ? "bg-primary-soft" : "hover:bg-muted"
                     }`}
-                  >
-                    {/* ✅ FIX #11: Added alt attributes for accessibility */}
-                    <img
-                      src={
-                        other?.profile_picture ||
-                        `https://ui-avatars.com/api/?name=${other?.first_name}&background=random`
-                      }
-                      alt={`${other?.first_name} ${other?.last_name}`}
-                      className="w-full h-full object-cover"
-                    />
+                >
+                  <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full border border-border">
+                    <img src={avatarFor(other)} alt={`${other?.first_name || ""} ${other?.last_name || ""}`} className="h-full w-full object-cover" />
                     {isOnline && (
-                      <div className="absolute bottom-1 right-1 h-2.5 w-2.5 bg-green-500 rounded-full border-2 border-white dark:border-black" />
+                      <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-card bg-emerald-500" />
                     )}
                   </div>
 
-                  <div className="flex-1 min-w-0">
-                    <h4
-                      className={`font-black text-sm truncate leading-none mb-1.5 ${
-                        isActive ? "text-white" : text
-                      }`}
-                    >
+                  <div className="min-w-0 flex-1">
+                    <h4 className={`truncate text-sm font-semibold ${isActive ? "text-primary" : "text-foreground"}`}>
                       {other?.first_name} {other?.last_name}
                     </h4>
-                    <p
-                      className={`text-[11px] truncate font-medium ${
-                        isActive ? "text-white/70" : "opacity-40"
-                      }`}
-                    >
+                    <p className="truncate text-xs text-muted-foreground">
                       {room.last_message && typeof room.last_message === "object"
-                        ? room.last_message.text ?? "Awaiting transmission..."
-                        : room.last_message || "Awaiting transmission..."}
+                        ? room.last_message.text ?? "No messages yet"
+                        : room.last_message || "No messages yet"}
                     </p>
                   </div>
-                </div>
+                </button>
               );
             })
           )}
@@ -448,154 +365,110 @@ export default function ChatPage() {
       </aside>
 
       {/* ================= CHAT WINDOW ================= */}
-      <main
-        className={`flex-1 flex flex-col ${
-          !selectedRoom && "hidden md:flex"
-        } animate-fadeIn`}
-      >
+      <main className={`flex flex-1 flex-col ${!selectedRoom && "hidden md:flex"}`}>
         {selectedRoom ? (
           <>
             {/* HEADER */}
-            <header
-              className={`flex items-center justify-between px-8 py-6 border-b z-10 ${
-                isDark
-                  ? "bg-[#0a0a0a]/80 border-white/5"
-                  : "bg-white/80 border-black/5"
-              } backdrop-blur-xl`}
-            >
-              <div className="flex items-center gap-4">
+            <header className="z-10 flex items-center justify-between border-b border-border bg-card px-4 py-3">
+              <div className="flex items-center gap-3">
                 <button
-                  className="md:hidden text-red-600"
+                  className="text-foreground md:hidden"
                   onClick={() => setSelectedRoom(null)}
                   aria-label="Back to conversations"
                 >
-                  <MdArrowBack size={24} />
+                  <MdArrowBack size={22} />
                 </button>
 
-                <div className="h-12 w-12 rounded-2xl overflow-hidden shadow-xl border-2 border-red-500/20">
-                  {/* ✅ FIX #11: Added alt */}
-                  <img
-                    src={
-                      otherUser?.profile_picture ||
-                      `https://ui-avatars.com/api/?name=${otherUser?.first_name}`
-                    }
-                    alt={`${otherUser?.first_name} ${otherUser?.last_name}`}
-                    className="w-full h-full object-cover"
-                  />
+                <div className="h-11 w-11 overflow-hidden rounded-full border border-border">
+                  <img src={avatarFor(otherUser)} alt={`${otherUser?.first_name || ""} ${otherUser?.last_name || ""}`} className="h-full w-full object-cover" />
                 </div>
 
-                <div>
-                  <h3
-                    className={`font-black text-base tracking-tight ${text}`}
-                  >
+                <div className="min-w-0">
+                  <h3 className="truncate text-sm font-semibold text-foreground">
                     {otherUser?.first_name} {otherUser?.last_name}
                   </h3>
                   <div className="flex items-center gap-1.5">
-                    <span
-                      className={`h-2 w-2 rounded-full shadow-sm ${
-                        isUserOnline(otherUser)
-                          ? "bg-green-500 animate-pulse shadow-green-500/50"
-                          : "bg-neutral-500"
-                      }`}
-                    />
-                    <span className="text-[10px] font-black uppercase tracking-widest opacity-30">
+                    <span className={`h-1.5 w-1.5 rounded-full ${isUserOnline(otherUser) ? "bg-emerald-500" : "bg-muted-foreground/40"}`} />
+                    <span className="text-2xs font-medium text-muted-foreground">
                       {isUserOnline(otherUser) ? "Online" : "Offline"}
                     </span>
                   </div>
                 </div>
               </div>
-              <div className="relative" ref={menuRef}>
+
+              <div className="flex items-center gap-1">
                 <button
-                  onClick={() => setShowMenu(!showMenu)}
-                  className={`h-11 w-11 flex items-center justify-center rounded-xl border border-black/5 dark:border-white/5 hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black transition-all group ${
-                    showMenu
-                      ? "bg-black dark:bg-white text-white dark:text-black"
-                      : text
-                  }`}
-                  aria-label="More options"
+                  onClick={() => {
+                    const callId = selectedRoom?.call_Room_id || selectedRoom?.booking?.call_Room_id;
+                    navigate(callId ? `/video-call/${callId}` : "/video-call");
+                  }}
+                  className="flex h-10 w-10 items-center justify-center rounded-xl text-muted-foreground transition-all hover:bg-muted hover:text-primary"
+                  aria-label="Video call"
+                  title="Video call"
                 >
-                  <MdMoreVert
-                    size={20}
-                    className={showMenu ? "opacity-100" : "opacity-40 group-hover:opacity-100"}
-                  />
+                  <MdVideoCall size={22} />
                 </button>
 
-                {showMenu && (
-                  <div
-                    className={`absolute right-0 mt-2 w-48 rounded-2xl shadow-2xl border flex flex-col overflow-hidden z-100 animate-fadeIn ${
-                      isDark
-                        ? "bg-[#0d0d0d] border-white/5"
-                        : "bg-white border-black/5"
-                    }`}
+                <div className="relative" ref={menuRef}>
+                  <button
+                    onClick={() => setShowMenu(!showMenu)}
+                    className={`flex h-10 w-10 items-center justify-center rounded-xl transition-all ${showMenu ? "bg-muted text-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
+                    aria-label="More options"
                   >
-                    <button
-                      onClick={() => {
-                        setShowMenu(false);
-                        const callId = selectedRoom?.call_Room_id || selectedRoom?.booking?.call_Room_id;
-                        if (callId) {
-                          navigate(`/video-call/${callId}`);
-                        } else {
-                          // If no ID, we can still show the button as per user request to see it, 
-                          // but maybe it navigates to a default or shows a placeholder.
-                          navigate("/video-call");
-                        }
-                      }}
-                      className={`flex items-center gap-3 px-3 py-3 text-xs font-black uppercase tracking-widest transition-colors hover:bg-red-600 hover:text-white ${
-                        isDark ? "text-white/60" : "text-black/60"
-                      }`}
-                    >
-                      <MdVideoCall size={18} />
-                      Video Call
-                    </button>
-                    <button
-                      onClick={() => {
-                        setSelectedRoom(null);
-                        setShowMenu(false);
-                      }}
-                      className={`flex items-center gap-3 px-3 py-3 text-xs font-black uppercase tracking-widest transition-colors hover:bg-red-600 hover:text-white ${
-                        isDark ? "text-white/60" : "text-black/60"
-                      }`}
-                    >
-                      <MdClose size={12} />
-                      Close Chat
-                    </button>
-                  </div>
-                )}
+                    <MdMoreVert size={20} />
+                  </button>
+
+                  {showMenu && (
+                    <div className="absolute right-0 z-50 mt-2 flex w-44 flex-col overflow-hidden rounded-xl border border-border bg-card p-1.5 shadow-xl animate-fadeIn">
+                      <button
+                        onClick={() => {
+                          setShowMenu(false);
+                          const callId = selectedRoom?.call_Room_id || selectedRoom?.booking?.call_Room_id;
+                          navigate(callId ? `/video-call/${callId}` : "/video-call");
+                        }}
+                        className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-xs font-semibold text-foreground transition-colors hover:bg-muted"
+                      >
+                        <MdVideoCall size={18} className="text-primary" />
+                        Video Call
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSelectedRoom(null);
+                          setShowMenu(false);
+                        }}
+                        className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-xs font-semibold text-foreground transition-colors hover:bg-muted"
+                      >
+                        <MdClose size={16} className="text-muted-foreground" />
+                        Close Chat
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </header>
 
             {/* MESSAGES */}
-            <div
-              className={`flex-1 overflow-y-auto p-4 space-y-1 ${
-                isDark ? "bg-[#0d0d0d]" : "bg-neutral-50"
-              }`}
-            >
+            <div className="flex-1 space-y-1 overflow-y-auto bg-muted/30 p-4 custom-scrollbar">
               {loadingMessages ? (
-                <div className="flex flex-col items-center justify-center h-full opacity-20">
-                  <div className="animate-spin rounded-full h-8 w-8 border-2 border-red-500 border-t-transparent mb-4" />
-                  <p className="text-[10px] font-black uppercase tracking-widest">
-                    Decoding Frequency...
-                  </p>
+                <div className="flex h-full flex-col items-center justify-center gap-3 text-muted-foreground">
+                  <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-primary" />
+                  <p className="text-2xs font-bold uppercase tracking-wide">Loading messages...</p>
                 </div>
               ) : messagesError ? (
-                // ✅ FIX #4: Show message error with retry
-                <div className="flex flex-col items-center justify-center h-full">
-                  <p className="text-red-500 text-sm font-bold mb-1">
-                    {messagesError}
-                  </p>
+                <div className="flex h-full flex-col items-center justify-center gap-2">
+                  <p className="text-sm font-bold text-danger">{messagesError}</p>
                   <button
                     onClick={() => fetchMessages(selectedRoom.id)}
-                    className="text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-xl bg-red-600 text-white hover:bg-red-700 transition"
+                    className="rounded-xl bg-primary px-4 py-2 text-2xs font-bold uppercase tracking-wide text-primary-foreground transition hover:bg-primary-hover"
                   >
                     Retry
                   </button>
                 </div>
               ) : messages.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full opacity-20">
-                  <MdChatBubbleOutline size={64} className="mb-4" />
-                  <p className="font-black text-sm uppercase tracking-widest leading-none">
-                    Initialize Stream
-                  </p>
+                <div className="flex h-full flex-col items-center justify-center gap-3 text-muted-foreground">
+                  <MdChatBubbleOutline size={56} className="opacity-40" />
+                  <p className="text-sm font-semibold">No messages yet</p>
+                  <p className="text-xs text-muted-foreground">Say hello to start the conversation.</p>
                 </div>
               ) : (
                 (() => {
@@ -608,57 +481,34 @@ export default function ChatPage() {
 
                     const isMine = msg.is_mine;
                     return (
-                      <div key={msg.id} className="flex flex-col space-y-4">
+                      <div key={msg.id} className="flex flex-col">
                         {showHeader && (
-                          <div className="flex justify-center my-6">
-                            <span
-                              className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm border ${
-                                isDark
-                                  ? "bg-white/5 border-white/5 text-white/40"
-                                  : "bg-neutral-100 border-black/5 text-black/40"
-                              }`}
-                            >
+                          <div className="my-4 flex justify-center">
+                            <span className="rounded-full border border-border bg-card px-3 py-1 text-2xs font-bold uppercase tracking-wide text-muted-foreground shadow-sm">
                               {formatMessageDate(msgTime)}
                             </span>
                           </div>
                         )}
 
-                        <div
-                          className={`flex ${
-                            isMine ? "justify-end" : "justify-start"
-                          }`}
-                        >
+                        <div className={`mb-1.5 flex ${isMine ? "justify-end" : "justify-start"}`}>
                           <div
-                            className={`group relative px-4 py-1 rounded-3xl text-sm font-medium shadow-sm transition-all duration-300 hover:shadow-lg max-w-[85%] sm:max-w-[70%] wrap-break-words whitespace-pre-wrap break-all border flex flex-col gap-1 ${
-                              isMine
-                                ? "bg-red-600 text-white border-red-500 rounded-tr-sm"
-                                : isDark
-                                ? "bg-white/5 text-white border-white/5 rounded-tl-sm"
-                                : "bg-white text-black border-black/5 rounded-tl-sm"
-                            }`}
+                            className={`max-w-[80%] whitespace-pre-wrap break-words rounded-2xl px-3.5 py-2 text-sm shadow-sm sm:max-w-[70%] ${isMine
+                              ? "rounded-br-md bg-primary text-primary-foreground"
+                              : "rounded-bl-md border border-border bg-card text-foreground"
+                              }`}
                           >
                             {msg.file ? (
-                              <a
-                                href={msg.file}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="underline font-bold"
-                              >
-                                📎 Encrypted Attachment
+                              <a href={msg.file} target="_blank" rel="noreferrer" className="font-semibold underline">
+                                📎 Attachment
                               </a>
                             ) : (
-                              msg.text
+                              <span>{msg.text}</span>
                             )}
-                            <div
-                              className={`flex items-center justify-end gap-1.5 ${
-                                isMine ? "text-white/50" : "opacity-30"
-                              }`}
-                            >
-                              <span className="text-[9px] font-black uppercase tracking-tighter">
+                            <div className={`mt-0.5 flex items-center justify-end ${isMine ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
+                              <span className="text-3xs font-medium">
                                 {new Date(msgTime).toLocaleTimeString([], {
                                   hour: "2-digit",
                                   minute: "2-digit",
-                                  hour12: false,
                                 })}
                               </span>
                             </div>
@@ -674,70 +524,50 @@ export default function ChatPage() {
 
             {/* TYPING INDICATOR */}
             {typingUser && (
-              <div
-                className={`px-8 py-2 text-xs font-medium flex items-center gap-2 ${
-                  isDark ? "text-neutral-400" : "text-neutral-500"
-                }`}
-              >
+              <div className="flex items-center gap-2 bg-muted/30 px-5 pb-1 text-xs font-medium text-muted-foreground">
                 <span>{typingUser} is typing</span>
                 <TypingDots />
               </div>
             )}
 
             {/* INPUT AREA */}
-            <div
-              className={`p-8 border-t ${
-                isDark
-                  ? "bg-[#0a0a0a] border-white/5"
-                  : "bg-white border-black/5"
-              }`}
-            >
-              {/* Offline warning banner */}
+            <div className="border-t border-border bg-card p-3 md:p-4">
               {!isReady && selectedRoom && (
-                <div className="mb-3 text-center text-[10px] font-black uppercase tracking-widest text-amber-500 opacity-70">
+                <div className="mb-2 text-center text-2xs font-bold uppercase tracking-wide text-amber-500">
                   Reconnecting...
                 </div>
               )}
-              <div
-                className={`flex items-center gap-4 rounded-3xl px-6 py-4 border transition-all ${
-                  isDark
-                    ? "bg-white/5 border-white/5 focus-within:border-red-500/50"
-                    : "bg-neutral-50 border-black/5 focus-within:border-red-500/50"
-                }`}
-              >
-                <input
-                  className={`flex-1 bg-transparent outline-none text-sm font-bold placeholder:opacity-30 ${text}`}
-                  placeholder="TRANSMIT INTELLIGENCE..."
-                  value={newMessage}
-                  onChange={(e) => handleTyping(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-                />
+              <div className="flex items-center gap-2">
+                <div className="flex flex-1 items-center rounded-2xl border border-input bg-muted/40 px-4 py-2.5 transition-all focus-within:border-primary focus-within:ring-2 focus-within:ring-ring/40">
+                  <input
+                    className="w-full bg-transparent text-sm font-medium text-foreground outline-none placeholder:text-muted-foreground"
+                    placeholder="Type a message..."
+                    value={newMessage}
+                    onChange={(e) => handleTyping(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+                  />
+                </div>
                 <button
                   onClick={sendMessage}
                   disabled={!newMessage.trim() || !isReady}
-                  className={`h-12 w-12 flex items-center justify-center rounded-2xl shadow-xl transition-all duration-300 ${
-                    newMessage.trim() && isReady
-                      ? "bg-red-600 text-white shadow-red-600/30 hover:scale-110 active:scale-95 translate-x-2"
-                      : "bg-neutral-100 dark:bg-white/5 text-neutral-400 cursor-not-allowed"
-                  }`}
+                  className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl transition-all ${newMessage.trim() && isReady
+                    ? "bg-primary text-primary-foreground shadow-sm shadow-primary/20 hover:bg-primary-hover active:scale-95"
+                    : "cursor-not-allowed bg-muted text-muted-foreground"
+                    }`}
                   aria-label="Send message"
                 >
-                  <MdSend size={24} />
+                  <MdSend size={20} />
                 </button>
               </div>
             </div>
           </>
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center animate-fadeIn">
-            <div className="h-32 w-32 bg-black/5 dark:bg-white/5 rounded-[40px] flex items-center justify-center text-red-600 mb-8 shadow-inner">
-              <MdChatBubbleOutline size={64} className="opacity-40" />
+          <div className="flex flex-1 flex-col items-center justify-center gap-3 animate-fadeIn">
+            <div className="flex h-24 w-24 items-center justify-center rounded-3xl bg-primary-soft text-primary">
+              <MdChatBubbleOutline size={48} />
             </div>
-            <h2 className={`text-2xl font-black tracking-tighter mb-2 ${text}`}>
-              QKICS <span className="text-red-600">Secure Comm</span>
-            </h2>
-            <p className="opacity-30 font-bold uppercase text-[10px] tracking-[0.4em]">
-              Establish valid connection to begin.
-            </p>
+            <h2 className="text-lg font-bold tracking-tight text-foreground">Your Messages</h2>
+            <p className="text-sm text-muted-foreground">Select a conversation to start chatting.</p>
           </div>
         )}
       </main>

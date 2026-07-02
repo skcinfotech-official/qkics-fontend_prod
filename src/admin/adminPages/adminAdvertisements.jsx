@@ -295,7 +295,7 @@ export default function AdminAdvertisements({ theme }) {
             {/* Filters Area */}
             <div className={`p-4 rounded-xl border flex flex-col xl:flex-row gap-4 justify-between items-center ${isDark ? "bg-[#111111] border-gray-800" : "bg-white border-gray-200 shadow-sm"}`}>
                 <div className={`relative w-full xl:max-w-md flex items-center`}>
-                    <FaSearch className={`absolute left-3 text-[0.8rem] ${isDark ? "text-gray-500" : "text-gray-400"}`} />
+                    <FaSearch className={`absolute left-3 text-sm ${isDark ? "text-gray-500" : "text-gray-400"}`} />
                     <input
                         type="text"
                         placeholder="Search ads by title, description..."
@@ -368,32 +368,32 @@ export default function AdminAdvertisements({ theme }) {
                                         <td className="py-3 px-5">
                                             <div>
                                                 <p className={`font-medium ${isDark ? "text-gray-200" : "text-gray-900"}`}>{ad.title}</p>
-                                                <p className={`text-[0.75rem] truncate max-w-[200px] ${isDark ? "text-gray-500" : "text-gray-500"}`}>{ad.description}</p>
+                                                <p className={`text-xs truncate max-w-[200px] ${isDark ? "text-gray-500" : "text-gray-500"}`}>{ad.description}</p>
                                             </div>
                                         </td>
                                         <td className="py-3 px-5">
-                                            <span className={`px-2.5 py-1 rounded-full text-[0.7rem] font-medium capitalize bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400`}>
+                                            <span className={`px-2.5 py-1 rounded-full text-xs font-medium capitalize bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400`}>
                                                 {formatPlacement(ad.placement)}
                                             </span>
                                         </td>
                                         <td className="py-3 px-5">
                                             <div className="flex items-center gap-2">
                                                 {ad.media_type === "image" ? <FaImage className="text-gray-400" /> : <FaVideo className="text-gray-400" />}
-                                                <span className={`text-[0.8rem] capitalize ${isDark ? "text-gray-300" : "text-gray-700"}`}>{ad.media_type}</span>
+                                                <span className={`text-sm capitalize ${isDark ? "text-gray-300" : "text-gray-700"}`}>{ad.media_type}</span>
                                             </div>
                                         </td>
                                         <td className="py-3 px-5 whitespace-nowrap">
                                             <div className="flex flex-col">
-                                                <span className={`text-[0.8rem] ${isDark ? "text-gray-400" : "text-gray-600"}`}>
-                                                    <span className="font-semibold text-[0.7rem]">Start:</span> {ad.start_datetime ? new Date(ad.start_datetime).toLocaleDateString() : "N/A"}
+                                                <span className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+                                                    <span className="font-semibold text-xs">Start:</span> {ad.start_datetime ? new Date(ad.start_datetime).toLocaleDateString() : "N/A"}
                                                 </span>
-                                                <span className={`text-[0.8rem] ${isDark ? "text-gray-400" : "text-gray-600"}`}>
-                                                    <span className="font-semibold text-[0.7rem]">End:</span> {ad.end_datetime ? new Date(ad.end_datetime).toLocaleDateString() : "N/A"}
+                                                <span className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+                                                    <span className="font-semibold text-xs">End:</span> {ad.end_datetime ? new Date(ad.end_datetime).toLocaleDateString() : "N/A"}
                                                 </span>
                                             </div>
                                         </td>
                                         <td className="py-3 px-5 text-center">
-                                            <span className={`px-2.5 py-1 rounded-full text-[0.7rem] font-medium uppercase ${getStatusStyle(ad.is_active)}`}>
+                                            <span className={`px-2.5 py-1 rounded-full text-xs font-medium uppercase ${getStatusStyle(ad.is_active)}`}>
                                                 {ad.is_active ? "Active" : "Inactive"}
                                             </span>
                                         </td>
@@ -466,7 +466,7 @@ export default function AdminAdvertisements({ theme }) {
                         <div className={`flex items-start justify-between pb-4 border-b ${isDark ? "border-gray-800" : "border-gray-200"}`}>
                             <div>
                                 <h3 className="text-xl font-bold tracking-tight mb-1">{viewModal.ad.title}</h3>
-                                <span className={`px-2 py-0.5 rounded text-[0.65rem] font-bold uppercase ${getStatusStyle(viewModal.ad.is_active)}`}>
+                                <span className={`px-2 py-0.5 rounded text-2xs font-bold uppercase ${getStatusStyle(viewModal.ad.is_active)}`}>
                                     {viewModal.ad.is_active ? "Active" : "Inactive"}
                                 </span>
                             </div>
@@ -499,15 +499,15 @@ export default function AdminAdvertisements({ theme }) {
                                     <h4 className={`text-xs font-bold uppercase tracking-wider mb-3 ${isDark ? "text-gray-500" : "text-gray-500"}`}>Ad Info</h4>
                                     <div className="space-y-3">
                                         <div>
-                                            <p className={`text-[0.65rem] uppercase font-bold tracking-wider ${isDark ? "text-gray-500" : "text-gray-500"}`}>Placement</p>
+                                            <p className={`text-2xs uppercase font-bold tracking-wider ${isDark ? "text-gray-500" : "text-gray-500"}`}>Placement</p>
                                             <p className="text-sm font-medium">{formatPlacement(viewModal.ad.placement)}</p>
                                         </div>
                                         <div>
-                                            <p className={`text-[0.65rem] uppercase font-bold tracking-wider ${isDark ? "text-gray-500" : "text-gray-500"}`}>Media Type</p>
+                                            <p className={`text-2xs uppercase font-bold tracking-wider ${isDark ? "text-gray-500" : "text-gray-500"}`}>Media Type</p>
                                             <p className="text-sm font-medium capitalize">{viewModal.ad.media_type}</p>
                                         </div>
                                         <div>
-                                            <p className={`text-[0.65rem] uppercase font-bold tracking-wider ${isDark ? "text-gray-500" : "text-gray-500"}`}>Created By</p>
+                                            <p className={`text-2xs uppercase font-bold tracking-wider ${isDark ? "text-gray-500" : "text-gray-500"}`}>Created By</p>
                                             <p className="text-sm font-medium">{viewModal.ad.created_by || "System"}</p>
                                         </div>
                                     </div>
@@ -515,15 +515,15 @@ export default function AdminAdvertisements({ theme }) {
                                 <div className={`p-4 rounded-lg border flex flex-col gap-3 ${isDark ? "bg-gray-900/50 border-gray-800" : "bg-gray-50 border-gray-200"}`}>
                                     <h4 className={`text-xs font-bold uppercase tracking-wider mb-0 ${isDark ? "text-gray-500" : "text-gray-500"}`}>Dates</h4>
                                     <div>
-                                        <p className={`text-[0.65rem] uppercase font-bold tracking-wider ${isDark ? "text-gray-500" : "text-gray-500"}`}>Start Datetime</p>
+                                        <p className={`text-2xs uppercase font-bold tracking-wider ${isDark ? "text-gray-500" : "text-gray-500"}`}>Start Datetime</p>
                                         <p className="text-sm font-medium">{viewModal.ad.start_datetime ? new Date(viewModal.ad.start_datetime).toLocaleString() : "N/A"}</p>
                                     </div>
                                     <div>
-                                        <p className={`text-[0.65rem] uppercase font-bold tracking-wider ${isDark ? "text-gray-500" : "text-gray-500"}`}>End Datetime</p>
+                                        <p className={`text-2xs uppercase font-bold tracking-wider ${isDark ? "text-gray-500" : "text-gray-500"}`}>End Datetime</p>
                                         <p className="text-sm font-medium">{viewModal.ad.end_datetime ? new Date(viewModal.ad.end_datetime).toLocaleString() : "N/A"}</p>
                                     </div>
                                     <div>
-                                        <p className={`text-[0.65rem] uppercase font-bold tracking-wider ${isDark ? "text-gray-500" : "text-gray-500"}`}>Created At</p>
+                                        <p className={`text-2xs uppercase font-bold tracking-wider ${isDark ? "text-gray-500" : "text-gray-500"}`}>Created At</p>
                                         <p className="text-sm font-medium">{viewModal.ad.created_at ? new Date(viewModal.ad.created_at).toLocaleString() : "N/A"}</p>
                                     </div>
                                 </div>
@@ -538,12 +538,12 @@ export default function AdminAdvertisements({ theme }) {
                                             <FaLink className="text-sm" />
                                         </div>
                                         <div>
-                                            <p className={`text-[0.65rem] uppercase font-bold tracking-wider ${isDark ? "text-gray-500" : "text-gray-500"}`}>Redirect URL</p>
+                                            <p className={`text-2xs uppercase font-bold tracking-wider ${isDark ? "text-gray-500" : "text-gray-500"}`}>Redirect URL</p>
                                             <a href={viewModal.ad.redirect_url} target="_blank" rel="noreferrer" className="text-sm font-medium text-blue-500 hover:underline">{viewModal.ad.redirect_url || "No URL provided"}</a>
                                         </div>
                                     </div>
                                     <div>
-                                        <p className={`text-[0.65rem] uppercase font-bold tracking-wider ${isDark ? "text-gray-500" : "text-gray-500"}`}>Button Text</p>
+                                        <p className={`text-2xs uppercase font-bold tracking-wider ${isDark ? "text-gray-500" : "text-gray-500"}`}>Button Text</p>
                                         <p className="text-sm font-medium">{viewModal.ad.button_text || "Default"}</p>
                                     </div>
                                 </div>

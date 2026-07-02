@@ -186,7 +186,7 @@ export default function InvestorBookSession() {
               <FiArrowLeft size={20} />
             </button>
             <div>
-              <h1 className="text-4xl md:text-5xl font-black tracking-tight">
+              <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
                 Select <span className="text-red-600">Session</span>
               </h1>
               <p className={`text-sm font-medium mt-2 opacity-60`}>
@@ -228,7 +228,7 @@ export default function InvestorBookSession() {
                               {startTime}
                             </div>
 
-                            <div className={`flex items-center gap-4 text-[10px] font-black uppercase tracking-widest opacity-60`}>
+                            <div className={`flex items-center gap-4 text-2xs font-black uppercase tracking-widest opacity-60`}>
                               <div className="flex items-center gap-1.5 bg-neutral-500/10 px-2.5 py-1 rounded-full text-red-600 dark:text-red-400">
                                 <FiClock size={12} />
                                 {slot.duration_minutes} MIN

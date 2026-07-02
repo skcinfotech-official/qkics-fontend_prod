@@ -44,7 +44,7 @@ export default function CompanyCard({ company, isDark }) {
           </div>
 
           {company.industry && (
-            <div className={`flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest  ${isDark ? "text-red-400" : "text-red-600"}`}>
+            <div className={`flex items-center gap-1.5 text-2xs font-black uppercase tracking-widest  ${isDark ? "text-red-400" : "text-red-600"}`}>
               <FaBriefcase size={10} />
               {company.industry}
             </div>
@@ -58,12 +58,12 @@ export default function CompanyCard({ company, isDark }) {
             {company.location && (
               <div className="flex items-center gap-2">
                 <FaMapMarkerAlt size={10} className="text-red-500 opacity-60" />
-                <span className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? "text-neutral-500" : "text-neutral-400"}`}>
+                <span className={`text-2xs font-bold uppercase tracking-widest ${isDark ? "text-neutral-500" : "text-neutral-400"}`}>
                   {company.location}
                 </span>
               </div>
             )}
-            <span className={`text-[9px] font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity ${isDark ? "text-red-400" : "text-red-600"}`}>
+            <span className={`text-2xs font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity ${isDark ? "text-red-400" : "text-red-600"}`}>
               View Profile
             </span>
           </div>

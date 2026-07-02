@@ -1,21 +1,16 @@
 // src/profiles/normalProfile.jsx
 import { useEffect, useState } from "react";
-import { CiEdit } from "react-icons/ci";
-import { MdEdit } from "react-icons/md";
+import { MdEdit, MdOutlineUpgrade } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { clearPostViewState } from "../redux/slices/postViewSlice";
-import { FaUser, FaRocket, FaGraduationCap, FaCrown } from "react-icons/fa";
-import { MdOutlineUpgrade } from "react-icons/md";
-
+import { FaRocket, FaGraduationCap, FaCrown } from "react-icons/fa";
+import { FiX } from "react-icons/fi";
 
 import axiosSecure from "../components/utils/axiosSecure";
 import { useAlert } from "../context/AlertContext";
-import { useConfirm } from "../context/ConfirmContext";
-
 
 // Redux
-import { loadUserPosts, removePost } from "../redux/slices/postsSlice";
+import { loadUserPosts } from "../redux/slices/postsSlice";
 import {
   fetchUserProfile,
   setActiveProfileData,
@@ -24,12 +19,12 @@ import {
 } from "../redux/slices/userSlice";
 import { resolveMedia } from "../components/utils/mediaUrl";
 
-
 // UI Components
 import UserDetails from "../profiles/basicDetails/userDetails";
 import UserPosts from "../profiles/basicDetails/userPosts";
 import UserBadge from "../components/ui/UserBadge";
 import ModalOverlay from "../components/ui/ModalOverlay";
+import { Button } from "../components/ui";
 import useModalEscape from "../components/hooks/useModalEscape";
 
 export default function NormalProfile({
@@ -37,34 +32,20 @@ export default function NormalProfile({
   readOnly = false,
   disableSelfFetch = false,
 }) {
-  const { theme, activeProfileData, data: loggedUser, picVersion } = useSelector((state) => state.user);
+  const { activeProfileData, data: loggedUser, picVersion } = useSelector((state) => state.user);
   const profile = activeProfileData?.profile || propProfile;
 
   const profileUser = profile?.user || profile || {};
   const isOwnProfile = loggedUser?.username === profileUser.username;
   const hasSubscription = profileUser.is_subscribed || (isOwnProfile && loggedUser?.is_subscribed);
 
-  const isDark = theme === "dark";
   const { showAlert } = useAlert();
-  const { showConfirm } = useConfirm();
 
   const [showImageModal, setShowImageModal] = useState(false);
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const postView = useSelector((state) => state.postView);
-
-
-  /* -------------------------------
-      TAB HANDLING
-  ------------------------------- */
-  const [activeTab, setActiveTab] = useState(() => {
-    return sessionStorage.getItem("normalProfileTab") || "details";
-  });
-
-  useEffect(() => {
-    sessionStorage.setItem("normalProfileTab", activeTab);
-  }, [activeTab]);
 
   /* -------------------------------
       USER + EDIT FORM STATE
@@ -75,9 +56,7 @@ export default function NormalProfile({
     if (profile) setProfileState(profile);
   }, [profile]);
 
-
   const [editMode, setEditMode] = useState(false);
-
 
   const [editData, setEditData] = useState({
     first_name: "",
@@ -87,7 +66,6 @@ export default function NormalProfile({
   });
 
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-
 
   /* -------------------------------
       LOAD USER + DISPATCH POSTS
@@ -111,8 +89,6 @@ export default function NormalProfile({
         });
 
         dispatch(loadUserPosts(user.username));
-
-        // ✅ ADD THIS LINE (sync Redux)
         dispatch(fetchUserProfile());
       } catch (err) {
         console.log("Profile load error:", err);
@@ -127,13 +103,6 @@ export default function NormalProfile({
       }
     };
   }, [disableSelfFetch, dispatch]);
-
-
-
-  /* -------------------------------
-      When Redux posts load → sync locally
-  ------------------------------- */
-  // Removed local posts sync as UserPosts now uses Redux directly
 
   /* -------------------------------
       SAVE USER INFO
@@ -158,7 +127,6 @@ export default function NormalProfile({
         phone: savedUser.phone || "",
       });
 
-      // ✅ ADD THIS LINE
       dispatch(fetchUserProfile());
 
       setEditMode(false);
@@ -167,7 +135,6 @@ export default function NormalProfile({
       showAlert("Failed updating profile", "error");
     }
   };
-
 
   /* -------------------------------
       UPDATE PROFILE PICTURE
@@ -196,24 +163,14 @@ export default function NormalProfile({
     }
   };
 
-
-  // Delete logic moved to UserPosts component
-
-
-  // Restore tab + scroll IF coming back from comments
+  // Restore scroll IF coming back from comments
   useEffect(() => {
     if (postView.from === "normal-profile") {
-      if (postView.tab) {
-        setActiveTab(postView.tab);
-      }
-
       setTimeout(() => {
         window.scrollTo(0, postView.scroll || 0);
       }, 50);
     }
   }, [postView]);
-
-
 
   useEffect(() => {
     if (!profile || !readOnly) return;
@@ -226,26 +183,21 @@ export default function NormalProfile({
     });
   }, [profile, readOnly]);
 
-
-
-
   useEffect(() => {
     if (!profile || !readOnly) return;
 
     dispatch(loadUserPosts(profile.username));
   }, [profile, readOnly, dispatch]);
 
-
-
   /* -------------------------------
       LOADING STATE
   ------------------------------- */
   if (!profileUser) {
     return (
-      <div className={`min-h-screen flex items-center justify-center ${isDark ? "bg-[#0a0a0a]" : "bg-[#f8f9fa]"}`}>
+      <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
-          <span className={`text-[10px] font-black uppercase tracking-[0.3em] opacity-30 ${isDark ? "text-white" : "text-black"}`}>Loading Profile...</span>
+          <div className="h-10 w-10 animate-spin rounded-full border-2 border-muted border-t-primary" />
+          <span className="text-2xs font-bold uppercase tracking-[0.3em] text-muted-foreground">Loading Profile...</span>
         </div>
       </div>
     );
@@ -254,150 +206,111 @@ export default function NormalProfile({
   /* -------------------------------
       MAIN UI
   ------------------------------- */
-  const text = isDark ? "text-white" : "text-black";
-
   return (
-    <div className={`min-h-screen px-4 py-4 md:px-8 ${isDark ? "bg-[#0a0a0a]" : "bg-[#f8f9fa]"}`}>
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-background text-foreground lg:h-[calc(100vh-5rem)] lg:min-h-0 lg:overflow-hidden">
+      <div className="mx-auto h-full max-w-6xl px-4 sm:px-6 lg:px-8 pt-6 pb-12 lg:pb-0">
+        <div className="grid grid-cols-1 gap-6 lg:h-full lg:grid-cols-12">
 
-        {/* HEADER */}
-        <div className={`premium-card p-4 md:p-7 mb-5  ${isDark ? "bg-neutral-900" : "bg-white"}`}>
-          <div className="flex flex-col md:flex-row items-center md:items-start gap-8 md:gap-12">
+          {/* LEFT — PROFILE (own scroll) */}
+          <div className="space-y-6 no-scrollbar lg:col-span-5 lg:h-full lg:overflow-y-auto lg:pb-6">
 
-            {/* PROFILE PICTURE */}
-            <div className="relative group">
-              <div className="w-32 h-32 md:w-40 md:h-40 rounded-3xl overflow-hidden shadow-2xl ring-4 ring-transparent group-hover:ring-red-500/20 transition-all duration-700">
-                {profileUser.profile_picture ? (
-                  <img
-                    loading="lazy"
-                    src={`${resolveMedia(profileUser.profile_picture)}?v=${picVersion}`}
-                    alt="Profile"
-                    className="w-full h-full object-cover transform md:group-hover:scale-110 transition-transform duration-700 cursor-pointer"
-                    onClick={() => setShowImageModal(true)}
-                  />
-                ) : (
-                  <div className="w-full h-full bg-red-600 flex items-center justify-center text-5xl font-black text-white">
-                    {profileUser?.first_name
-                      ? profileUser.first_name.charAt(0).toUpperCase()
-                      : profileUser?.username?.charAt(0).toUpperCase()}
-                  </div>
-                )}
+            {/* IDENTITY CARD */}
+            <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+              <div className="relative h-24 bg-gradient-to-br from-primary via-primary-hover to-primary/60">
+                <div className="absolute inset-0 opacity-20 [background-image:radial-gradient(circle_at_1px_1px,white_1px,transparent_0)] [background-size:18px_18px]" />
               </div>
 
-              {/* EDIT BUTTON */}
-              {!readOnly && (
-                <label className="absolute -bottom-2 -right-2 h-10 w-10 bg-black text-white rounded-xl flex items-center justify-center shadow-xl cursor-pointer hover:bg-red-600 transition-colors z-20">
-                  <MdEdit size={16} />
-                  <input type="file" accept="image/*" onChange={handleProfilePicUpload} className="hidden" />
-                </label>
-              )}
-            </div>
-
-            {/* INFO */}
-            <div className="flex-1 text-center md:text-left">
-              <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-4">
-                <div>
-                  <h1 className={`text-4xl md:text-5xl font-black tracking-tighter mb-2 ${isDark ? "text-white" : "text-black"}`}>
-                    {profileUser.first_name || profileUser.last_name
-                      ? `${profileUser.first_name} ${profileUser.last_name}`
-                      : profileUser.username}
-                  </h1>
-                  <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-blue-500/10 text-blue-500 border border-blue-500/20">
-                      @{profileUser?.username}
-                    </span>
-                    <UserBadge userType={profileUser.user_type || "normal"} />
-                    {hasSubscription && (
-                      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-amber-500/10 text-amber-600 border border-amber-500/20 shadow-lg shadow-amber-500/5 transition-all">
-                        <FaCrown className="mr-0.5 text-amber-600" size={12} /> Premium
-                      </span>
+              <div className="px-5 pb-5">
+                <div className="group relative -mt-10 inline-block">
+                  <div className="h-20 w-20 overflow-hidden rounded-2xl bg-card ring-4 ring-card">
+                    {profileUser.profile_picture ? (
+                      <img
+                        loading="lazy"
+                        src={`${resolveMedia(profileUser.profile_picture)}?v=${picVersion}`}
+                        alt="Profile"
+                        className="h-full w-full cursor-pointer object-cover transition-transform duration-500 group-hover:scale-105"
+                        onClick={() => setShowImageModal(true)}
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-primary text-3xl font-bold text-primary-foreground">
+                        {profileUser?.first_name
+                          ? profileUser.first_name.charAt(0).toUpperCase()
+                          : profileUser?.username?.charAt(0).toUpperCase()}
+                      </div>
                     )}
                   </div>
-                </div>
 
-                {/* UPGRADE BUTTON */}
-                <div className="flex-shrink-0 mt-4 md:mt-0">
                   {!readOnly && (
-                    <button
-                      onClick={() => setShowUpgradeModal(true)}
-                      className="flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-red-600 to-orange-600 text-white rounded-xl text-[11px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl shadow-red-600/20"
-                    >
-                      <MdOutlineUpgrade size={18} />
-                      Upgrade Profile
-                    </button>
+                    <label className="absolute -bottom-2 -right-2 z-20 flex h-8 w-8 cursor-pointer items-center justify-center rounded-xl bg-foreground text-background shadow-lg transition-colors hover:bg-primary hover:text-primary-foreground">
+                      <MdEdit size={14} />
+                      <input type="file" accept="image/*" onChange={handleProfilePicUpload} className="hidden" />
+                    </label>
                   )}
                 </div>
+
+                <h1 className="mt-3 truncate text-lg font-bold tracking-tight text-foreground">
+                  {profileUser.first_name || profileUser.last_name
+                    ? `${profileUser.first_name} ${profileUser.last_name}`
+                    : profileUser.username}
+                </h1>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <span className="inline-flex items-center rounded-full bg-muted px-3 py-1 text-2xs font-bold uppercase tracking-wide text-muted-foreground">
+                    @{profileUser?.username}
+                  </span>
+                  <UserBadge userType={profileUser.user_type || "normal"} />
+                  {hasSubscription && (
+                    <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1 text-2xs font-bold uppercase tracking-wide text-amber-600 dark:text-amber-400">
+                      <FaCrown size={11} /> Premium
+                    </span>
+                  )}
+                </div>
+
+                {!readOnly && (
+                  <Button fullWidth onClick={() => setShowUpgradeModal(true)} className="mt-4">
+                    <MdOutlineUpgrade size={17} />
+                    Upgrade Profile
+                  </Button>
+                )}
               </div>
             </div>
+
+            {/* ABOUT */}
+            <UserDetails
+              editMode={!readOnly && editMode}
+              setEditMode={readOnly ? () => { } : setEditMode}
+              editData={editData}
+              setEditData={readOnly ? () => { } : setEditData}
+              handleSave={handleSaveUser}
+            />
           </div>
-        </div>
 
-        {/* TABS */}
-        <div className={`sticky top-16 z-40 flex justify-center mb-8 py-4 transition-all duration-300 ${isDark ? 'bg-[#0a0a0a]/90 border-white/5' : 'bg-[#f8f9fa]/90 border-black/5'} backdrop-blur-xl border-b -mx-4 px-4 sm:-mx-8 sm:px-8`}>
-          <div className="inline-flex flex-wrap justify-center p-1.5 rounded-2xl glass transition-all shadow-xl">
-            {['details', 'posts'].map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`px-8 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300 ${activeTab === tab
-                  ? "bg-red-600 text-white shadow-lg shadow-red-600/30"
-                  : "text-neutral-500 hover:text-black dark:hover:text-white"
-                  }`}
-              >
-                {tab === "details" ? "About" : "Posts"}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* TAB CONTENT */}
-        <div className="mt-6 flex flex-col md:flex-row gap-8">
-          <div className="flex-1 min-w-0 animate-fadeIn">
-            {activeTab === "details" && (
-              <div className="relative">
-                <UserDetails
-                  editMode={!readOnly && editMode}
-                  setEditMode={readOnly ? () => { } : setEditMode}
-                  editData={editData}
-                  setEditData={readOnly ? () => { } : setEditData}
-                  handleSave={handleSaveUser}
-                />
-              </div>
-            )}
-
-            {activeTab === "posts" && (
-              <UserPosts />
-            )}
+          {/* RIGHT — POSTS (own scroll) */}
+          <div className="no-scrollbar lg:col-span-7 lg:h-full lg:overflow-y-auto lg:pb-6">
+            <UserPosts />
           </div>
         </div>
       </div>
 
       {/* UPGRADE MODAL */}
       {showUpgradeModal && (
-        <UpgradeModal
-          close={() => setShowUpgradeModal(false)}
-          navigate={navigate}
-          isDark={isDark}
-        />
+        <UpgradeModal close={() => setShowUpgradeModal(false)} navigate={navigate} />
       )}
 
       {/* PROFILE PICTURE MODAL */}
       {showImageModal && (
         <ModalOverlay close={() => setShowImageModal(false)}>
-          <div className={`relative p-8 rounded-3xl shadow-2xl flex flex-col items-center justify-center animate-pop ${isDark ? "bg-neutral-900 border border-neutral-800" : "bg-white"}`}>
+          <div className="relative flex animate-pop flex-col items-center justify-center rounded-2xl border border-border bg-card p-6 shadow-2xl">
             <button
               onClick={() => setShowImageModal(false)}
-              className={`absolute top-4 right-4 p-2 rounded-full transition-all ${isDark ? "text-neutral-400 hover:text-white hover:bg-neutral-800" : "text-neutral-500 hover:text-black hover:bg-neutral-100"
-                }`}
+              className="absolute right-4 top-4 rounded-full p-2 text-muted-foreground transition-all hover:bg-muted hover:text-foreground"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <FiX size={20} />
             </button>
             <img
               loading="lazy"
               src={`${resolveMedia(profileUser.profile_picture)}?v=${picVersion}`}
-              className="w-80 h-80 md:w-96 md:h-96 rounded-2xl object-cover shadow-2xl ring-4 ring-white/10"
+              alt="Profile"
+              className="h-72 w-72 rounded-xl object-cover md:h-80 md:w-80"
               onClick={(e) => e.stopPropagation()}
             />
           </div>
@@ -408,47 +321,39 @@ export default function NormalProfile({
 }
 
 /* ----------------------------------------------------
-   UPGRADE MODAL — Always Works
+   UPGRADE MODAL
 ---------------------------------------------------- */
-function UpgradeModal({ close, navigate, isDark }) {
+function UpgradeModal({ close, navigate }) {
   useModalEscape(close);
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn">
-      <div
-        className={`w-full max-w-2xl rounded-3xl p-8 shadow-2xl transform transition-all animate-scaleIn ${isDark ? "bg-neutral-900 border border-white/5" : "bg-white"
-          }`}
-      >
-        <div className="flex justify-between items-center mb-8">
+    <div className="fixed inset-0 z-50 flex animate-fadeIn items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+      <div className="w-full max-w-2xl animate-scaleIn rounded-2xl border border-border bg-card p-6 shadow-2xl md:p-8">
+        <div className="mb-6 flex items-start justify-between">
           <div>
-            <h2 className={`text-3xl font-black tracking-tighter ${isDark ? "text-white" : "text-black"}`}>Method of Discovery</h2>
-            <p className={`text-sm mt-1 ${isDark ? "text-neutral-400" : "text-neutral-500"}`}>Choose how you want to contribute to the ecosystem.</p>
+            <h2 className="text-xl font-bold tracking-tight text-foreground md:text-2xl">Upgrade Your Profile</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Choose how you want to contribute to the ecosystem.</p>
           </div>
           <button
             onClick={close}
-            className={`p-2 rounded-full transition-colors ${isDark ? "hover:bg-white/10 text-white" : "hover:bg-black/5 text-black"}`}
+            className="rounded-full p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <FiX size={20} />
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div
             onClick={() => {
               close();
               navigate("/upgrade/expert");
             }}
-            className={`group cursor-pointer p-6 rounded-2xl border transition-all duration-300 hover:shadow-xl ${isDark
-              ? "bg-white/5 border-white/5 hover:bg-white/10 hover:border-red-500/50"
-              : "bg-white border-neutral-200 hover:border-red-500/50"
-              }`}
+            className="group cursor-pointer rounded-xl border border-border bg-card p-5 transition-all duration-300 hover:border-primary/50 hover:shadow-lg"
           >
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-red-500 to-orange-600 flex items-center justify-center text-white mb-4 shadow-lg shadow-red-500/30 group-hover:scale-110 transition-transform">
-              <FaGraduationCap size={24} />
+            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground transition-transform group-hover:scale-105">
+              <FaGraduationCap size={22} />
             </div>
-            <h3 className={`text-xl font-bold mb-2 ${isDark ? "text-white" : "text-black"}`}>Become an Expert</h3>
-            <p className={`text-sm leading-relaxed ${isDark ? "text-neutral-400" : "text-neutral-500"}`}>Share your specialized knowledge, offer consultations, and mentor others in your field.</p>
+            <h3 className="mb-1 text-base font-bold text-foreground">Become an Expert</h3>
+            <p className="text-sm leading-relaxed text-muted-foreground">Share your specialized knowledge, offer consultations, and mentor others in your field.</p>
           </div>
 
           <div
@@ -456,16 +361,13 @@ function UpgradeModal({ close, navigate, isDark }) {
               close();
               navigate("/upgrade/entrepreneur");
             }}
-            className={`group cursor-pointer p-6 rounded-2xl border transition-all duration-300 hover:shadow-xl ${isDark
-              ? "bg-white/5 border-white/5 hover:bg-white/10 hover:border-blue-500/50"
-              : "bg-white border-neutral-200 hover:border-blue-500/50"
-              }`}
+            className="group cursor-pointer rounded-xl border border-border bg-card p-5 transition-all duration-300 hover:border-primary/50 hover:shadow-lg"
           >
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center text-white mb-4 shadow-lg shadow-blue-500/30 group-hover:scale-110 transition-transform">
-              <FaRocket size={24} />
+            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-foreground text-background transition-transform group-hover:scale-105">
+              <FaRocket size={22} />
             </div>
-            <h3 className={`text-xl font-bold mb-2 ${isDark ? "text-white" : "text-black"}`}>Become an Entrepreneur</h3>
-            <p className={`text-sm leading-relaxed ${isDark ? "text-neutral-400" : "text-neutral-500"}`}>Build your startup profile, showcase your innovations, and connect with investors.</p>
+            <h3 className="mb-1 text-base font-bold text-foreground">Become an Entrepreneur</h3>
+            <p className="text-sm leading-relaxed text-muted-foreground">Build your startup profile, showcase your innovations, and connect with investors.</p>
           </div>
         </div>
       </div>

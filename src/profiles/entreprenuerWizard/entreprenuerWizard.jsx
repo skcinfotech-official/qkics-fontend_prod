@@ -321,7 +321,7 @@ function SubmitNoteModal({ onClose, onSubmit, isDark }) {
       <h2 className="text-xl font-semibold mb-4">Submit Application for Verification</h2>
 
       <div className="mb-4">
-        <label className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40 mb-1 block">
+        <label className="text-2xs font-black uppercase tracking-[0.2em] opacity-40 mb-1 block">
           Admin Review Note (optional)
         </label>
         <textarea

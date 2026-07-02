@@ -195,7 +195,7 @@ export default function BookSession() {
               <FiArrowLeft size={20} />
             </button>
             <div>
-              <h1 className="text-4xl md:text-5xl font-black tracking-tight">
+              <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
                 Select <span className="text-red-600">Session</span>
               </h1>
               <p className={`text-sm font-medium mt-2 opacity-60`}>
@@ -245,7 +245,7 @@ export default function BookSession() {
                               {startTime}
                             </div>
 
-                            <div className={`flex items-center gap-4 text-[10px] font-black uppercase tracking-widest opacity-60`}>
+                            <div className={`flex items-center gap-4 text-2xs font-black uppercase tracking-widest opacity-60`}>
                               <div className="flex items-center gap-1.5 bg-neutral-500/10 px-2.5 py-1 rounded-full text-red-600 dark:text-red-400">
                                 <FiClock size={12} />
                                 {slot.duration_minutes} MIN
@@ -259,13 +259,13 @@ export default function BookSession() {
                               <div className="flex flex-col gap-1.5">
                                 {Number(slot.chat_price) > 0 && (
                                   <div className="flex justify-between items-center w-full">
-                                    <span className="text-[10px] font-black uppercase tracking-widest opacity-40">Chat Price</span>
+                                    <span className="text-2xs font-black uppercase tracking-widest opacity-40">Chat Price</span>
                                     <span className={`text-base font-black ${isSelected ? "text-red-600" : ""}`}>₹{slot.chat_price}</span>
                                   </div>
                                 )}
                                 {Number(slot.video_call_price) > 0 && (
                                   <div className="flex justify-between items-center w-full">
-                                    <span className="text-[10px] font-black uppercase tracking-widest opacity-40">Video Call Price</span>
+                                    <span className="text-2xs font-black uppercase tracking-widest opacity-40">Video Call Price</span>
                                     <span className={`text-base font-black ${isSelected ? "text-red-600" : ""}`}>₹{slot.video_call_price}</span>
                                   </div>
                                 )}
@@ -293,7 +293,7 @@ export default function BookSession() {
             {!selectedSlot ? (
               <div className="flex flex-col items-center justify-center py-12 opacity-30">
                 <FiCheckCircle size={48} className="mb-6 opacity-50" />
-                <p className="text-[10px] text-center font-black uppercase tracking-widest leading-loose">
+                <p className="text-2xs text-center font-black uppercase tracking-widest leading-loose">
                   Select a slot from<br />the calendar to continue
                 </p>
               </div>
@@ -301,13 +301,13 @@ export default function BookSession() {
               <div className="space-y-8 animate-fadeIn">
 
                 <div className={`p-6 rounded-3xl ${isDark ? "bg-white/5" : "bg-neutral-50"}`}>
-                  <p className="text-[10px] font-black uppercase tracking-widest opacity-50 mb-3">Consultation Type</p>
+                  <p className="text-2xs font-black uppercase tracking-widest opacity-50 mb-3">Consultation Type</p>
                   <div className="flex gap-2 mb-5">
                     {Number(selectedSlot.chat_price) > 0 && (
                       <button
                         onClick={() => setBookingType("CHAT")}
                         disabled={!selectedSlot.is_chat_available}
-                        className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${!selectedSlot.is_chat_available ? "opacity-30 cursor-not-allowed grayscale" : ""} ${bookingType === "CHAT"
+                        className={`flex-1 py-3 rounded-xl text-2xs font-black uppercase tracking-widest border transition-all ${!selectedSlot.is_chat_available ? "opacity-30 cursor-not-allowed grayscale" : ""} ${bookingType === "CHAT"
                           ? "bg-red-600 border-red-600 text-white shadow-lg shadow-red-600/20"
                           : "border-neutral-500/20 text-neutral-500 hover:border-neutral-500/40"
                           }`}
@@ -319,7 +319,7 @@ export default function BookSession() {
                       <button
                         onClick={() => setBookingType("VIDEO_CALL")}
                         disabled={!selectedSlot.is_video_call_available}
-                        className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${!selectedSlot.is_video_call_available ? "opacity-30 cursor-not-allowed grayscale" : ""} ${bookingType === "VIDEO_CALL"
+                        className={`flex-1 py-3 rounded-xl text-2xs font-black uppercase tracking-widest border transition-all ${!selectedSlot.is_video_call_available ? "opacity-30 cursor-not-allowed grayscale" : ""} ${bookingType === "VIDEO_CALL"
                           ? "bg-red-600 border-red-600 text-white shadow-lg shadow-red-600/20"
                           : "border-neutral-500/20 text-neutral-500 hover:border-neutral-500/40"
                           }`}
@@ -329,7 +329,7 @@ export default function BookSession() {
                     )}
                   </div>
 
-                  <p className="text-[10px] font-black uppercase tracking-widest opacity-50 mb-2">Selected Time</p>
+                  <p className="text-2xs font-black uppercase tracking-widest opacity-50 mb-2">Selected Time</p>
                   <p className="font-bold text-lg leading-snug">
                     {formatDateTime(selectedSlot.start_datetime).date}
                   </p>
@@ -366,7 +366,7 @@ export default function BookSession() {
                       checked={agreed}
                       onChange={(e) => setAgreed(e.target.checked)}
                     />
-                    <span className="text-[10px] font-black uppercase tracking-widest leading-loose opacity-60 group-hover:opacity-100 transition-opacity">
+                    <span className="text-2xs font-black uppercase tracking-widest leading-loose opacity-60 group-hover:opacity-100 transition-opacity">
                       I agree to the <span className="text-red-600 hover:underline">terms and conditions</span> and acknowledge the cancellation policy
                     </span>
                   </label>
