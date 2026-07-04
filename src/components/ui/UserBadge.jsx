@@ -1,4 +1,4 @@
-import { FaGraduationCap, FaUser, FaBriefcase } from "react-icons/fa";
+import { FaGraduationCap, FaBriefcase } from "react-icons/fa";
 import { IoIosRocket } from "react-icons/io";
 
 export default function UserBadge({ userType }) {
@@ -21,11 +21,8 @@ export default function UserBadge({ userType }) {
                     <FaBriefcase className="mr-1 text-xs" /> Investor
                 </span>
             );
+        // normal (and any non-role user type) → no badge
         default:
-            return (
-                <span className="inline-flex items-center px-2 py-1 rounded-xl text-2xs font-bold uppercase tracking-wider border transition-all border-gray-400 bg-gray-400/10 text-gray-600 dark:border-gray-500 dark:bg-gray-500/20 dark:text-gray-300">
-                    <FaUser className="mr-1 text-xs" /> Normal
-                </span>
-            );
+            return null;
     }
 }
