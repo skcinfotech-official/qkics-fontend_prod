@@ -52,7 +52,7 @@ export default function RefundPolicy() {
 
         <ContentSection title="6. Contact" last>
           <p className="text-sm text-muted-foreground">
-            <span className="font-semibold text-foreground">Email: [your email]</span>
+            <span className="font-semibold text-foreground">Email: kalyaniinfotech2000@gmail.com</span>
           </p>
         </ContentSection>
       </Card>

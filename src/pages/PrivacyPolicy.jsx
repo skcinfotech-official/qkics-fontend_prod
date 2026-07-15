@@ -69,7 +69,7 @@ export default function PrivacyPolicy() {
         </ContentSection>
 
         <ContentSection title="9. Contact Us" last>
-          <p className="text-sm text-muted-foreground">For any questions: <span className="font-semibold text-foreground">Email: [your email]</span></p>
+          <p className="text-sm text-muted-foreground">For any questions: <span className="font-semibold text-foreground">Email: kalyaniinfotech2000@gmail.com</span></p>
         </ContentSection>
       </Card>
     </div>
