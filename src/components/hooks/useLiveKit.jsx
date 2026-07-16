@@ -5,6 +5,7 @@ import {
   Track,
   ConnectionState,
   DataPacket_Kind,
+  DisconnectReason,
   setLogLevel,
 } from "livekit-client";
 
@@ -35,6 +36,9 @@ export function useLiveKit() {
   const [isHandRaised, setIsHandRaised] = useState(false); // local user's own hand
   const [activeSpeakers, setActiveSpeakers] = useState([]); // identities currently speaking
   const [localIdentity, setLocalIdentity] = useState("");   // this client's identity
+  // true when the SERVER ended us (host removed us / room deleted) — the
+  // client should leave the page immediately, not show "Reconnecting…".
+  const [wasRemoved, setWasRemoved] = useState(false);
 
   useEffect(() => {
     setIsScreenShareSupported(
@@ -120,8 +124,12 @@ export function useLiveKit() {
   }, [routeTrackIn]);
 
   // ───────── CONNECT ─────────
-  const connect = useCallback(async (livekitUrl, livekitToken) => {
+  // opts: { cam?: boolean, mic?: boolean } — initial device state chosen on
+  // the pre-join screen. Defaults to both on.
+  const connect = useCallback(async (livekitUrl, livekitToken, opts = {}) => {
     if (connectPromiseRef.current) return connectPromiseRef.current;
+    const wantCam = opts.cam !== false;
+    const wantMic = opts.mic !== false;
 
     const promise = (async () => {
       const room = new Room({
@@ -133,6 +141,18 @@ export function useLiveKit() {
       // CONNECTION STATE
       room.on(RoomEvent.ConnectionStateChanged, (state) => {
         setConnectionState(state);
+      });
+
+      // SERVER-INITIATED DISCONNECT — host removed us / room closed. Signal the
+      // page to exit rather than sitting on "Reconnecting…".
+      room.on(RoomEvent.Disconnected, (reason) => {
+        if (
+          reason === DisconnectReason.PARTICIPANT_REMOVED ||
+          reason === DisconnectReason.ROOM_DELETED ||
+          reason === DisconnectReason.SERVER_SHUTDOWN
+        ) {
+          setWasRemoved(true);
+        }
       });
 
       // TRACK EVENTS — use stable wrappers so we always get the latest routeTrack logic
@@ -259,18 +279,22 @@ export function useLiveKit() {
         await room.connect(livekitUrl.trim(), livekitToken.trim());
 
         try {
-          await room.localParticipant.setCameraEnabled(true);
-          const camPub = room.localParticipant.getTrack(Track.Source.Camera);
-          if (camPub?.track) setLocalVideoTrack(camPub.track);
-          setIsCamOn(true);
+          await room.localParticipant.setCameraEnabled(wantCam);
+          if (wantCam) {
+            const camPub = room.localParticipant.getTrack(Track.Source.Camera);
+            if (camPub?.track) setLocalVideoTrack(camPub.track);
+          } else {
+            setLocalVideoTrack(null);
+          }
+          setIsCamOn(wantCam);
         } catch (camErr) {
           console.warn("Camera failed or not found:", camErr);
           setIsCamOn(false);
         }
 
         try {
-          await room.localParticipant.setMicrophoneEnabled(true);
-          setIsMicOn(true);
+          await room.localParticipant.setMicrophoneEnabled(wantMic);
+          setIsMicOn(wantMic);
         } catch (micErr) {
           console.warn("Microphone failed or not found:", micErr);
           setIsMicOn(false);
@@ -402,6 +426,7 @@ export function useLiveKit() {
     setIsHandRaised(false);
     setActiveSpeakers([]);
     setLocalIdentity("");
+    setWasRemoved(false);
   }, []);
 
   // CLEANUP
@@ -456,6 +481,7 @@ export function useLiveKit() {
     isHandRaised,
     activeSpeakers,
     localIdentity,
+    wasRemoved,
     remoteParticipantCount,
     isConnected: connectionState === ConnectionState.Connected,
   };

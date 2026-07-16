@@ -336,6 +336,131 @@ function GroupStage({
   );
 }
 
+/**
+ * Pre-join "green room": asks for camera/mic permission, shows a self preview
+ * with mic/cam toggles, then a Join button — like every major meeting app.
+ */
+function PreJoinScreen({ onJoin, onCancel }) {
+  const videoRef = useRef(null);
+  const streamRef = useRef(null);
+  const [camOn, setCamOn] = useState(true);
+  const [micOn, setMicOn] = useState(true);
+  const [permError, setPermError] = useState(null);
+  const [ready, setReady] = useState(false);
+
+  // Acquire devices once so the browser shows its permission prompt.
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        if (!active) {
+          stream.getTracks().forEach((t) => t.stop());
+          return;
+        }
+        streamRef.current = stream;
+        if (videoRef.current) videoRef.current.srcObject = stream;
+        setReady(true);
+      } catch (e) {
+        console.warn("PreJoin getUserMedia failed:", e);
+        setPermError("We couldn't access your camera/mic. Check browser permissions — you can still join.");
+        setReady(true);
+      }
+    })();
+    return () => {
+      active = false;
+      streamRef.current?.getTracks().forEach((t) => t.stop());
+    };
+  }, []);
+
+  // Reflect toggles on the preview stream.
+  useEffect(() => {
+    streamRef.current?.getVideoTracks().forEach((t) => (t.enabled = camOn));
+  }, [camOn]);
+  useEffect(() => {
+    streamRef.current?.getAudioTracks().forEach((t) => (t.enabled = micOn));
+  }, [micOn]);
+
+  const handleJoin = () => {
+    // Release the preview devices so LiveKit can re-acquire them cleanly.
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+    onJoin({ cam: camOn, mic: micOn });
+  };
+
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-gradient-to-b from-neutral-900 to-black px-4 py-8 text-white">
+      <div className="text-center">
+        <h1 className="text-lg font-semibold sm:text-xl">Ready to join?</h1>
+        <p className="mt-1 text-sm text-neutral-400">Check your camera and mic before entering.</p>
+      </div>
+
+      {/* Preview */}
+      <div className="relative aspect-video w-full max-w-xl overflow-hidden rounded-2xl bg-neutral-800 ring-1 ring-white/10 shadow-2xl">
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          muted
+          className={`h-full w-full object-cover ${camOn ? "" : "hidden"}`}
+          style={{ transform: "scaleX(-1)" }}
+        />
+        {!camOn && (
+          <div className="flex h-full w-full flex-col items-center justify-center gap-3 bg-gradient-to-br from-neutral-800 to-neutral-900">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/5 ring-1 ring-white/10">
+              <FaVideoSlash className="text-2xl text-neutral-500" />
+            </div>
+            <span className="text-sm text-neutral-400">Camera is off</span>
+          </div>
+        )}
+
+        {/* Device toggles */}
+        <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-2">
+          <button
+            onClick={() => setMicOn((v) => !v)}
+            title={micOn ? "Mute mic" : "Unmute mic"}
+            className={`flex h-11 w-11 items-center justify-center rounded-full transition ${
+              micOn ? "bg-white/10 text-white hover:bg-white/20" : "bg-red-500 text-white hover:bg-red-400"
+            }`}
+          >
+            {micOn ? <FaMicrophone /> : <FaMicrophoneSlash />}
+          </button>
+          <button
+            onClick={() => setCamOn((v) => !v)}
+            title={camOn ? "Turn off camera" : "Turn on camera"}
+            className={`flex h-11 w-11 items-center justify-center rounded-full transition ${
+              camOn ? "bg-white/10 text-white hover:bg-white/20" : "bg-red-500 text-white hover:bg-red-400"
+            }`}
+          >
+            {camOn ? <FaVideo /> : <FaVideoSlash />}
+          </button>
+        </div>
+      </div>
+
+      {permError && (
+        <p className="max-w-xl text-center text-xs text-amber-400">{permError}</p>
+      )}
+
+      {/* Actions */}
+      <div className="flex w-full max-w-xl flex-col gap-3 sm:flex-row">
+        <button
+          onClick={onCancel}
+          className="order-2 flex-1 rounded-xl bg-white/10 px-6 py-3 text-sm font-semibold transition hover:bg-white/20 sm:order-1"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={handleJoin}
+          disabled={!ready}
+          className="order-1 flex-1 rounded-xl bg-red-600 px-6 py-3 text-sm font-semibold shadow-lg shadow-red-600/30 transition hover:bg-red-500 disabled:opacity-50 sm:order-2"
+        >
+          {ready ? "Join now" : "Preparing…"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function VideoCallComponent({ call_room_id, token, onCallEnd }) {
   const remoteAudioRef = useRef(null);
   const screenAudioRef = useRef(null);
@@ -344,6 +469,9 @@ export default function VideoCallComponent({ call_room_id, token, onCallEnd }) {
 
   const lk = useLiveKit();
   const chat = useCallChat(call_room_id, token);
+
+  const [joined, setJoined] = useState(false);
+  const joinPrefsRef = useRef({ cam: true, mic: true });
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -370,6 +498,7 @@ export default function VideoCallComponent({ call_room_id, token, onCallEnd }) {
   }, [chat.messages.length]);
 
   useEffect(() => {
+    if (!joined) return;   // wait until the user joins from the pre-join screen
     (async () => {
       try {
         const roomData = await getCallRoom(call_room_id);
@@ -388,7 +517,7 @@ export default function VideoCallComponent({ call_room_id, token, onCallEnd }) {
         const history = await getCallMessages(call_room_id);
         const noteData = await getMyNote(call_room_id);
         setNote(noteData.content || "");
-        await lk.connect(roomData.livekit_url, roomData.livekit_token);
+        await lk.connect(roomData.livekit_url, roomData.livekit_token, joinPrefsRef.current);
         chat.connect(history);
         if (roomData.scheduled_end) {
           setScheduledEnd(new Date(roomData.scheduled_end).getTime());
@@ -404,7 +533,12 @@ export default function VideoCallComponent({ call_room_id, token, onCallEnd }) {
       lk.disconnect();
       chat.disconnect();
     };
-  }, [call_room_id, lk.connect, chat.connect, lk.disconnect, chat.disconnect]);
+  }, [joined, call_room_id, lk.connect, chat.connect, lk.disconnect, chat.disconnect]);
+
+  const handleJoinNow = useCallback((prefs) => {
+    joinPrefsRef.current = prefs || { cam: true, mic: true };
+    setJoined(true);
+  }, []);
 
   const [isEnding, setIsEnding] = useState(false);
 
@@ -413,13 +547,16 @@ export default function VideoCallComponent({ call_room_id, token, onCallEnd }) {
     try {
       await lk.disconnect().catch(() => {});
       await chat.disconnect().catch(() => {});
-      // Allow endCall to fail quietly if the room is already gone
-      await endCall(call_room_id).catch(() => {});
+      // 1:1 call → end the shared room. Group call → leaving is personal;
+      // the room ends on its scheduled-end timer, not when one person leaves.
+      if (!isBatch) {
+        await endCall(call_room_id).catch(() => {});
+      }
     } finally {
       // Force navigation back to bookings no matter what
       onCallEnd?.();
     }
-  }, [lk, chat, call_room_id, onCallEnd]);
+  }, [lk, chat, call_room_id, onCallEnd, isBatch]);
 
   const triggerEndCall = () => {
     if (isEnding) return;
@@ -456,6 +593,25 @@ export default function VideoCallComponent({ call_room_id, token, onCallEnd }) {
       handleEndCall();
     }
   }, [isBatch, lk.remoteParticipantCount, hasRemoteJoined, isEnding, loading, handleEndCall]);
+
+  // Host removed us (or the room was closed) → leave the page immediately
+  // instead of showing "Reconnecting…".
+  useEffect(() => {
+    if (lk.wasRemoved && !isEnding) {
+      setIsEnding(true);
+      try {
+        localStorage.setItem(
+          "pendingAlert",
+          isBatch
+            ? "You have been removed from the call by the host."
+            : "The call has ended."
+        );
+      } catch { /* ignore */ }
+      lk.disconnect().catch(() => {});
+      chat.disconnect().catch(() => {});
+      onCallEnd?.();
+    }
+  }, [lk.wasRemoved, isEnding, isBatch, lk, chat, onCallEnd]);
 
   useEffect(() => {
     const track = lk.remoteAudioTrack;
@@ -542,6 +698,11 @@ export default function VideoCallComponent({ call_room_id, token, onCallEnd }) {
   const anyHandRaised =
     lk.isHandRaised || (lk.remoteParticipants || []).some((p) => p.handRaised);
 
+  // Only one person may screen-share at a time. If a remote is already
+  // sharing, block starting a new share.
+  const remoteScreenActive = (lk.remoteParticipants || []).some((p) => p.screen);
+  const screenShareBlocked = remoteScreenActive && !lk.isScreenSharing;
+
   const fmt = (s) => {
     if (s === null || s === undefined) return "";
     const h = Math.floor(s / 3600);
@@ -551,6 +712,11 @@ export default function VideoCallComponent({ call_room_id, token, onCallEnd }) {
     const ss = String(sec).padStart(2, "0");
     return h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
   };
+
+  // Pre-join green room — shown until the user hits "Join now".
+  if (!joined) {
+    return <PreJoinScreen onJoin={handleJoinNow} onCancel={onCallEnd} />;
+  }
 
   if (loading) return (
     <div className="flex flex-col items-center justify-center h-screen bg-gradient-to-b from-neutral-900 to-black text-white">
@@ -854,6 +1020,11 @@ export default function VideoCallComponent({ call_room_id, token, onCallEnd }) {
           />
           <ToolbarButton
             onClick={async () => {
+              // Enforce one screen-share at a time.
+              if (screenShareBlocked) {
+                alert("Someone is already sharing their screen. Please wait until they stop.");
+                return;
+              }
               try {
                 await lk.toggleScreenShare();
               } catch (err) {
@@ -875,8 +1046,8 @@ export default function VideoCallComponent({ call_room_id, token, onCallEnd }) {
             }}
             highlight={lk.isScreenSharing}
             icon={<FaDesktop />}
-            label={lk.isScreenSharing ? "Stop share" : "Share"}
-            disabled={!lk.isScreenSharing && false} // Removed hardware gate to allow attempts
+            label={screenShareBlocked ? "Someone is sharing" : lk.isScreenSharing ? "Stop share" : "Share"}
+            disabled={screenShareBlocked}
           />
           {isBatch && (
             <ToolbarButton
@@ -924,7 +1095,7 @@ export default function VideoCallComponent({ call_room_id, token, onCallEnd }) {
             title="End call"
           >
             <FaPhoneSlash className="text-sm sm:text-base" />
-            <span className="text-xs sm:text-sm font-semibold">End</span>
+            <span className="text-xs sm:text-sm font-semibold">{isBatch ? "Leave" : "End"}</span>
           </button>
         </div>
       </div>
@@ -936,8 +1107,10 @@ export default function VideoCallComponent({ call_room_id, token, onCallEnd }) {
           setShowEndConfirm(false);
           handleEndCall();
         }}
-        title="End Call?"
-        message="Are you sure you want to leave this meeting?"
+        title={isBatch ? "Leave meeting?" : "End Call?"}
+        message={isBatch
+          ? "You'll leave this group call. Others can keep going."
+          : "Are you sure you want to leave this meeting?"}
       />
     </div>
   );
