@@ -4,6 +4,7 @@ import {
   RoomEvent,
   Track,
   ConnectionState,
+  DataPacket_Kind,
   setLogLevel,
 } from "livekit-client";
 
@@ -18,6 +19,7 @@ export function useLiveKit() {
   );
 
   const [localVideoTrack, setLocalVideoTrack] = useState(null);
+  const [localScreenTrack, setLocalScreenTrack] = useState(null);
 
   const [remoteTracks, setRemoteTracks] = useState({});
 
@@ -234,6 +236,7 @@ export function useLiveKit() {
         }
         if (publication.source === Track.Source.ScreenShare) {
           setIsScreenSharing(true);
+          setLocalScreenTrack(publication.track || null);
         }
       });
 
@@ -247,6 +250,7 @@ export function useLiveKit() {
         }
         if (publication.source === Track.Source.ScreenShare) {
           setIsScreenSharing(false);
+          setLocalScreenTrack(null);
         }
       });
 
@@ -346,7 +350,9 @@ export function useLiveKit() {
       const data = new TextEncoder().encode(
         JSON.stringify({ type: "raise_hand", raised: next })
       );
-      await room.localParticipant.publishData(data, { reliable: true });
+      // livekit-client v1: publishData(data, kind) — kind is DataPacket_Kind,
+      // NOT an options object. RELIABLE ensures delivery to all participants.
+      await room.localParticipant.publishData(data, DataPacket_Kind.RELIABLE);
     } catch (err) {
       console.error("Failed to send raise-hand:", err);
     }
@@ -361,7 +367,7 @@ export function useLiveKit() {
       const data = new TextEncoder().encode(
         JSON.stringify({ type: "lower_all_hands" })
       );
-      await room.localParticipant.publishData(data, { reliable: true });
+      await room.localParticipant.publishData(data, DataPacket_Kind.RELIABLE);
     } catch (err) {
       console.error("Failed to send lower-all-hands:", err);
     }
@@ -389,6 +395,7 @@ export function useLiveKit() {
 
     setConnectionState(ConnectionState.Disconnected);
     setLocalVideoTrack(null);
+    setLocalScreenTrack(null);
     setRemoteTracks({});
     setMutedMic({});
     setRaisedHands({});
@@ -435,6 +442,7 @@ export function useLiveKit() {
     lowerAllHands,
     connectionState,
     localVideoTrack,
+    localScreenTrack,
     remoteVideoTrack: remoteParticipant.video || null,
     remoteAudioTrack: remoteParticipant.audio || null,
     screenShareTrack: remoteParticipant.screen || null,

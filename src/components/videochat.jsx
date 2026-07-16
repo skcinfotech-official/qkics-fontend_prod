@@ -16,6 +16,8 @@ import {
   FaExclamationTriangle,
   FaHandPaper,
   FaUserSlash,
+  FaBan,
+  FaCommentSlash,
 } from "react-icons/fa";
 import { getAccessToken } from "../redux/store/tokenManager";
 import ModalOverlay from "./ui/ModalOverlay";
@@ -87,7 +89,9 @@ function RemoteAudio({ track }) {
   return <audio ref={ref} autoPlay className="hidden" />;
 }
 
-/** One tile in the group grid — video or an initials avatar fallback. */
+/** One tile in the group grid — video or an initials avatar fallback.
+ *  `fill` makes the tile fill its grid cell (gallery); otherwise it keeps a
+ *  16:9 box (used in the screen-share filmstrip). */
 function ParticipantTile({
   name,
   videoTrack,
@@ -95,10 +99,14 @@ function ParticipantTile({
   micOn = true,
   handRaised = false,
   speaking = false,
+  fill = false,
   canMute = false,
   onMute,
   canRemove = false,
   onRemove,
+  canBlock = false,
+  isBlocked = false,
+  onToggleBlock,
 }) {
   const initial = (name || "?").trim().charAt(0).toUpperCase() || "?";
 
@@ -111,28 +119,39 @@ function ParticipantTile({
 
   return (
     <div
-      className={`group/tile relative aspect-video overflow-hidden rounded-2xl bg-neutral-800 shadow-lg transition-all ${ring}`}
+      className={`group/tile relative ${fill ? "h-full w-full" : "aspect-video"} min-h-0 overflow-hidden rounded-xl sm:rounded-2xl bg-neutral-800 shadow-lg transition-all ${ring}`}
     >
       {videoTrack ? (
         <SafeVideoRenderer track={videoTrack} isLocal={isLocal} cover />
       ) : (
         <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-neutral-800 to-neutral-900">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-500/20 text-lg font-bold text-red-300 ring-1 ring-red-500/30">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-500/20 text-base font-bold text-red-300 ring-1 ring-red-500/30 sm:h-14 sm:w-14 sm:text-lg">
             {initial}
           </div>
         </div>
       )}
 
-      {/* Host controls (appear on hover) */}
-      {(canMute || canRemove) && (
-        <div className="absolute left-2 top-2 flex gap-1.5 opacity-0 transition group-hover/tile:opacity-100">
+      {/* Host controls (appear on hover; always tappable on touch) */}
+      {(canMute || canRemove || canBlock) && (
+        <div className="absolute left-1.5 top-1.5 flex gap-1 opacity-100 transition sm:opacity-0 sm:group-hover/tile:opacity-100">
           {canMute && (
             <button
               onClick={onMute}
               title="Mute this participant"
               className="flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white ring-1 ring-white/20 backdrop-blur-sm transition hover:bg-red-600"
             >
-              <FaMicrophoneSlash className="text-xs" />
+              <FaMicrophoneSlash className="text-2xs" />
+            </button>
+          )}
+          {canBlock && (
+            <button
+              onClick={onToggleBlock}
+              title={isBlocked ? "Unblock chat" : "Block from chat"}
+              className={`flex h-7 w-7 items-center justify-center rounded-full text-white ring-1 ring-white/20 backdrop-blur-sm transition ${
+                isBlocked ? "bg-amber-600 hover:bg-amber-500" : "bg-black/60 hover:bg-amber-600"
+              }`}
+            >
+              <FaCommentSlash className="text-2xs" />
             </button>
           )}
           {canRemove && (
@@ -141,46 +160,75 @@ function ParticipantTile({
               title="Remove from call"
               className="flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white ring-1 ring-white/20 backdrop-blur-sm transition hover:bg-red-600"
             >
-              <FaUserSlash className="text-xs" />
+              <FaUserSlash className="text-2xs" />
             </button>
           )}
         </div>
       )}
 
-      {/* Raised hand */}
-      {handRaised && (
-        <div className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-amber-400 text-black shadow-lg animate-bounce">
-          <FaHandPaper className="text-xs" />
-        </div>
-      )}
+      {/* Badges (raised hand / blocked) */}
+      <div className="absolute right-1.5 top-1.5 flex gap-1">
+        {isBlocked && (
+          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-500/90 text-black shadow-lg" title="Blocked from chat">
+            <FaBan className="text-2xs" />
+          </div>
+        )}
+        {handRaised && (
+          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-400 text-black shadow-lg animate-bounce">
+            <FaHandPaper className="text-2xs" />
+          </div>
+        )}
+      </div>
 
       {/* Name + mic state */}
-      <span className="absolute bottom-2 left-2 flex items-center gap-1.5 rounded-md bg-black/60 px-2 py-0.5 text-2xs font-semibold backdrop-blur-sm">
+      <span className="absolute bottom-1.5 left-1.5 flex items-center gap-1.5 rounded-md bg-black/60 px-1.5 py-0.5 text-2xs font-semibold backdrop-blur-sm sm:bottom-2 sm:left-2 sm:px-2">
         {!micOn && <FaMicrophoneSlash className="text-red-400" />}
-        {isLocal ? "You" : name}
+        <span className="max-w-[24vw] truncate sm:max-w-[10rem]">{isLocal ? "You" : name}</span>
       </span>
     </div>
   );
 }
 
-function gridColsClass(n) {
-  if (n <= 1) return "grid-cols-1";
-  if (n === 2) return "grid-cols-1 sm:grid-cols-2";
-  if (n <= 4) return "grid-cols-2";
-  if (n <= 6) return "grid-cols-2 sm:grid-cols-3";
-  if (n <= 9) return "grid-cols-2 sm:grid-cols-3";
-  return "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4";
+/** Best column count so `n` tiles fill the stage without overflow.
+ *  Narrow (mobile) screens cap columns so tiles stay tall enough. */
+function useGridColumns(n) {
+  const [isNarrow, setIsNarrow] = useState(
+    typeof window !== "undefined" ? window.innerWidth < 640 : false
+  );
+  useEffect(() => {
+    const onResize = () => setIsNarrow(window.innerWidth < 640);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  if (n <= 1) return 1;
+  let cols = Math.ceil(Math.sqrt(n));
+  const maxCols = isNarrow ? 2 : 4;
+  cols = Math.min(cols, maxCols);
+  return Math.max(1, cols);
 }
 
 /**
  * Group (batch) call stage — gallery grid of every participant, or a
  * screen-share priority view. Attaches every remote's audio.
  */
-function GroupStage({ lk, isHost = false, onMuteParticipant, onRemoveParticipant }) {
+function GroupStage({
+  lk,
+  isHost = false,
+  onMuteParticipant,
+  onRemoveParticipant,
+  onToggleBlock,
+  blockedUserIds = [],
+}) {
   const remotes = lk.remoteParticipants || [];
-  const screenSharer = remotes.find((p) => p.screen);
+  const remoteSharer = remotes.find((p) => p.screen);
+  // Screen to feature: a remote's, or the local user's own share.
+  const screenTrack = remoteSharer?.screen || (lk.isScreenSharing ? lk.localScreenTrack : null);
   const totalTiles = remotes.length + 1; // + self
   const localSpeaking = (lk.activeSpeakers || []).includes(lk.localIdentity);
+
+  const cols = useGridColumns(totalTiles);
+  const rows = Math.ceil(totalTiles / cols);
 
   // Names of everyone with a raised hand (for the top banner)
   const raisedNames = [
@@ -195,10 +243,11 @@ function GroupStage({ lk, isHost = false, onMuteParticipant, onRemoveParticipant
     </Fragment>
   ));
 
-  const selfTile = (
+  const selfTile = (fill) => (
     <ParticipantTile
       name="You"
       isLocal
+      fill={fill}
       micOn={lk.isMicOn}
       handRaised={lk.isHandRaised}
       speaking={localSpeaking}
@@ -206,10 +255,11 @@ function GroupStage({ lk, isHost = false, onMuteParticipant, onRemoveParticipant
     />
   );
 
-  const remoteTile = (p) => (
+  const remoteTile = (p, fill) => (
     <ParticipantTile
       name={p.name}
       videoTrack={p.video}
+      fill={fill}
       micOn={p.micOn}
       handRaised={p.handRaised}
       speaking={p.speaking}
@@ -217,13 +267,16 @@ function GroupStage({ lk, isHost = false, onMuteParticipant, onRemoveParticipant
       onMute={() => onMuteParticipant?.(p.id)}
       canRemove={isHost}
       onRemove={() => onRemoveParticipant?.(p.id, p.name)}
+      canBlock={isHost}
+      isBlocked={blockedUserIds.includes(String(p.id))}
+      onToggleBlock={() => onToggleBlock?.(p.id, !blockedUserIds.includes(String(p.id)))}
     />
   );
 
   // Raised-hands banner shown over the stage (useful when a tile is scrolled off)
   const banner = raisedNames.length > 0 && (
     <div className="pointer-events-none absolute left-1/2 top-3 z-30 -translate-x-1/2">
-      <div className="flex items-center gap-2 rounded-full bg-amber-400/95 px-4 py-1.5 text-2xs font-bold text-black shadow-lg backdrop-blur-sm">
+      <div className="flex items-center gap-2 rounded-full bg-amber-400/95 px-3 py-1.5 text-2xs font-bold text-black shadow-lg backdrop-blur-sm">
         <FaHandPaper className="text-xs" />
         <span className="max-w-[70vw] truncate">
           {raisedNames.length === 1
@@ -234,19 +287,19 @@ function GroupStage({ lk, isHost = false, onMuteParticipant, onRemoveParticipant
     </div>
   );
 
-  // ── Screen-share priority view ──
-  if (screenSharer) {
+  // ── Screen-share priority view (screen centre, people in a filmstrip) ──
+  if (screenTrack) {
     return (
       <div className="relative flex h-full w-full flex-col">
         {banner}
         <div className="flex min-h-0 flex-1 items-center justify-center bg-black">
-          <SafeVideoRenderer track={screenSharer.screen} isScreen />
+          <SafeVideoRenderer track={screenTrack} isScreen />
         </div>
-        <div className="flex shrink-0 gap-2 overflow-x-auto bg-black/40 p-2">
-          <div className="w-36 shrink-0 sm:w-44">{selfTile}</div>
+        <div className="flex shrink-0 gap-2 overflow-x-auto bg-black/40 p-2 pb-24">
+          <div className="aspect-video w-28 shrink-0 sm:w-44">{selfTile(true)}</div>
           {remotes.map((p) => (
-            <div key={p.id} className="w-36 shrink-0 sm:w-44">
-              {remoteTile(p)}
+            <div key={p.id} className="aspect-video w-28 shrink-0 sm:w-44">
+              {remoteTile(p, true)}
             </div>
           ))}
         </div>
@@ -255,21 +308,25 @@ function GroupStage({ lk, isHost = false, onMuteParticipant, onRemoveParticipant
     );
   }
 
-  // ── Gallery grid ──
+  // ── Gallery grid — tiles shrink to fit; no page scroll ──
   return (
-    <div className="relative h-full w-full overflow-y-auto p-2 sm:p-4">
+    <div className="relative flex h-full w-full flex-col p-1.5 pt-16 pb-24 sm:p-3 sm:pt-16 sm:pb-24">
       {banner}
       <div
-        className={`grid h-full auto-rows-fr content-center gap-2 sm:gap-3 ${gridColsClass(totalTiles)}`}
+        className="grid min-h-0 flex-1 gap-1.5 sm:gap-3"
+        style={{
+          gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
+          gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))`,
+        }}
       >
-        {selfTile}
+        {selfTile(true)}
         {remotes.map((p) => (
-          <Fragment key={p.id}>{remoteTile(p)}</Fragment>
+          <Fragment key={p.id}>{remoteTile(p, true)}</Fragment>
         ))}
       </div>
 
       {remotes.length === 0 && (
-        <p className="mt-4 text-center text-sm font-medium text-neutral-400">
+        <p className="mt-3 text-center text-sm font-medium text-neutral-400">
           {lk.isConnected ? "Waiting for others to join…" : "Connecting…"}
         </p>
       )}
@@ -423,7 +480,7 @@ export default function VideoCallComponent({ call_room_id, token, onCallEnd }) {
 
   const handleSend = (e) => {
     e.preventDefault();
-    if (!chatInput.trim()) return;
+    if (!chatInput.trim() || iAmBlocked) return;
     chat.sendMessage(chatInput);
     setChatInput("");
   };
@@ -472,6 +529,15 @@ export default function VideoCallComponent({ call_room_id, token, onCallEnd }) {
       alert("Could not remove this participant.");
     }
   }, [call_room_id]);
+
+  // Host blocks/unblocks a participant from the in-call chat (spam control).
+  const handleToggleBlock = useCallback((identity, blocked) => {
+    chat.blockUser(identity, blocked);
+  }, [chat]);
+
+  // Am I (this client) blocked from chatting?
+  const iAmBlocked =
+    !!lk.localIdentity && (chat.blockedUserIds || []).includes(String(lk.localIdentity));
 
   const anyHandRaised =
     lk.isHandRaised || (lk.remoteParticipants || []).some((p) => p.handRaised);
@@ -564,6 +630,8 @@ export default function VideoCallComponent({ call_room_id, token, onCallEnd }) {
               isHost={isHost}
               onMuteParticipant={handleMuteParticipant}
               onRemoveParticipant={handleRemoveParticipant}
+              onToggleBlock={handleToggleBlock}
+              blockedUserIds={chat.blockedUserIds}
             />
           ) : (
           <>
@@ -696,6 +764,14 @@ export default function VideoCallComponent({ call_room_id, token, onCallEnd }) {
                   )}
                   <div ref={chatEndRef} />
                 </div>
+                {iAmBlocked ? (
+                  <div className="flex items-center gap-2 px-4 pt-3 pb-24 sm:pb-3 border-t border-neutral-800">
+                    <div className="flex w-full items-center gap-2 rounded-xl bg-amber-500/10 px-3 py-2.5 text-2xs font-semibold text-amber-300 ring-1 ring-amber-500/20">
+                      <FaBan className="shrink-0" />
+                      The host has blocked you from chatting in this call.
+                    </div>
+                  </div>
+                ) : (
                 <form
                   onSubmit={handleSend}
                   className="flex items-center gap-2 px-3 pt-3 pb-24 sm:pb-3 border-t border-neutral-800"
@@ -732,6 +808,7 @@ export default function VideoCallComponent({ call_room_id, token, onCallEnd }) {
                     <FaPaperPlane className="text-sm" />
                   </button>
                 </form>
+                )}
               </>
             )}
 
