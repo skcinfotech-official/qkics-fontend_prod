@@ -47,21 +47,27 @@ export function useLiveKit() {
   }, []);
 
   // ───────── ROSTER REBUILD ─────────
-  // Single source of truth: rebuild the whole remote roster straight from
-  // room.remoteParticipants. Idempotent + race-free — every connected
+  // Single source of truth: rebuild the whole remote roster straight from the
+  // room's participant map. Idempotent + race-free — every connected
   // participant always gets an entry (even with cam+mic off), and every
   // published track is re-attached and subscribed. Called on every relevant
   // event so what one user sees never depends on event ordering.
   const rebuildFromRoom = useCallback((room) => {
     if (!room) return;
 
+    // livekit-client v1 exposes room.participants (Map) + participant.tracks
+    // (Map); v2 renamed them remoteParticipants / trackPublications. Support both.
+    const participants = room.participants || room.remoteParticipants;
+    if (!participants) return;
+
     const nextTracks = {};
     const nextMuted = {};
 
-    room.remoteParticipants?.forEach((p) => {
+    participants.forEach((p) => {
       const entry = { name: p.name || p.identity };
 
-      p.trackPublications?.forEach((pub) => {
+      const pubs = p.tracks || p.trackPublications;
+      pubs?.forEach((pub) => {
         const isScreen =
           pub.source === Track.Source.ScreenShare ||
           pub.source === Track.Source.ScreenShareAudio;
@@ -93,7 +99,7 @@ export function useLiveKit() {
 
     setRemoteTracks(nextTracks);
     setMutedMic(nextMuted);
-    setRemoteParticipantCount(room.remoteParticipants?.size || 0);
+    setRemoteParticipantCount(participants.size || 0);
   }, []);
 
   // ───────── CONNECT ─────────
