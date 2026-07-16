@@ -46,98 +46,55 @@ export function useLiveKit() {
     );
   }, []);
 
-  // ───────── TRACK ROUTING ─────────
-  const routeTrackIn = useCallback((track, participant) => {
-    const id = participant.identity;
+  // ───────── ROSTER REBUILD ─────────
+  // Single source of truth: rebuild the whole remote roster straight from
+  // room.remoteParticipants. Idempotent + race-free — every connected
+  // participant always gets an entry (even with cam+mic off), and every
+  // published track is re-attached and subscribed. Called on every relevant
+  // event so what one user sees never depends on event ordering.
+  const rebuildFromRoom = useCallback((room) => {
+    if (!room) return;
 
-    setRemoteTracks((prev) => {
-      // Clone to avoid mutating previous state
-      const user = { ...(prev[id] || {}) };
-      user.name = participant.name || participant.identity;
+    const nextTracks = {};
+    const nextMuted = {};
 
-      const src = track.source;
-      const isScreen =
-        src === Track.Source.ScreenShare ||
-        src === Track.Source.ScreenShareAudio;
+    room.remoteParticipants?.forEach((p) => {
+      const entry = { name: p.name || p.identity };
 
-      if (track.kind === "video") {
-        if (isScreen) {
-          user.screen = track;
-        } else {
-          user.video = track;
+      p.trackPublications?.forEach((pub) => {
+        const isScreen =
+          pub.source === Track.Source.ScreenShare ||
+          pub.source === Track.Source.ScreenShareAudio;
+        const track = pub.track || null;
+        const kind = pub.kind || pub.track?.kind;
+
+        if (kind === "video") {
+          if (isScreen) entry.screen = track;
+          else entry.video = track;
+        } else if (kind === "audio") {
+          if (isScreen) {
+            entry.screenAudio = track;
+          } else {
+            entry.audio = track;
+            if (pub.source === Track.Source.Microphone) {
+              nextMuted[p.identity] = pub.isMuted;
+            }
+          }
         }
-      }
 
-      if (track.kind === "audio") {
-        if (isScreen) {
-          user.screenAudio = track;
-        } else {
-          user.audio = track;
-        }
-      }
-
-      return { ...prev, [id]: user };
-    });
-  }, []);
-
-  const routeTrackOut = useCallback((track, participant) => {
-    const id = participant.identity;
-
-    setRemoteTracks((prev) => {
-      const user = prev[id];
-      if (!user) return prev;
-
-      const updated = { ...user };
-
-      const isScreen =
-        track.source === Track.Source.ScreenShare ||
-        track.source === Track.Source.ScreenShareAudio;
-
-      if (track.kind === "video") {
-        if (isScreen) delete updated.screen;
-        else delete updated.video;
-      }
-
-      if (track.kind === "audio") {
-        if (isScreen) delete updated.screenAudio;
-        else delete updated.audio;
-      }
-
-      return { ...prev, [id]: updated };
-    });
-  }, []);
-
-  // Ensure a participant has a tile entry even before any track arrives
-  // (e.g. they joined with camera AND mic off — no tracks published yet).
-  const ensureParticipant = useCallback((participant) => {
-    setRemoteTracks((prev) => {
-      const existing = prev[participant.identity] || {};
-      return {
-        ...prev,
-        [participant.identity]: {
-          ...existing,
-          name: participant.name || participant.identity,
-        },
-      };
-    });
-  }, []);
-
-  // Sync all tracks from all existing remote participants
-  const syncExistingParticipants = useCallback((room) => {
-    room.remoteParticipants?.forEach((participant) => {
-      ensureParticipant(participant);
-      participant.trackPublications?.forEach((publication) => {
-        if (!publication.isSubscribed) {
-          try {
-            publication.setSubscribed(true);
-          } catch { /* subscription in progress */ }
-        }
-        if (publication.track) {
-          routeTrackIn(publication.track, participant);
+        // Make sure we're subscribed to everything (safety net).
+        if (!pub.isSubscribed) {
+          try { pub.setSubscribed(true); } catch { /* in progress */ }
         }
       });
+
+      nextTracks[p.identity] = entry;
     });
-  }, [routeTrackIn, ensureParticipant]);
+
+    setRemoteTracks(nextTracks);
+    setMutedMic(nextMuted);
+    setRemoteParticipantCount(room.remoteParticipants?.size || 0);
+  }, []);
 
   // ───────── CONNECT ─────────
   // opts: { cam?: boolean, mic?: boolean } — initial device state chosen on
@@ -149,7 +106,10 @@ export function useLiveKit() {
 
     const promise = (async () => {
       const room = new Room({
-        adaptiveStream: true,
+        // adaptiveStream pauses video for tiles it thinks are off-screen/small,
+        // which made remote video appear only after a delay in the gallery.
+        // Off = every subscribed video streams immediately (fine for ≤10).
+        adaptiveStream: false,
         dynacast: true,
         stopLocalTrackOnUnpublish: true,
       });
@@ -171,18 +131,9 @@ export function useLiveKit() {
         }
       });
 
-      // TRACK EVENTS — use stable wrappers so we always get the latest routeTrack logic
-      room.on(RoomEvent.TrackSubscribed, (track, pub, participant) => {
-        console.log("TrackSubscribed:", participant.identity, track.kind, track.source);
-        routeTrackIn(track, participant);
-        if (pub.source === Track.Source.Microphone) {
-          setMutedMic((prev) => ({ ...prev, [participant.identity]: pub.isMuted }));
-        }
-      });
-
-      room.on(RoomEvent.TrackUnsubscribed, (track, _pub, participant) => {
-        routeTrackOut(track, participant);
-      });
+      // TRACK EVENTS — rebuild the whole roster from the room each time.
+      room.on(RoomEvent.TrackSubscribed, () => rebuildFromRoom(room));
+      room.on(RoomEvent.TrackUnsubscribed, () => rebuildFromRoom(room));
 
       // MUTE STATE — reflect mic mute/unmute (remote tiles + local, incl. host force-mute)
       room.on(RoomEvent.TrackMuted, (pub, participant) => {
@@ -217,45 +168,21 @@ export function useLiveKit() {
       });
 
       room.on(RoomEvent.TrackPublished, async (publication) => {
-        // Ensure we subscribe to any newly published track
+        // Subscribe to the new track, then rebuild.
         if (!publication.isSubscribed) {
-          try {
-            await publication.setSubscribed(true);
-          } catch { /* auto-subscribe may handle it */ }
+          try { await publication.setSubscribed(true); } catch { /* auto-subscribe may handle it */ }
         }
+        rebuildFromRoom(room);
       });
+      room.on(RoomEvent.TrackUnpublished, () => rebuildFromRoom(room));
 
       room.on(RoomEvent.ParticipantConnected, (participant) => {
-        console.log("ParticipantConnected:", participant.identity);
-        setRemoteParticipantCount(room?.remoteParticipants?.size || 0);
         // Show them right away — even if they joined with cam+mic off.
-        ensureParticipant(participant);
-
-        participant.trackPublications?.forEach((publication) => {
-          if (!publication.isSubscribed) {
-            try {
-              publication.setSubscribed(true);
-            } catch { /* subscription in progress */ }
-          }
-          if (publication.track) {
-            routeTrackIn(publication.track, participant);
-          }
-        });
+        rebuildFromRoom(room);
       });
 
       room.on(RoomEvent.ParticipantDisconnected, (participant) => {
-        console.log("ParticipantDisconnected:", participant.identity);
-        setRemoteParticipantCount(room?.remoteParticipants?.size || 0);
-        setRemoteTracks((prev) => {
-          const updated = { ...prev };
-          delete updated[participant.identity];
-          return updated;
-        });
-        setMutedMic((prev) => {
-          const updated = { ...prev };
-          delete updated[participant.identity];
-          return updated;
-        });
+        rebuildFromRoom(room);
         setRaisedHands((prev) => {
           const updated = { ...prev };
           delete updated[participant.identity];
@@ -321,9 +248,14 @@ export function useLiveKit() {
         roomRef.current = room;
         setLocalIdentity(room.localParticipant.identity);
 
-        // Sync tracks from participants who were already in the room
-        syncExistingParticipants(room);
-        setRemoteParticipantCount(room?.remoteParticipants?.size || 0);
+        // Build the roster from whoever is already in the room, then re-sync a
+        // few times to catch anyone whose state arrived slightly late (races).
+        rebuildFromRoom(room);
+        [400, 1200, 2500].forEach((ms) =>
+          setTimeout(() => {
+            if (roomRef.current === room) rebuildFromRoom(room);
+          }, ms)
+        );
 
         setIsMicOn(room.localParticipant.isMicrophoneEnabled);
         setIsCamOn(room.localParticipant.isCameraEnabled);
@@ -340,7 +272,7 @@ export function useLiveKit() {
 
     connectPromiseRef.current = promise;
     return promise;
-  }, [routeTrackIn, routeTrackOut, syncExistingParticipants, ensureParticipant]);
+  }, [rebuildFromRoom]);
 
   // ───────── CONTROLS ─────────
   const toggleMic = useCallback(async () => {
