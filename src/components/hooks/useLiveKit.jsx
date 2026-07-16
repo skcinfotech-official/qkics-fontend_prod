@@ -107,9 +107,25 @@ export function useLiveKit() {
     });
   }, []);
 
+  // Ensure a participant has a tile entry even before any track arrives
+  // (e.g. they joined with camera AND mic off — no tracks published yet).
+  const ensureParticipant = useCallback((participant) => {
+    setRemoteTracks((prev) => {
+      const existing = prev[participant.identity] || {};
+      return {
+        ...prev,
+        [participant.identity]: {
+          ...existing,
+          name: participant.name || participant.identity,
+        },
+      };
+    });
+  }, []);
+
   // Sync all tracks from all existing remote participants
   const syncExistingParticipants = useCallback((room) => {
     room.remoteParticipants?.forEach((participant) => {
+      ensureParticipant(participant);
       participant.trackPublications?.forEach((publication) => {
         if (!publication.isSubscribed) {
           try {
@@ -121,7 +137,7 @@ export function useLiveKit() {
         }
       });
     });
-  }, [routeTrackIn]);
+  }, [routeTrackIn, ensureParticipant]);
 
   // ───────── CONNECT ─────────
   // opts: { cam?: boolean, mic?: boolean } — initial device state chosen on
@@ -212,6 +228,8 @@ export function useLiveKit() {
       room.on(RoomEvent.ParticipantConnected, (participant) => {
         console.log("ParticipantConnected:", participant.identity);
         setRemoteParticipantCount(room?.remoteParticipants?.size || 0);
+        // Show them right away — even if they joined with cam+mic off.
+        ensureParticipant(participant);
 
         participant.trackPublications?.forEach((publication) => {
           if (!publication.isSubscribed) {
@@ -322,7 +340,7 @@ export function useLiveKit() {
 
     connectPromiseRef.current = promise;
     return promise;
-  }, [routeTrackIn, routeTrackOut, syncExistingParticipants]);
+  }, [routeTrackIn, routeTrackOut, syncExistingParticipants, ensureParticipant]);
 
   // ───────── CONTROLS ─────────
   const toggleMic = useCallback(async () => {
