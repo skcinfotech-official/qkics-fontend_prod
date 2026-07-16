@@ -36,6 +36,7 @@ const Notification          = lazy(() => import("./pages/notification"));
 const ChatPage              = lazy(() => import("./chat"));
 const MyBookings            = lazy(() => import("./components/myBookings/MyBookings"));
 const Subscription          = lazy(() => import("./components/subscription/Subscription"));
+const PaymentResult         = lazy(() => import("./pages/PaymentResult"));
 const MyCompany             = lazy(() => import("./pages/company/MyCompany"));
 const CompanyPage           = lazy(() => import("./pages/company/CompanyPage"));
 const PublicCompanyProfile  = lazy(() => import("./pages/company/PublicCompanyProfile"));
@@ -158,6 +159,7 @@ function App() {
               <Route path="/company"                    element={<CompanyPage />} />
               <Route path="/my-company"                 element={<MyCompany />} />
               <Route path="/subscription"               element={<Subscription />} />
+              <Route path="/payment/result"             element={<PaymentResult />} />
               <Route path="/post/:id/comments"          element={<Comments />} />
               <Route path="/book-session/:expertUuid"   element={<BookSession />} />
               <Route path="/book-session/investor/:investorUuid" element={<InvestorBookSession />} />

@@ -27,6 +27,13 @@ export function useLiveKit() {
   const [isScreenShareSupported, setIsScreenShareSupported] = useState(false);
   const [remoteParticipantCount, setRemoteParticipantCount] = useState(0);
 
+  // Per-participant mic-mute state + raised hands (group calls)
+  const [mutedMic, setMutedMic] = useState({});      // { identity: true } when mic muted
+  const [raisedHands, setRaisedHands] = useState({}); // { identity: true } when hand raised
+  const [isHandRaised, setIsHandRaised] = useState(false); // local user's own hand
+  const [activeSpeakers, setActiveSpeakers] = useState([]); // identities currently speaking
+  const [localIdentity, setLocalIdentity] = useState("");   // this client's identity
+
   useEffect(() => {
     setIsScreenShareSupported(
       !!(navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia)
@@ -127,13 +134,48 @@ export function useLiveKit() {
       });
 
       // TRACK EVENTS — use stable wrappers so we always get the latest routeTrack logic
-      room.on(RoomEvent.TrackSubscribed, (track, _pub, participant) => {
+      room.on(RoomEvent.TrackSubscribed, (track, pub, participant) => {
         console.log("TrackSubscribed:", participant.identity, track.kind, track.source);
         routeTrackIn(track, participant);
+        if (pub.source === Track.Source.Microphone) {
+          setMutedMic((prev) => ({ ...prev, [participant.identity]: pub.isMuted }));
+        }
       });
 
       room.on(RoomEvent.TrackUnsubscribed, (track, _pub, participant) => {
         routeTrackOut(track, participant);
+      });
+
+      // MUTE STATE — reflect mic mute/unmute (remote tiles + local, incl. host force-mute)
+      room.on(RoomEvent.TrackMuted, (pub, participant) => {
+        if (pub.source === Track.Source.Microphone) {
+          setMutedMic((prev) => ({ ...prev, [participant.identity]: true }));
+          if (participant.isLocal) setIsMicOn(false);
+        }
+      });
+      room.on(RoomEvent.TrackUnmuted, (pub, participant) => {
+        if (pub.source === Track.Source.Microphone) {
+          setMutedMic((prev) => ({ ...prev, [participant.identity]: false }));
+          if (participant.isLocal) setIsMicOn(true);
+        }
+      });
+
+      // ACTIVE SPEAKERS — highlight whoever is talking
+      room.on(RoomEvent.ActiveSpeakersChanged, (speakers) => {
+        setActiveSpeakers((speakers || []).map((p) => p.identity));
+      });
+
+      // DATA CHANNEL — raise-hand + host "lower all hands" signalling
+      room.on(RoomEvent.DataReceived, (payload, participant) => {
+        try {
+          const msg = JSON.parse(new TextDecoder().decode(payload));
+          if (msg.type === "raise_hand" && participant?.identity) {
+            setRaisedHands((prev) => ({ ...prev, [participant.identity]: !!msg.raised }));
+          } else if (msg.type === "lower_all_hands") {
+            setRaisedHands({});
+            setIsHandRaised(false);
+          }
+        } catch { /* ignore malformed data */ }
       });
 
       room.on(RoomEvent.TrackPublished, async (publication) => {
@@ -165,6 +207,16 @@ export function useLiveKit() {
         console.log("ParticipantDisconnected:", participant.identity);
         setRemoteParticipantCount(room?.remoteParticipants?.size || 0);
         setRemoteTracks((prev) => {
+          const updated = { ...prev };
+          delete updated[participant.identity];
+          return updated;
+        });
+        setMutedMic((prev) => {
+          const updated = { ...prev };
+          delete updated[participant.identity];
+          return updated;
+        });
+        setRaisedHands((prev) => {
           const updated = { ...prev };
           delete updated[participant.identity];
           return updated;
@@ -221,6 +273,7 @@ export function useLiveKit() {
         }
 
         roomRef.current = room;
+        setLocalIdentity(room.localParticipant.identity);
 
         // Sync tracks from participants who were already in the room
         syncExistingParticipants(room);
@@ -284,6 +337,36 @@ export function useLiveKit() {
     }
   }, []);
 
+  const toggleRaiseHand = useCallback(async () => {
+    const room = roomRef.current;
+    if (!room) return;
+    const next = !isHandRaised;
+    setIsHandRaised(next);
+    try {
+      const data = new TextEncoder().encode(
+        JSON.stringify({ type: "raise_hand", raised: next })
+      );
+      await room.localParticipant.publishData(data, { reliable: true });
+    } catch (err) {
+      console.error("Failed to send raise-hand:", err);
+    }
+  }, [isHandRaised]);
+
+  const lowerAllHands = useCallback(async () => {
+    const room = roomRef.current;
+    setRaisedHands({});
+    setIsHandRaised(false);
+    if (!room) return;
+    try {
+      const data = new TextEncoder().encode(
+        JSON.stringify({ type: "lower_all_hands" })
+      );
+      await room.localParticipant.publishData(data, { reliable: true });
+    } catch (err) {
+      console.error("Failed to send lower-all-hands:", err);
+    }
+  }, []);
+
   const disconnect = useCallback(async () => {
     const pending = connectPromiseRef.current;
     connectPromiseRef.current = null;
@@ -307,6 +390,11 @@ export function useLiveKit() {
     setConnectionState(ConnectionState.Disconnected);
     setLocalVideoTrack(null);
     setRemoteTracks({});
+    setMutedMic({});
+    setRaisedHands({});
+    setIsHandRaised(false);
+    setActiveSpeakers([]);
+    setLocalIdentity("");
   }, []);
 
   // CLEANUP
@@ -324,12 +412,27 @@ export function useLiveKit() {
   const remoteId = Object.keys(remoteTracks)[0];
   const remoteParticipant = remoteTracks[remoteId] || {};
 
+  // 👥 Full list of remote participants (group / batch calls)
+  const remoteParticipants = Object.entries(remoteTracks).map(([id, u]) => ({
+    id,
+    name: u.name || id,
+    video: u.video || null,
+    audio: u.audio || null,
+    screen: u.screen || null,
+    screenAudio: u.screenAudio || null,
+    micOn: !!u.audio && !mutedMic[id],
+    handRaised: !!raisedHands[id],
+    speaking: activeSpeakers.includes(id),
+  }));
+
   return {
     connect,
     disconnect,
     toggleMic,
     toggleCamera,
     toggleScreenShare,
+    toggleRaiseHand,
+    lowerAllHands,
     connectionState,
     localVideoTrack,
     remoteVideoTrack: remoteParticipant.video || null,
@@ -337,10 +440,14 @@ export function useLiveKit() {
     screenShareTrack: remoteParticipant.screen || null,
     screenShareAudioTrack: remoteParticipant.screenAudio || null,
     remoteName: remoteParticipant.name || remoteId || null,
+    remoteParticipants,
     isMicOn,
     isCamOn,
     isScreenSharing,
     isScreenShareSupported,
+    isHandRaised,
+    activeSpeakers,
+    localIdentity,
     remoteParticipantCount,
     isConnected: connectionState === ConnectionState.Connected,
   };

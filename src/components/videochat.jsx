@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, Fragment } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   FaMicrophone,
@@ -14,6 +14,8 @@ import {
   FaTimes,
   FaCircle,
   FaExclamationTriangle,
+  FaHandPaper,
+  FaUserSlash,
 } from "react-icons/fa";
 import { getAccessToken } from "../redux/store/tokenManager";
 import ModalOverlay from "./ui/ModalOverlay";
@@ -26,13 +28,16 @@ import {
   uploadCallFile,
   saveMyNote,
   endCall,
+  muteCallParticipant,
+  muteAllCallParticipants,
+  removeCallParticipant,
 } from "./utils/callApi";
 
 /**
  * Enhanced Video Renderer that handles orientation and aspect ratios safely.
  * Prevents stretching, cropping, and rotation issues in cross-platform calls.
  */
-function SafeVideoRenderer({ track, isLocal = false, isScreen = false, className = "" }) {
+function SafeVideoRenderer({ track, isLocal = false, isScreen = false, cover = false, className = "" }) {
   const videoRef = useRef(null);
   // eslint-disable-next-line no-unused-vars
   const [isPortrait, setIsPortrait] = useState(false);
@@ -50,7 +55,7 @@ function SafeVideoRenderer({ track, isLocal = false, isScreen = false, className
     const handleDimensions = (dims) => {
       setIsPortrait(dims.height > dims.width);
     };
-    
+
     track.on("dimensionsChanged", handleDimensions);
     return () => {
       track.off("dimensionsChanged", handleDimensions);
@@ -64,9 +69,213 @@ function SafeVideoRenderer({ track, isLocal = false, isScreen = false, className
       autoPlay
       playsInline
       muted={true} // Always mute video tags as audio is handled separately; ensures auto-play on mobile
-      style={{ objectFit: isScreen ? "contain" : (isLocal ? "cover" : "contain") }}
+      style={{ objectFit: cover ? "cover" : isScreen ? "contain" : (isLocal ? "cover" : "contain") }}
       className={`w-full h-full bg-black/40 transition-opacity duration-300 ${className}`}
     />
+  );
+}
+
+/** Hidden audio sink for a single remote participant's track (group calls). */
+function RemoteAudio({ track }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!track || !el) return;
+    track.attach(el);
+    return () => track.detach(el);
+  }, [track]);
+  return <audio ref={ref} autoPlay className="hidden" />;
+}
+
+/** One tile in the group grid — video or an initials avatar fallback. */
+function ParticipantTile({
+  name,
+  videoTrack,
+  isLocal = false,
+  micOn = true,
+  handRaised = false,
+  speaking = false,
+  canMute = false,
+  onMute,
+  canRemove = false,
+  onRemove,
+}) {
+  const initial = (name || "?").trim().charAt(0).toUpperCase() || "?";
+
+  // Speaking (emerald) takes ring priority; raised hand (amber) otherwise.
+  const ring = speaking
+    ? "ring-2 ring-emerald-400"
+    : handRaised
+    ? "ring-2 ring-amber-400"
+    : "ring-1 ring-white/10";
+
+  return (
+    <div
+      className={`group/tile relative aspect-video overflow-hidden rounded-2xl bg-neutral-800 shadow-lg transition-all ${ring}`}
+    >
+      {videoTrack ? (
+        <SafeVideoRenderer track={videoTrack} isLocal={isLocal} cover />
+      ) : (
+        <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-neutral-800 to-neutral-900">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-500/20 text-lg font-bold text-red-300 ring-1 ring-red-500/30">
+            {initial}
+          </div>
+        </div>
+      )}
+
+      {/* Host controls (appear on hover) */}
+      {(canMute || canRemove) && (
+        <div className="absolute left-2 top-2 flex gap-1.5 opacity-0 transition group-hover/tile:opacity-100">
+          {canMute && (
+            <button
+              onClick={onMute}
+              title="Mute this participant"
+              className="flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white ring-1 ring-white/20 backdrop-blur-sm transition hover:bg-red-600"
+            >
+              <FaMicrophoneSlash className="text-xs" />
+            </button>
+          )}
+          {canRemove && (
+            <button
+              onClick={onRemove}
+              title="Remove from call"
+              className="flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white ring-1 ring-white/20 backdrop-blur-sm transition hover:bg-red-600"
+            >
+              <FaUserSlash className="text-xs" />
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Raised hand */}
+      {handRaised && (
+        <div className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-amber-400 text-black shadow-lg animate-bounce">
+          <FaHandPaper className="text-xs" />
+        </div>
+      )}
+
+      {/* Name + mic state */}
+      <span className="absolute bottom-2 left-2 flex items-center gap-1.5 rounded-md bg-black/60 px-2 py-0.5 text-2xs font-semibold backdrop-blur-sm">
+        {!micOn && <FaMicrophoneSlash className="text-red-400" />}
+        {isLocal ? "You" : name}
+      </span>
+    </div>
+  );
+}
+
+function gridColsClass(n) {
+  if (n <= 1) return "grid-cols-1";
+  if (n === 2) return "grid-cols-1 sm:grid-cols-2";
+  if (n <= 4) return "grid-cols-2";
+  if (n <= 6) return "grid-cols-2 sm:grid-cols-3";
+  if (n <= 9) return "grid-cols-2 sm:grid-cols-3";
+  return "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4";
+}
+
+/**
+ * Group (batch) call stage — gallery grid of every participant, or a
+ * screen-share priority view. Attaches every remote's audio.
+ */
+function GroupStage({ lk, isHost = false, onMuteParticipant, onRemoveParticipant }) {
+  const remotes = lk.remoteParticipants || [];
+  const screenSharer = remotes.find((p) => p.screen);
+  const totalTiles = remotes.length + 1; // + self
+  const localSpeaking = (lk.activeSpeakers || []).includes(lk.localIdentity);
+
+  // Names of everyone with a raised hand (for the top banner)
+  const raisedNames = [
+    ...(lk.isHandRaised ? ["You"] : []),
+    ...remotes.filter((p) => p.handRaised).map((p) => p.name),
+  ];
+
+  const audioSinks = remotes.map((p) => (
+    <Fragment key={`aud-${p.id}`}>
+      {p.audio && <RemoteAudio track={p.audio} />}
+      {p.screenAudio && <RemoteAudio track={p.screenAudio} />}
+    </Fragment>
+  ));
+
+  const selfTile = (
+    <ParticipantTile
+      name="You"
+      isLocal
+      micOn={lk.isMicOn}
+      handRaised={lk.isHandRaised}
+      speaking={localSpeaking}
+      videoTrack={lk.isCamOn ? lk.localVideoTrack : null}
+    />
+  );
+
+  const remoteTile = (p) => (
+    <ParticipantTile
+      name={p.name}
+      videoTrack={p.video}
+      micOn={p.micOn}
+      handRaised={p.handRaised}
+      speaking={p.speaking}
+      canMute={isHost && p.micOn}
+      onMute={() => onMuteParticipant?.(p.id)}
+      canRemove={isHost}
+      onRemove={() => onRemoveParticipant?.(p.id, p.name)}
+    />
+  );
+
+  // Raised-hands banner shown over the stage (useful when a tile is scrolled off)
+  const banner = raisedNames.length > 0 && (
+    <div className="pointer-events-none absolute left-1/2 top-3 z-30 -translate-x-1/2">
+      <div className="flex items-center gap-2 rounded-full bg-amber-400/95 px-4 py-1.5 text-2xs font-bold text-black shadow-lg backdrop-blur-sm">
+        <FaHandPaper className="text-xs" />
+        <span className="max-w-[70vw] truncate">
+          {raisedNames.length === 1
+            ? `${raisedNames[0]} raised their hand`
+            : `${raisedNames.length} hands raised — ${raisedNames.join(", ")}`}
+        </span>
+      </div>
+    </div>
+  );
+
+  // ── Screen-share priority view ──
+  if (screenSharer) {
+    return (
+      <div className="relative flex h-full w-full flex-col">
+        {banner}
+        <div className="flex min-h-0 flex-1 items-center justify-center bg-black">
+          <SafeVideoRenderer track={screenSharer.screen} isScreen />
+        </div>
+        <div className="flex shrink-0 gap-2 overflow-x-auto bg-black/40 p-2">
+          <div className="w-36 shrink-0 sm:w-44">{selfTile}</div>
+          {remotes.map((p) => (
+            <div key={p.id} className="w-36 shrink-0 sm:w-44">
+              {remoteTile(p)}
+            </div>
+          ))}
+        </div>
+        {audioSinks}
+      </div>
+    );
+  }
+
+  // ── Gallery grid ──
+  return (
+    <div className="relative h-full w-full overflow-y-auto p-2 sm:p-4">
+      {banner}
+      <div
+        className={`grid h-full auto-rows-fr content-center gap-2 sm:gap-3 ${gridColsClass(totalTiles)}`}
+      >
+        {selfTile}
+        {remotes.map((p) => (
+          <Fragment key={p.id}>{remoteTile(p)}</Fragment>
+        ))}
+      </div>
+
+      {remotes.length === 0 && (
+        <p className="mt-4 text-center text-sm font-medium text-neutral-400">
+          {lk.isConnected ? "Waiting for others to join…" : "Connecting…"}
+        </p>
+      )}
+
+      {audioSinks}
+    </div>
   );
 }
 
@@ -83,6 +292,8 @@ export default function VideoCallComponent({ call_room_id, token, onCallEnd }) {
   const [error, setError] = useState(null);
   const [remaining, setRemaining] = useState(null);
   const [scheduledEnd, setScheduledEnd] = useState(null);
+  const [isBatch, setIsBatch] = useState(false);
+  const [hostId, setHostId] = useState("");
   const [hasRemoteJoined, setHasRemoteJoined] = useState(false);
   const [activePanel, setActivePanel] = useState(null); // "chat" | "notes" | null
   const [note, setNote] = useState("");
@@ -105,6 +316,8 @@ export default function VideoCallComponent({ call_room_id, token, onCallEnd }) {
     (async () => {
       try {
         const roomData = await getCallRoom(call_room_id);
+        setIsBatch(Boolean(roomData.is_batch));
+        setHostId(roomData.advisor?.id != null ? String(roomData.advisor.id) : "");
         if (!roomData.can_join) {
           setError("This call is not available right now or has already ended.");
           setLoading(false);
@@ -173,7 +386,11 @@ export default function VideoCallComponent({ call_room_id, token, onCallEnd }) {
   }, [scheduledEnd, handleEndCall, isEnding]);
 
   // ───────── Synced Call Termination (Participant Monitoring) ─────────
+  // Only applies to 1:1 calls. In a group (batch) call, people come and go —
+  // the call ends via the End button or the scheduled-end timer, not because
+  // one participant left.
   useEffect(() => {
+    if (isBatch) return;
     if (lk.remoteParticipantCount > 0) {
       setHasRemoteJoined(true);
     }
@@ -181,7 +398,7 @@ export default function VideoCallComponent({ call_room_id, token, onCallEnd }) {
     if (hasRemoteJoined && lk.remoteParticipantCount === 0 && !isEnding && !loading) {
       handleEndCall();
     }
-  }, [lk.remoteParticipantCount, hasRemoteJoined, isEnding, loading, handleEndCall]);
+  }, [isBatch, lk.remoteParticipantCount, hasRemoteJoined, isEnding, loading, handleEndCall]);
 
   useEffect(() => {
     const track = lk.remoteAudioTrack;
@@ -224,6 +441,40 @@ export default function VideoCallComponent({ call_room_id, token, onCallEnd }) {
   };
 
   const handleNoteSave = () => saveMyNote(call_room_id, note);
+
+  // Host (expert) controls for group calls
+  const isHost = Boolean(isBatch && hostId && hostId === lk.localIdentity);
+
+  const handleMuteParticipant = useCallback(async (identity) => {
+    try {
+      await muteCallParticipant(call_room_id, identity);
+    } catch (err) {
+      console.error("Failed to mute participant:", err);
+      alert("Could not mute this participant.");
+    }
+  }, [call_room_id]);
+
+  const handleMuteAll = useCallback(async () => {
+    try {
+      await muteAllCallParticipants(call_room_id);
+    } catch (err) {
+      console.error("Failed to mute everyone:", err);
+      alert("Could not mute everyone.");
+    }
+  }, [call_room_id]);
+
+  const handleRemoveParticipant = useCallback(async (identity, name) => {
+    if (!window.confirm(`Remove ${name || "this participant"} from the call?`)) return;
+    try {
+      await removeCallParticipant(call_room_id, identity);
+    } catch (err) {
+      console.error("Failed to remove participant:", err);
+      alert("Could not remove this participant.");
+    }
+  }, [call_room_id]);
+
+  const anyHandRaised =
+    lk.isHandRaised || (lk.remoteParticipants || []).some((p) => p.handRaised);
 
   const fmt = (s) => {
     if (s === null || s === undefined) return "";
@@ -272,7 +523,9 @@ export default function VideoCallComponent({ call_room_id, token, onCallEnd }) {
             <span className="text-2xs sm:text-xs font-medium text-red-300">LIVE</span>
           </div>
           <h1 className="text-xs sm:text-sm font-medium text-neutral-200 truncate hidden xs:block sm:block">
-            Meeting in progress
+            {isBatch
+              ? `Group call · ${(lk.remoteParticipants?.length || 0) + 1} in call`
+              : "Meeting in progress"}
           </h1>
         </div>
         <div className="flex items-center gap-2 sm:gap-4 shrink-0">
@@ -305,6 +558,15 @@ export default function VideoCallComponent({ call_room_id, token, onCallEnd }) {
       {/* ── Stage ── */}
       <div className="flex-1 flex overflow-hidden -mt-14">
         <section className="relative flex-1 bg-gradient-to-b from-neutral-900 to-black flex items-center justify-center">
+          {isBatch ? (
+            <GroupStage
+              lk={lk}
+              isHost={isHost}
+              onMuteParticipant={handleMuteParticipant}
+              onRemoveParticipant={handleRemoveParticipant}
+            />
+          ) : (
+          <>
           {lk.screenShareTrack ? (
             <SafeVideoRenderer track={lk.screenShareTrack} isScreen={true} />
           ) : lk.remoteVideoTrack ? (
@@ -354,6 +616,8 @@ export default function VideoCallComponent({ call_room_id, token, onCallEnd }) {
           {/* Hidden audio sinks */}
           <audio ref={remoteAudioRef} autoPlay className="hidden" />
           <audio ref={screenAudioRef} autoPlay className="hidden" />
+          </>
+          )}
         </section>
 
         {/* ── Side panel (desktop) / bottom sheet (mobile) ── */}
@@ -537,6 +801,30 @@ export default function VideoCallComponent({ call_room_id, token, onCallEnd }) {
             label={lk.isScreenSharing ? "Stop share" : "Share"}
             disabled={!lk.isScreenSharing && false} // Removed hardware gate to allow attempts
           />
+          {isBatch && (
+            <ToolbarButton
+              onClick={lk.toggleRaiseHand}
+              highlight={lk.isHandRaised}
+              tone="amber"
+              icon={<FaHandPaper />}
+              label={lk.isHandRaised ? "Lower hand" : "Raise hand"}
+            />
+          )}
+          {isHost && (lk.remoteParticipants || []).length > 0 && (
+            <ToolbarButton
+              onClick={handleMuteAll}
+              icon={<FaMicrophoneSlash />}
+              label="Mute everyone"
+            />
+          )}
+          {isHost && anyHandRaised && (
+            <ToolbarButton
+              onClick={lk.lowerAllHands}
+              icon={<FaHandPaper />}
+              label="Lower all hands"
+              badge={(lk.remoteParticipants || []).filter((p) => p.handRaised).length + (lk.isHandRaised ? 1 : 0)}
+            />
+          )}
           <ToolbarButton
             onClick={() => openPanel("chat")}
             highlight={activePanel === "chat"}
@@ -607,10 +895,13 @@ function ConfirmationModal({ isOpen, onConfirm, onCancel, title, message }) {
   );
 }
 
-function ToolbarButton({ onClick, active = true, highlight = false, icon, label, badge = 0, disabled = false }) {
+function ToolbarButton({ onClick, active = true, highlight = false, tone = "red", icon, label, badge = 0, disabled = false }) {
   const base = "relative flex items-center justify-center w-11 sm:w-12 h-10 sm:h-12 rounded-xl transition-all active:scale-95";
+  const highlightStyle = tone === "amber"
+    ? "bg-amber-400 hover:bg-amber-300 text-black shadow-lg shadow-amber-400/30"
+    : "bg-red-600 hover:bg-red-500 text-white shadow-lg shadow-red-600/30";
   const style = highlight
-    ? "bg-red-600 hover:bg-red-500 text-white shadow-lg shadow-red-600/30"
+    ? highlightStyle
     : active
     ? "bg-white/10 hover:bg-white/20 text-white"
     : "bg-red-500/90 hover:bg-red-500 text-white";

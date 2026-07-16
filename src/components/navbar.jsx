@@ -27,6 +27,7 @@ import { useUserLayoutOptional } from "../layouts/Userlayoutcontext";
 
 function Navbar({ theme, onToggleTheme, user, onOpenLogin }) {
   const picVersion   = useSelector((state) => state.user.picVersion || 0);
+  const isPremium    = useSelector((state) => Boolean(state.user.data?.is_subscribed));
   const isDark       = theme === "dark";
   const navigate     = useNavigate();
   const location     = useLocation();
@@ -230,15 +231,6 @@ function Navbar({ theme, onToggleTheme, user, onOpenLogin }) {
 
             <div className="flex items-center gap-2 md:gap-3">
 
-              {/* PREMIUM */}
-              <button
-                className="hidden xl:flex items-center gap-2 px-4 py-2.5 rounded-xl text-2xs font-black uppercase tracking-widest text-white bg-linear-to-r from-red-600 to-rose-600 hover:shadow-lg hover:shadow-red-600/30 hover:scale-105 transition-all active:scale-95"
-                onClick={() => navigate("/subscription")}
-              >
-                <FaCrown size={15} className="text-yellow-300" />
-                <span>Premium</span>
-              </button>
-
               {/* NOTIFICATIONS */}
               {isLoggedIn && (
                 <button
@@ -286,10 +278,18 @@ function Navbar({ theme, onToggleTheme, user, onOpenLogin }) {
                 <div className="relative" ref={dropdownRef}>
                   <button
                     onClick={() => setDropdown((v) => !v)}
-                    className="h-9 w-9 overflow-hidden rounded-xl ring-2 ring-border ring-offset-2 ring-offset-background transition-all duration-300 hover:ring-primary"
+                    className={`h-9 w-9 overflow-hidden rounded-xl ring-2 ring-offset-2 ring-offset-background transition-all duration-300 hover:ring-primary ${isPremium ? "ring-amber-400/70" : "ring-border"}`}
                   >
                     <UserAvatar user={user} picVersion={picVersion} />
                   </button>
+                  {isPremium && (
+                    <span
+                      className="pointer-events-none absolute -right-1 -top-1 z-10 flex h-4 w-4 items-center justify-center rounded-full bg-amber-400 text-black shadow ring-2 ring-background"
+                      title="Premium member"
+                    >
+                      <FaCrown size={8} />
+                    </span>
+                  )}
 
                   {dropdown && (
                     <div className="absolute right-0 z-[100] mt-3 w-64 origin-top-right animate-pop overflow-hidden rounded-2xl border border-border bg-card shadow-xl">
@@ -322,7 +322,7 @@ function Navbar({ theme, onToggleTheme, user, onOpenLogin }) {
                         <DropdownItem onClick={() => { setDropdown(false); navigate("/my-company"); }}  icon={<FaBuilding />}        label="My Company"   />
                         <DropdownItem onClick={() => { setDropdown(false); navigate("/chat"); }}        icon={<IoChatboxEllipses />} label="Messages"     />
                         <DropdownItem onClick={() => { setDropdown(false); navigate("/my-bookings"); }} icon={<FaAddressBook />}     label="My Bookings"  />
-                        <DropdownItem onClick={() => { setDropdown(false); navigate("/subscription"); }} icon={<FaCrown />}          label="Subscription" />
+                        <DropdownItem onClick={() => { setDropdown(false); navigate("/subscription"); }} icon={<FaCrown className={isPremium ? "text-amber-500" : ""} />} label={isPremium ? "My Plan" : "Go Premium"} />
                         <div className="my-1.5 border-t border-border" />
                         <DropdownItem onClick={() => { setDropdown(false); openChangePass(); }}         icon={<FaKey />}             label="Security"     />
                         <DropdownItem onClick={() => { setDropdown(false); navigate("/logout"); }}      icon={<FaSignOutAlt />}      label="Logout" danger />

@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useParams } from "react-router-dom";
 
 import axiosSecure from "../../utils/axiosSecure";
+import { initiatePayment, redirectToGateway } from "../../utils/paymentApi";
 
 import { useDispatch } from "react-redux";
 import {
@@ -17,6 +18,7 @@ import {
   FiCheckCircle,
   FiMessageSquare,
   FiVideo,
+  FiUsers,
 } from "react-icons/fi";
 
 import {
@@ -57,7 +59,11 @@ export default function BookSession() {
       );
 
       const availableSlots = (res.data || []).filter((slot) =>
-        Boolean(slot.is_chat_available || slot.is_video_call_available)
+        Boolean(
+          slot.is_chat_available ||
+            slot.is_video_call_available ||
+            slot.is_batch_available
+        )
       );
 
       setSlots(availableSlots);
@@ -73,7 +79,9 @@ export default function BookSession() {
   useEffect(() => {
     if (!selectedSlot) return;
 
-    if (Number(selectedSlot.chat_price) > 0 && selectedSlot.is_chat_available) {
+    if (selectedSlot.slot_mode === "BATCH") {
+      setBookingType("VIDEO_CALL"); // batch is group video only
+    } else if (Number(selectedSlot.chat_price) > 0 && selectedSlot.is_chat_available) {
       setBookingType("CHAT");
     } else if (
       Number(selectedSlot.video_call_price) > 0 &&
@@ -83,26 +91,35 @@ export default function BookSession() {
     }
   }, [selectedSlot]);
 
+  const isBatch = selectedSlot?.slot_mode === "BATCH";
+
   /* ---------------- PAYMENT FLOW ---------------- */
   const currentPrice = selectedSlot
-    ? bookingType === "CHAT"
-      ? selectedSlot.chat_price
-      : selectedSlot.video_call_price
+    ? isBatch
+      ? selectedSlot.batch_price
+      : bookingType === "CHAT"
+        ? selectedSlot.chat_price
+        : selectedSlot.video_call_price
     : 0;
 
   const handleProceedToPay = () => {
     if (!selectedSlot || paymentProcessing) return;
 
+    const sessionLabel = isBatch
+      ? "Group Video Call"
+      : bookingType === "CHAT"
+        ? "Chat"
+        : "Video Call";
+
     showConfirm({
       title: "Confirm Payment",
-      message: `You will be charged ₹${currentPrice} for this ${
-        bookingType === "CHAT" ? "Chat" : "Video Call"
-      } session. Continue?`,
+      message: `You will be charged ₹${currentPrice} for this ${sessionLabel} session. Continue?`,
       confirmText: "Pay Now",
       cancelText: "Cancel",
 
       onConfirm: async () => {
         setPaymentProcessing(true);
+        const wasBatch = isBatch;
 
         try {
           /* 1️⃣ CREATE BOOKING */
@@ -110,19 +127,34 @@ export default function BookSession() {
             createBooking({ slotUuid: selectedSlot.uuid, bookingType })
           ).unwrap();
 
-          /* 2️⃣ FAKE PAYMENT API */
-          await axiosSecure.post("/v1/payments/fake/booking/", {
+          /* 2️⃣ START PAYMENT (gateway-agnostic) */
+          const pay = await initiatePayment({
+            purpose: "BOOKING",
             booking_id: booking.uuid,
           });
 
+          /* 2b️⃣ Hosted checkout (PayU): leave the SPA and come back to
+             /payment/result. Do NOT clear UI — the browser is navigating. */
+          if (pay.flow === "redirect_post") {
+            redirectToGateway(pay.checkout);
+            return;
+          }
+
+          /* 2c️⃣ Instant gateway (fake): already confirmed. */
           setPaymentProcessing(false);
           showAlert("Payment successful! Booking confirmed.", "success");
 
-          // Remove booked slot
-          setSlots((prev) => prev.filter((s) => s.uuid !== selectedSlot.uuid));
           setSelectedSlot(null);
           setAgreed(false);
           dispatch(resetBookingState());
+
+          if (wasBatch) {
+            // Batch slot may still have seats — refresh to update seats left.
+            fetchSlots();
+          } else {
+            // One-to-one slot is now fully booked — remove it.
+            setSlots((prev) => prev.filter((s) => s.uuid !== booking.slot_uuid));
+          }
         } catch (err) {
           console.error("Payment failed:", err);
           setPaymentProcessing(false);
@@ -255,11 +287,17 @@ export default function BookSession() {
                               {startTime}
                             </div>
 
-                            <div className="mt-3 flex items-center gap-2 text-2xs font-black uppercase tracking-widest">
+                            <div className="mt-3 flex flex-wrap items-center gap-2 text-2xs font-black uppercase tracking-widest">
                               <span className="inline-flex items-center gap-1.5 bg-primary-soft text-primary px-2.5 py-1 rounded-full">
                                 <FiClock size={11} />
                                 {slot.duration_minutes} Min
                               </span>
+                              {slot.slot_mode === "BATCH" && (
+                                <span className="inline-flex items-center gap-1.5 bg-primary text-primary-foreground px-2.5 py-1 rounded-full">
+                                  <FiUsers size={11} />
+                                  Group
+                                </span>
+                              )}
                               <span className="text-muted-foreground">
                                 To {endTime}
                               </span>
@@ -271,35 +309,58 @@ export default function BookSession() {
                                 isSelected ? "border-primary/20" : "border-border"
                               )}
                             >
-                              {Number(slot.chat_price) > 0 && (
-                                <div className="flex justify-between items-center">
-                                  <span className="text-2xs font-black uppercase tracking-widest text-muted-foreground">
-                                    Chat
-                                  </span>
-                                  <span
-                                    className={cn(
-                                      "text-base font-black",
-                                      isSelected && "text-primary"
-                                    )}
-                                  >
-                                    ₹{slot.chat_price}
-                                  </span>
-                                </div>
-                              )}
-                              {Number(slot.video_call_price) > 0 && (
-                                <div className="flex justify-between items-center">
-                                  <span className="text-2xs font-black uppercase tracking-widest text-muted-foreground">
-                                    Video Call
-                                  </span>
-                                  <span
-                                    className={cn(
-                                      "text-base font-black",
-                                      isSelected && "text-primary"
-                                    )}
-                                  >
-                                    ₹{slot.video_call_price}
-                                  </span>
-                                </div>
+                              {slot.slot_mode === "BATCH" ? (
+                                <>
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-2xs font-black uppercase tracking-widest text-muted-foreground">
+                                      Per User
+                                    </span>
+                                    <span className={cn("text-base font-black", isSelected && "text-primary")}>
+                                      ₹{slot.batch_price}
+                                    </span>
+                                  </div>
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-2xs font-black uppercase tracking-widest text-muted-foreground">
+                                      Seats Left
+                                    </span>
+                                    <span className="text-2xs font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400">
+                                      {slot.seats_left} / {slot.capacity}
+                                    </span>
+                                  </div>
+                                </>
+                              ) : (
+                                <>
+                                  {Number(slot.chat_price) > 0 && (
+                                    <div className="flex justify-between items-center">
+                                      <span className="text-2xs font-black uppercase tracking-widest text-muted-foreground">
+                                        Chat
+                                      </span>
+                                      <span
+                                        className={cn(
+                                          "text-base font-black",
+                                          isSelected && "text-primary"
+                                        )}
+                                      >
+                                        ₹{slot.chat_price}
+                                      </span>
+                                    </div>
+                                  )}
+                                  {Number(slot.video_call_price) > 0 && (
+                                    <div className="flex justify-between items-center">
+                                      <span className="text-2xs font-black uppercase tracking-widest text-muted-foreground">
+                                        Video Call
+                                      </span>
+                                      <span
+                                        className={cn(
+                                          "text-base font-black",
+                                          isSelected && "text-primary"
+                                        )}
+                                      >
+                                        ₹{slot.video_call_price}
+                                      </span>
+                                    </div>
+                                  )}
+                                </>
                               )}
                             </div>
                           </button>
@@ -330,40 +391,56 @@ export default function BookSession() {
                 </div>
               ) : (
                 <div className="space-y-6 animate-fadeIn">
-                  {/* Consultation type — segmented control */}
-                  <div>
-                    <p className="text-2xs font-black uppercase tracking-widest text-muted-foreground mb-2">
-                      Consultation Type
-                    </p>
-                    <div className="inline-flex w-full gap-1 rounded-2xl border border-border bg-muted/50 p-1.5">
-                      {Number(selectedSlot.chat_price) > 0 && (
-                        <TypeToggle
-                          active={bookingType === "CHAT"}
-                          disabled={!selectedSlot.is_chat_available}
-                          onClick={() => setBookingType("CHAT")}
-                          icon={<FiMessageSquare size={13} />}
-                          label={
-                            selectedSlot.is_chat_available
-                              ? "Chat"
-                              : "Chat (Booked)"
-                          }
-                        />
-                      )}
-                      {Number(selectedSlot.video_call_price) > 0 && (
-                        <TypeToggle
-                          active={bookingType === "VIDEO_CALL"}
-                          disabled={!selectedSlot.is_video_call_available}
-                          onClick={() => setBookingType("VIDEO_CALL")}
-                          icon={<FiVideo size={13} />}
-                          label={
-                            selectedSlot.is_video_call_available
-                              ? "Video"
-                              : "Video (Booked)"
-                          }
-                        />
-                      )}
+                  {/* Consultation type — segmented control (or group badge for batch) */}
+                  {isBatch ? (
+                    <div>
+                      <p className="text-2xs font-black uppercase tracking-widest text-muted-foreground mb-2">
+                        Session Type
+                      </p>
+                      <div className="flex items-center justify-between rounded-2xl border border-primary/20 bg-primary-soft/60 px-4 py-3">
+                        <span className="inline-flex items-center gap-2 text-sm font-bold text-primary">
+                          <FiUsers size={15} /> Group Video Call
+                        </span>
+                        <span className="text-2xs font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400">
+                          {selectedSlot.seats_left} / {selectedSlot.capacity} seats
+                        </span>
+                      </div>
                     </div>
-                  </div>
+                  ) : (
+                    <div>
+                      <p className="text-2xs font-black uppercase tracking-widest text-muted-foreground mb-2">
+                        Consultation Type
+                      </p>
+                      <div className="inline-flex w-full gap-1 rounded-2xl border border-border bg-muted/50 p-1.5">
+                        {Number(selectedSlot.chat_price) > 0 && (
+                          <TypeToggle
+                            active={bookingType === "CHAT"}
+                            disabled={!selectedSlot.is_chat_available}
+                            onClick={() => setBookingType("CHAT")}
+                            icon={<FiMessageSquare size={13} />}
+                            label={
+                              selectedSlot.is_chat_available
+                                ? "Chat"
+                                : "Chat (Booked)"
+                            }
+                          />
+                        )}
+                        {Number(selectedSlot.video_call_price) > 0 && (
+                          <TypeToggle
+                            active={bookingType === "VIDEO_CALL"}
+                            disabled={!selectedSlot.is_video_call_available}
+                            onClick={() => setBookingType("VIDEO_CALL")}
+                            icon={<FiVideo size={13} />}
+                            label={
+                              selectedSlot.is_video_call_available
+                                ? "Video"
+                                : "Video (Booked)"
+                            }
+                          />
+                        )}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Selected time */}
                   <div className="rounded-2xl bg-muted/50 p-5">
@@ -388,7 +465,7 @@ export default function BookSession() {
                       </span>
                     </div>
                     <div className="flex justify-between items-center text-sm">
-                      <span className="text-muted-foreground">Session Fee</span>
+                      <span className="text-muted-foreground">{isBatch ? "Fee (per user)" : "Session Fee"}</span>
                       <span className="font-bold">₹{currentPrice}</span>
                     </div>
                   </div>

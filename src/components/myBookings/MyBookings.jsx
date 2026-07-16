@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { MdOutlineSchedule, MdPerson, MdOutlinePayments, MdChatBubbleOutline, MdOutlineTimer, MdVideocam } from "react-icons/md";
+import { MdOutlineSchedule, MdPerson, MdOutlinePayments, MdChatBubbleOutline, MdOutlineTimer, MdVideocam, MdGroups } from "react-icons/md";
 
 import axiosSecure from "../utils/axiosSecure";
 import { useAlert } from "../../context/AlertContext";
@@ -173,6 +173,7 @@ export default function MyBookings() {
               const startDate = new Date(booking.start_datetime);
               const endDate = new Date(booking.end_datetime);
               const durationMins = booking.duration_minutes || Math.floor((endDate - startDate) / 60000);
+              const isBatch = Boolean(booking.is_batch);
               const isVideo = booking.session_type === "VIDEO_CALL";
 
               let otherPersonName = "";
@@ -213,8 +214,8 @@ export default function MyBookings() {
                       </div>
                     </div>
                     <div className="flex shrink-0 items-center gap-1 rounded-lg border border-border bg-muted/40 px-2 py-1 text-2xs font-bold uppercase tracking-wide text-muted-foreground">
-                      {isVideo ? <MdVideocam size={13} className="text-primary" /> : <MdChatBubbleOutline size={13} className="text-primary" />}
-                      {isVideo ? "Video" : "Chat"}
+                      {isBatch ? <MdGroups size={13} className="text-primary" /> : isVideo ? <MdVideocam size={13} className="text-primary" /> : <MdChatBubbleOutline size={13} className="text-primary" />}
+                      {isBatch ? "Group" : isVideo ? "Video" : "Chat"}
                     </div>
                   </div>
 
@@ -262,7 +263,7 @@ export default function MyBookings() {
                           size="sm"
                           onClick={() => booking.call_room_id ? navigate(`/video-call/${booking.call_room_id}`) : showAlert("Video room not ready yet", "info")}
                         >
-                          <MdVideocam size={16} /> Start Video Call
+                          {isBatch ? <MdGroups size={16} /> : <MdVideocam size={16} />} {isBatch ? "Join Group Call" : "Start Video Call"}
                         </Button>
                       ) : (
                         <Button

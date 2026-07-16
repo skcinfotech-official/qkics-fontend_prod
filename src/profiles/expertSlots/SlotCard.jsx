@@ -1,4 +1,4 @@
-import { MdEdit, MdDelete, MdOutlineSchedule } from "react-icons/md";
+import { MdEdit, MdDelete, MdOutlineSchedule, MdGroups } from "react-icons/md";
 
 export default function SlotCard({
   slot,
@@ -9,8 +9,13 @@ export default function SlotCard({
   const start = new Date(slot.start_datetime);
   const end = new Date(slot.end_datetime);
 
-  // Slot is available if at least one service is available
-  const isAvailable = Boolean(slot.is_chat_available || slot.is_video_call_available);
+  const isBatch = slot.slot_mode === "BATCH";
+  const seatsLeft = Number(slot.seats_left ?? 0);
+
+  // Slot is available if at least one service (or a batch seat) is available
+  const isAvailable = isBatch
+    ? Boolean(slot.is_batch_available)
+    : Boolean(slot.is_chat_available || slot.is_video_call_available);
 
   const sameDay = start.toLocaleDateString() === end.toLocaleDateString();
 
@@ -41,18 +46,35 @@ export default function SlotCard({
 
       {/* INFO GRID */}
       <div className="mb-4 grid grid-cols-2 gap-x-2 gap-y-4">
-        <div>
-          <span className="mb-1 block text-2xs font-bold uppercase tracking-wide text-muted-foreground">Chat Price</span>
-          <span className={`text-base font-bold ${Number(slot.chat_price) > 0 ? "text-primary" : "text-muted-foreground"}`}>
-            {Number(slot.chat_price) > 0 ? `₹${slot.chat_price}` : "N/A"}
-          </span>
-        </div>
-        <div>
-          <span className="mb-1 block text-2xs font-bold uppercase tracking-wide text-muted-foreground">Video Price</span>
-          <span className={`text-base font-bold ${Number(slot.video_call_price) > 0 ? "text-primary" : "text-muted-foreground"}`}>
-            {Number(slot.video_call_price) > 0 ? `₹${slot.video_call_price}` : "N/A"}
-          </span>
-        </div>
+        {isBatch ? (
+          <>
+            <div>
+              <span className="mb-1 block text-2xs font-bold uppercase tracking-wide text-muted-foreground">Per User</span>
+              <span className="text-base font-bold text-primary">₹{slot.batch_price}</span>
+            </div>
+            <div>
+              <span className="mb-1 block text-2xs font-bold uppercase tracking-wide text-muted-foreground">Seats</span>
+              <span className="text-base font-bold text-foreground">
+                {seatsLeft}<span className="text-muted-foreground"> / {slot.capacity} left</span>
+              </span>
+            </div>
+          </>
+        ) : (
+          <>
+            <div>
+              <span className="mb-1 block text-2xs font-bold uppercase tracking-wide text-muted-foreground">Chat Price</span>
+              <span className={`text-base font-bold ${Number(slot.chat_price) > 0 ? "text-primary" : "text-muted-foreground"}`}>
+                {Number(slot.chat_price) > 0 ? `₹${slot.chat_price}` : "N/A"}
+              </span>
+            </div>
+            <div>
+              <span className="mb-1 block text-2xs font-bold uppercase tracking-wide text-muted-foreground">Video Price</span>
+              <span className={`text-base font-bold ${Number(slot.video_call_price) > 0 ? "text-primary" : "text-muted-foreground"}`}>
+                {Number(slot.video_call_price) > 0 ? `₹${slot.video_call_price}` : "N/A"}
+              </span>
+            </div>
+          </>
+        )}
         <div className="col-span-2">
           <span className="mb-1 block text-2xs font-bold uppercase tracking-wide text-muted-foreground">Duration</span>
           <span className="text-sm font-bold text-foreground">{slot.duration_minutes} mins</span>
@@ -61,6 +83,11 @@ export default function SlotCard({
 
       {/* STATUS BADGES */}
       <div className="mb-5 flex flex-wrap gap-2">
+        {isBatch && (
+          <span className="inline-flex items-center gap-1 rounded-full border border-primary/20 bg-primary-soft px-3 py-1 text-2xs font-bold uppercase tracking-wide text-primary">
+            <MdGroups size={13} /> Group
+          </span>
+        )}
         <span
           className={`rounded-full border px-3 py-1 text-2xs font-bold uppercase tracking-wide ${slot.status === "ACTIVE"
             ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"

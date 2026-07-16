@@ -44,3 +44,21 @@ export async function saveMyNote(call_room_id, content) {
   const res = await axiosSecure.post(`/v1/calls/${call_room_id}/notes/`, { content });
   return res.status === 200 || res.status === 201;
 }
+
+// Host (expert) force-mutes a participant's mic in a group call.
+export async function muteCallParticipant(call_room_id, identity) {
+  const res = await axiosSecure.post(`/v1/calls/${call_room_id}/mute/`, { identity });
+  return res.data;
+}
+
+// Host mutes everyone's mic (host stays unmuted).
+export async function muteAllCallParticipants(call_room_id) {
+  const res = await axiosSecure.post(`/v1/calls/${call_room_id}/mute-all/`);
+  return res.data;
+}
+
+// Host removes (disconnects) a participant from the call.
+export async function removeCallParticipant(call_room_id, identity) {
+  const res = await axiosSecure.post(`/v1/calls/${call_room_id}/remove/`, { identity });
+  return res.data;
+}

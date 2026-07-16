@@ -170,7 +170,7 @@ export default function ExpertSlots() {
       {/* MODAL */}
       {showModal && (
         <ModalOverlay close={() => setShowModal(false)}>
-          <div className="relative w-full max-w-xl rounded-2xl border border-border bg-card p-6 shadow-2xl md:p-8">
+          <div className="relative max-h-[92vh] w-full max-w-md overflow-y-auto rounded-2xl border border-border bg-card p-5 shadow-2xl sm:p-6">
             <SlotForm
               initialData={editingSlot}
               onSave={handleSave}

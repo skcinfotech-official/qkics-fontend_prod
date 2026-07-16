@@ -5,6 +5,7 @@ import { FaCheckCircle, FaCrown, FaArrowRight } from "react-icons/fa";
 import { MdDiamond } from "react-icons/md";
 
 import axiosSecure from "../utils/axiosSecure";
+import { redirectToGateway } from "../utils/paymentApi";
 import { useAlert } from "../../context/AlertContext";
 import { Breadcrumb } from "../ui";
 
@@ -62,9 +63,15 @@ export default function Subscription() {
 
         try {
             setSubscribing(plan.uuid);
-            await axiosSecure.post("/v1/subscriptions/subscribe/", {
+            const res = await axiosSecure.post("/v1/subscriptions/subscribe/", {
                 plan_uuid: plan.uuid
             });
+
+            // Hosted checkout (PayU): leave the SPA; return to /payment/result.
+            if (res.data?.flow === "redirect_post") {
+                redirectToGateway(res.data.checkout);
+                return;
+            }
 
             showAlert(`Successfully subscribed to ${plan.name} plan!`, "success");
 
