@@ -1,812 +1,543 @@
 import { useEffect, useState } from "react";
+import {
+  FaEye, FaBuilding, FaMapMarkerAlt, FaGlobe, FaBriefcase, FaTrash,
+  FaEdit, FaCog,
+} from "react-icons/fa";
 import axiosSecure from "../../components/utils/axiosSecure";
-import { FaSearch, FaEye, FaBuilding, FaMapMarkerAlt, FaGlobe, FaBriefcase, FaTrash, FaEdit, FaCheck, FaTimes, FaCog } from "react-icons/fa";
 import { useAlert } from "../../context/AlertContext";
 import ConfirmationAlert from "../../components/ui/ConfirmationAlert";
-import { Breadcrumb } from "../../components/ui";
+import { PageHeader, SearchInput, Button, Badge, AdminModal } from "../../components/ui";
+import { AdminTable, FIELD_CLASS, LABEL_CLASS } from "../adminComponents/adminUi";
 import { resolveMedia } from "../../components/utils/mediaUrl";
 
-export default function AdminCompanies({ theme }) {
-    const isDark = theme === "dark";
-    const { showAlert } = useAlert();
+const STATUS_VARIANT = {
+  approved: "success",
+  pending: "warning",
+  rejected: "danger",
+  suspended: "warning",
+};
 
-    const [companies, setCompanies] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [searchText, setSearchText] = useState("");
-    const [filterStatus, setFilterStatus] = useState("");
-    const [nextCursor, setNextCursor] = useState(null);
-    const [prevCursor, setPrevCursor] = useState(null);
-    const [totalCount, setTotalCount] = useState(0);
+export default function AdminCompanies() {
+  const { showAlert } = useAlert();
 
-    const [viewModal, setViewModal] = useState({ isOpen: false, company: null });
-    const [editModal, setEditModal] = useState({ isOpen: false, company: null });
-    const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, companyId: null });
-    const [submitting, setSubmitting] = useState(false);
-    const [fetchingDetails, setFetchingDetails] = useState(false);
-    const [members, setMembers] = useState([]);
-    const [fetchingMembers, setFetchingMembers] = useState(false);
-    const [memberToRemove, setMemberToRemove] = useState(null);
-    const [memberNextCursor, setMemberNextCursor] = useState(null);
-    const [totalMembers, setTotalMembers] = useState(0);
-    const [settings, setSettings] = useState({ free_posts_per_company: 0, paid_post_price: 0 });
-    const [settingsModal, setSettingsModal] = useState({ isOpen: false });
-    const [savingSettings, setSavingSettings] = useState(false);
+  const [companies, setCompanies] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchText, setSearchText] = useState("");
+  const [filterStatus, setFilterStatus] = useState("");
+  const [nextCursor, setNextCursor] = useState(null);
+  const [prevCursor, setPrevCursor] = useState(null);
+  const [totalCount, setTotalCount] = useState(0);
 
-    const [formData, setFormData] = useState({
-        name: "",
-        description: "",
-        industry: "",
-        website: "",
-        location: "",
-        status: "pending"
+  const [viewModal, setViewModal] = useState({ isOpen: false, company: null });
+  const [editModal, setEditModal] = useState({ isOpen: false, company: null });
+  const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, companyId: null });
+  const [submitting, setSubmitting] = useState(false);
+  const [fetchingDetails, setFetchingDetails] = useState(false);
+  const [members, setMembers] = useState([]);
+  const [fetchingMembers, setFetchingMembers] = useState(false);
+  const [memberToRemove, setMemberToRemove] = useState(null);
+  const [memberNextCursor, setMemberNextCursor] = useState(null);
+  const [totalMembers, setTotalMembers] = useState(0);
+  const [settings, setSettings] = useState({ free_posts_per_company: 0, paid_post_price: 0 });
+  const [settingsModal, setSettingsModal] = useState({ isOpen: false });
+  const [savingSettings, setSavingSettings] = useState(false);
+
+  const [formData, setFormData] = useState({
+    name: "", description: "", industry: "", website: "", location: "", status: "pending",
+  });
+
+  const extractCursor = (url) => {
+    if (!url) return null;
+    try {
+      return new URL(url, window.location.origin).searchParams.get("cursor");
+    } catch {
+      const match = url.match(/[?&]cursor=([^&]+)/);
+      return match ? match[1] : null;
+    }
+  };
+
+  const fetchCompanies = async (cursor = null) => {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams();
+      if (cursor) params.append("cursor", cursor);
+      if (searchText) params.append("q", searchText);
+      if (filterStatus) params.append("status", filterStatus);
+
+      const res = await axiosSecure.get("/v1/admin/companies/?" + params.toString());
+      const data = res.data?.results || (Array.isArray(res.data) ? res.data : []);
+      setCompanies(data);
+      setNextCursor(extractCursor(res.data?.next));
+      setPrevCursor(extractCursor(res.data?.previous));
+      setTotalCount(res.data?.count || data.length);
+    } catch (err) {
+      console.error(err);
+      showAlert("Failed to load companies", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchSettings = async () => {
+    try {
+      const res = await axiosSecure.get("/v1/admin/company-settings/");
+      setSettings(res.data);
+    } catch (err) {
+      console.error("Failed to fetch settings:", err);
+    }
+  };
+
+  useEffect(() => { fetchSettings(); }, []);
+
+  useEffect(() => {
+    const t = setTimeout(() => fetchCompanies(), 500);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchText, filterStatus]);
+
+  const fetchMembers = async (companyId, cursor = null) => {
+    try {
+      setFetchingMembers(true);
+      const params = cursor ? `?cursor=${cursor}` : "";
+      const res = await axiosSecure.get(`/v1/admin/companies/${companyId}/members/${params}`);
+      const memberData = res.data?.results || (Array.isArray(res.data) ? res.data : []);
+      setMembers((prev) => (cursor ? [...prev, ...memberData] : memberData));
+      setMemberNextCursor(extractCursor(res.data?.next));
+      setTotalMembers(res.data?.count || (cursor ? members.length + memberData.length : memberData.length));
+    } catch (err) {
+      console.error("Failed to fetch members:", err);
+      if (!cursor) setMembers([]);
+    } finally {
+      setFetchingMembers(false);
+    }
+  };
+
+  const handleViewClick = async (company) => {
+    try {
+      setFetchingDetails(true);
+      setMembers([]);
+      setMemberNextCursor(null);
+      const res = await axiosSecure.get(`/v1/admin/companies/${company.id}/`);
+      setViewModal({ isOpen: true, company: res.data });
+      fetchMembers(company.id);
+    } catch (err) {
+      console.error(err);
+      showAlert("Failed to fetch company details", "error");
+      setViewModal({ isOpen: true, company });
+    } finally {
+      setFetchingDetails(false);
+    }
+  };
+
+  const handleEditClick = (company) => {
+    setMembers([]);
+    setMemberNextCursor(null);
+    setEditModal({ isOpen: true, company });
+    setFormData({
+      name: company.name || "", description: company.description || "",
+      industry: company.industry || "", website: company.website || "",
+      location: company.location || "", status: company.status || "pending",
     });
+    fetchMembers(company.id);
+  };
 
-    const extractCursor = (url) => {
-        if (!url) return null;
-        try {
-            // Safe URL parsing with fallback base
-            const urlObj = new URL(url, window.location.origin);
-            return urlObj.searchParams.get("cursor");
-        } catch {
-            // Fallback: manually parse if URL is malformed
-            const match = url.match(/[?&]cursor=([^&]+)/);
-            return match ? match[1] : null;
-        }
-    };
+  const confirmRemoveMember = async () => {
+    if (!memberToRemove) return;
+    try {
+      await axiosSecure.delete(`/v1/admin/company-members/${memberToRemove.id}/remove/`);
+      showAlert("Member removed successfully", "success");
+      setMembers(members.filter((m) => m.id !== memberToRemove.id));
+      setMemberToRemove(null);
+    } catch (err) {
+      console.error(err);
+      showAlert("Failed to remove member", "error");
+    }
+  };
 
-    const fetchCompanies = async (cursor = null) => {
-        try {
-            setLoading(true);
-            let url = "/v1/admin/companies/?";
-            const params = new URLSearchParams();
+  const handleUpdateCompany = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      await axiosSecure.patch(`/v1/admin/companies/${editModal.company.id}/update/`, formData);
+      showAlert("Company updated successfully", "success");
+      setEditModal({ isOpen: false, company: null });
+      fetchCompanies();
+    } catch (err) {
+      console.error(err);
+      showAlert("Failed to update company", "error");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
-            if (cursor) params.append("cursor", cursor);
-            if (searchText) params.append("q", searchText);
-            if (filterStatus) params.append("status", filterStatus);
+  const handleUpdateSettings = async (e) => {
+    e.preventDefault();
+    setSavingSettings(true);
+    try {
+      await axiosSecure.patch("/v1/admin/company-settings/", settings);
+      showAlert("Settings updated successfully", "success");
+      setSettingsModal({ isOpen: false });
+      fetchSettings();
+    } catch (err) {
+      console.error(err);
+      showAlert("Failed to update settings", "error");
+    } finally {
+      setSavingSettings(false);
+    }
+  };
 
-            const res = await axiosSecure.get(url + params.toString());
-            
-            // Handle both { results: [] } and direct [] responses
-            const data = res.data?.results || (Array.isArray(res.data) ? res.data : []);
-            setCompanies(data);
-            
-            setNextCursor(extractCursor(res.data?.next));
-            setPrevCursor(extractCursor(res.data?.previous));
-            setTotalCount(res.data?.count || data.length);
+  const confirmDelete = async () => {
+    try {
+      await axiosSecure.delete(`/v1/admin/companies/${deleteConfirm.companyId}/delete/`);
+      showAlert("Company deleted successfully", "success");
+      setDeleteConfirm({ isOpen: false, companyId: null });
+      fetchCompanies();
+    } catch (err) {
+      console.error(err);
+      showAlert("Failed to delete company", "error");
+    }
+  };
 
-        } catch (err) {
-            console.error(err);
-            showAlert("Failed to load companies", "error");
-        } finally {
-            setLoading(false);
-        }
-    };
+  const renderSafe = (val) => {
+    if (!val) return "—";
+    if (typeof val === "object") return val.username || val.email || val.name || val.label || "Object";
+    return String(val);
+  };
 
-    const fetchSettings = async () => {
-        try {
-            const res = await axiosSecure.get("/v1/admin/company-settings/");
-            setSettings(res.data);
-        } catch (err) {
-            console.error("Failed to fetch settings:", err);
-        }
-    };
+  const columns = [
+    { key: "org", label: "Organization" },
+    { key: "details", label: "Details" },
+    { key: "owner", label: "Owner" },
+    { key: "status", label: "Status", align: "center" },
+    { key: "actions", label: "Actions", align: "center" },
+  ];
 
-    useEffect(() => {
-        fetchSettings();
-    }, []);
-
-    useEffect(() => {
-        const timeoutId = setTimeout(() => {
-            fetchCompanies();
-        }, 500);
-        return () => clearTimeout(timeoutId);
-    }, [searchText, filterStatus]);
-
-    const fetchMembers = async (companyId, cursor = null) => {
-        try {
-            setFetchingMembers(true);
-            const params = cursor ? `?cursor=${cursor}` : "";
-            const res = await axiosSecure.get(`/v1/admin/companies/${companyId}/members/${params}`);
-            
-            const memberData = res.data?.results || (Array.isArray(res.data) ? res.data : []);
-            
-            if (cursor) {
-                setMembers(prev => [...prev, ...memberData]);
-            } else {
-                setMembers(memberData);
-            }
-            
-            setMemberNextCursor(extractCursor(res.data?.next));
-            setTotalMembers(res.data?.count || (cursor ? members.length + memberData.length : memberData.length));
-        } catch (err) {
-            console.error("Failed to fetch members:", err);
-            if (!cursor) setMembers([]);
-        } finally {
-            setFetchingMembers(false);
-        }
-    };
-
-    const handleViewClick = async (company) => {
-        try {
-            setFetchingDetails(true);
-            setMembers([]);
-            setMemberNextCursor(null);
-            const res = await axiosSecure.get(`/v1/admin/companies/${company.id}/`);
-            setViewModal({ isOpen: true, company: res.data });
-            fetchMembers(company.id);
-        } catch (err) {
-            console.error(err);
-            showAlert("Failed to fetch company details", "error");
-            // Fallback to list data if single fetch fails
-            setViewModal({ isOpen: true, company });
-        } finally {
-            setFetchingDetails(false);
-        }
-    };
-
-    const handleEditClick = (company) => {
-        setMembers([]);
-        setMemberNextCursor(null);
-        setEditModal({ isOpen: true, company });
-        setFormData({
-            name: company.name || "",
-            description: company.description || "",
-            industry: company.industry || "",
-            website: company.website || "",
-            location: company.location || "",
-            status: company.status || "pending"
-        });
-        fetchMembers(company.id);
-    };
-
-    const handleRemoveMemberClick = (member) => {
-        setMemberToRemove(member);
-    };
-
-    const confirmRemoveMember = async () => {
-        if (!memberToRemove) return;
-        try {
-            await axiosSecure.delete(`/v1/admin/company-members/${memberToRemove.id}/remove/`);
-            showAlert("Member removed successfully", "success");
-            setMembers(members.filter(m => m.id !== memberToRemove.id));
-            setMemberToRemove(null);
-        } catch (err) {
-            console.error(err);
-            showAlert("Failed to remove member", "error");
-        }
-    };
-
-    const handleUpdateCompany = async (e) => {
-        e.preventDefault();
-        setSubmitting(true);
-        try {
-            await axiosSecure.patch(`/v1/admin/companies/${editModal.company.id}/update/`, formData);
-            showAlert("Company updated successfully", "success");
-            setEditModal({ isOpen: false, company: null });
-            fetchCompanies();
-        } catch (err) {
-            console.error(err);
-            showAlert("Failed to update company", "error");
-        } finally {
-            setSubmitting(false);
-        }
-    };
-
-    const handleDeleteClick = (id) => {
-        setDeleteConfirm({ isOpen: true, companyId: id });
-    };
-
-    const handleUpdateSettings = async (e) => {
-        e.preventDefault();
-        setSavingSettings(true);
-        try {
-            await axiosSecure.patch("/v1/admin/company-settings/", settings);
-            showAlert("Settings updated successfully", "success");
-            setSettingsModal({ isOpen: false });
-            fetchSettings(); // Refresh settings after update
-        } catch (err) {
-            console.error(err);
-            showAlert("Failed to update settings", "error");
-        } finally {
-            setSavingSettings(false);
-        }
-    };
-
-    const confirmDelete = async () => {
-        try {
-            await axiosSecure.delete(`/v1/admin/companies/${deleteConfirm.companyId}/delete/`);
-            showAlert("Company deleted successfully", "success");
-            setDeleteConfirm({ isOpen: false, companyId: null });
-            fetchCompanies();
-        } catch (err) {
-            console.error(err);
-            showAlert("Failed to delete company", "error");
-        }
-    };
-
-    const getStatusStyle = (status) => {
-        switch (status?.toLowerCase()) {
-            case "approved":
-                return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400";
-            case "pending":
-                return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400";
-            case "rejected":
-                return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400";
-            case "suspended":
-                return "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400";
-            default:
-                return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300";
-        }
-    };
-
-    const textStyle = isDark ? "text-gray-200" : "text-gray-900";
-    const labelStyle = isDark ? "text-gray-400" : "text-gray-500";
-    const bgCard = isDark ? "bg-[#111111]" : "bg-white";
-
-    // Helper to safely render strings, numbers, or fallback from objects
-    const renderSafe = (val) => {
-        if (!val) return "—";
-        if (typeof val === 'object') {
-            // If it's the owner object {id, username, email}
-            return (val.username || val.email || val.name || val.label || "Object");
-        }
-        return String(val);
-    };
-
-    return (
-        <div className="space-y-6">
-            <Breadcrumb home={false} items={[{ label: "Dashboard", to: "/admin" }, { label: "Companies" }]} />
-            {/* Header Area */}
-            <div className="flex justify-between items-center">
-                <h1 className={`text-2xl font-semibold tracking-tight ${textStyle}`}>
-                    Company Management
-                </h1>
-            </div>
-
-            {/* Global Settings Area (Like Documents Page) */}
-            {settings && (
-                <div className={`p-6 rounded-xl border flex flex-col sm:flex-row justify-between items-center gap-6 ${isDark ? "bg-[#111111] border-gray-800" : "bg-white border-gray-200 shadow-sm"}`}>
-                    <div className="flex flex-wrap gap-10">
-                        <div className="flex flex-col">
-                            <span className={`text-2xs font-black uppercase tracking-[0.2em] mb-1 opacity-50 ${textStyle}`}>Free Posts Limit</span>
-                            <span className={`text-3xl font-black ${isDark ? "text-blue-400" : "text-blue-600"}`}>
-                                {settings.free_posts_per_company} 
-                                <span className="text-sm font-medium ml-2">/ Organization</span>
-                            </span>
-                        </div>
-                        <div className="flex flex-col">
-                            <span className={`text-2xs font-black uppercase tracking-[0.2em] mb-1 opacity-50 ${textStyle}`}>Paid Post Price</span>
-                            <span className={`text-3xl font-black ${isDark ? "text-emerald-400" : "text-emerald-600"}`}>
-                                ₹{settings.paid_post_price}
-                                <span className="text-sm font-medium ml-2">/ Extra Post</span>
-                            </span>
-                        </div>
-                    </div>
-                    <button 
-                        onClick={() => setSettingsModal({ isOpen: true })}
-                        className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-2xs font-black uppercase tracking-[0.2em] transition-all border ${isDark ? "border-white/10 hover:bg-white/5 text-white" : "border-black/10 hover:bg-black/5 text-black"}`}
-                    >
-                        <FaCog className={isDark ? "text-blue-400" : "text-blue-600"} />
-                        Update Limits
-                    </button>
-                </div>
-            )}
-
-            {/* Filters Area */}
-            <div className={`p-4 rounded-xl border flex flex-col sm:flex-row gap-4 justify-between items-center ${isDark ? "bg-[#111111] border-gray-800" : "bg-white border-gray-200 shadow-sm"}`}>
-                <div className="relative w-full sm:max-w-md">
-                    <FaSearch className={`absolute left-3 top-1/2 -translate-y-1/2 text-sm ${isDark ? "text-gray-500" : "text-gray-400"}`} />
-                    <input
-                        type="text"
-                        placeholder="Search companies by name..."
-                        value={searchText}
-                        onChange={(e) => setSearchText(e.target.value)}
-                        className={`w-full pl-9 pr-4 py-2 rounded-lg border text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all ${isDark ? "bg-[#0a0a0a] border-gray-800 text-gray-200" : "bg-gray-50 border-gray-200 text-gray-900"}`}
-                    />
-                </div>
-                <select
-                    value={filterStatus}
-                    onChange={(e) => setFilterStatus(e.target.value)}
-                    className={`w-full sm:w-auto border rounded-lg font-medium text-sm px-4 py-2 outline-none transition-all ${isDark ? "bg-gray-800 border-gray-800 text-gray-300" : "bg-white border-gray-200 text-gray-700"}`}
-                >
-                    <option value="">All Statuses</option>
-                    <option value="pending">Pending</option>
-                    <option value="approved">Approved</option>
-                    <option value="rejected">Rejected</option>
-                    <option value="suspended">Suspended</option>
-                </select>
-            </div>
-
-            {/* Table Area */}
-            <div className={`rounded-xl border overflow-hidden ${isDark ? "border-gray-800 bg-[#111111]" : "border-gray-200 bg-white shadow-sm"}`}>
-                {!loading ? (
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm text-left">
-                            <thead className={`text-xs uppercase font-semibold ${isDark ? "bg-gray-800/50 text-gray-400 border-b border-gray-800" : "bg-gray-50 text-gray-600 border-b border-gray-200"}`}>
-                                <tr>
-                                    <th className="py-4 px-5">Organization</th>
-                                    <th className="py-4 px-5">Details</th>
-                                    <th className="py-4 px-5">Owner</th>
-                                    <th className="py-4 px-5 text-center">Status</th>
-                                    <th className="py-4 px-5 text-center">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody className={`divide-y ${isDark ? "divide-gray-800" : "divide-gray-200"}`}>
-                                {companies.map((company) => (
-                                    <tr key={company.id} className={`transition-all ${isDark ? "hover:bg-gray-800/30" : "hover:bg-gray-50"}`}>
-                                        <td className="py-3 px-5">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-lg bg-gray-200 dark:bg-gray-700 flex shrink-0 items-center justify-center overflow-hidden border border-black/5 dark:border-white/5">
-                                                    {company.logo ? (
-                                                        <img src={resolveMedia(company.logo)} alt={renderSafe(company.name)} className="w-full h-full object-cover" />
-                                                    ) : (
-                                                        <FaBuilding className="text-gray-400" />
-                                                    )}
-                                                </div>
-                                                <div>
-                                                    <p className={`font-bold ${textStyle}`}>{renderSafe(company.name)}</p>
-                                                    <p className="text-xs font-medium text-blue-500">@{renderSafe(company.slug)}</p>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="py-3 px-5">
-                                            <div className="flex flex-col gap-1">
-                                                <div className="flex items-center gap-2 text-xs">
-                                                    <FaBriefcase className="text-gray-400" />
-                                                    <span className={textStyle}>{renderSafe(company.industry)}</span>
-                                                </div>
-                                                <div className="flex items-center gap-2 text-xs">
-                                                    <FaMapMarkerAlt className="text-gray-400" />
-                                                    <span className={textStyle}>{renderSafe(company.location)}</span>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="py-3 px-5">
-                                            <span className={`text-xs font-medium ${textStyle}`}>
-                                                {renderSafe(company.owner)}
-                                            </span>
-                                        </td>
-                                        <td className="py-3 px-5 text-center">
-                                            <span className={`px-2.5 py-1 rounded-full text-2xs font-black uppercase tracking-widest ${getStatusStyle(String(company.status))}`}>
-                                                {renderSafe(company.status)}
-                                            </span>
-                                        </td>
-                                        <td className="py-3 px-5 text-center">
-                                            <div className="flex items-center justify-center gap-2">
-                                                <button 
-                                                    onClick={() => handleViewClick(company)} 
-                                                    disabled={fetchingDetails}
-                                                    className={`p-2 rounded-lg transition-all ${isDark ? "text-blue-400 hover:bg-blue-400/10" : "text-blue-600 hover:bg-blue-50"}`}
-                                                    title="View Full Details"
-                                                >
-                                                    {fetchingDetails ? <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"></div> : <FaEye size={14} />}
-                                                </button>
-                                                <button onClick={() => handleEditClick(company)} className={`p-2 rounded-lg transition-all ${isDark ? "text-blue-400 hover:bg-blue-400/10" : "text-blue-600 hover:bg-blue-50"}`} title="Edit / Moderate">
-                                                    <FaEdit size={14} />
-                                                </button>
-                                                <button onClick={() => handleDeleteClick(company.id)} className={`p-2 rounded-lg transition-all ${isDark ? "text-red-400 hover:bg-red-400/10" : "text-red-600 hover:bg-red-50"}`} title="Delete Permanently">
-                                                    <FaTrash size={14} />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                                {companies.length === 0 && (
-                                    <tr>
-                                        <td colSpan="5" className="py-12 text-center">
-                                            <FaBuilding className={`text-4xl mx-auto mb-3 opacity-20 ${isDark ? "text-white" : "text-black"}`} />
-                                            <p className={`text-sm opacity-50 ${textStyle}`}>No organizations found.</p>
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-                ) : (
-                    <div className="py-20 flex flex-col items-center">
-                        <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
-                        <p className={`text-sm opacity-50 ${textStyle}`}>Loading organizations...</p>
-                    </div>
-                )}
-
-                {/* Pagination */}
-                {!loading && (prevCursor || nextCursor) && (
-                    <div className={`px-5 py-4 border-t flex items-center justify-between ${isDark ? "border-gray-800" : "border-gray-100"}`}>
-                         <p className={`text-xs font-black uppercase tracking-widest opacity-40 ${textStyle}`}>
-                            Total: {totalCount} Organizations
-                        </p>
-                        <div className="flex gap-2">
-                            <button
-                                onClick={() => fetchCompanies(prevCursor)}
-                                disabled={!prevCursor}
-                                className={`px-4 py-2 rounded-lg text-xs font-bold uppercase transition-all ${!prevCursor ? "opacity-30 cursor-not-allowed" : (isDark ? "bg-gray-800 hover:bg-gray-700 text-white" : "bg-gray-100 hover:bg-gray-200 text-black")}`}
-                            >
-                                Previous
-                            </button>
-                            <button
-                                onClick={() => fetchCompanies(nextCursor)}
-                                disabled={!nextCursor}
-                                className={`px-4 py-2 rounded-lg text-xs font-bold uppercase transition-all ${!nextCursor ? "opacity-30 cursor-not-allowed" : (isDark ? "bg-gray-800 hover:bg-gray-700 text-white" : "bg-gray-100 hover:bg-gray-200 text-black")}`}
-                            >
-                                Next
-                            </button>
-                        </div>
-                    </div>
-                )}
-            </div>
-
-            {/* VIEW MODAL */}
-            {viewModal.isOpen && viewModal.company && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn overflow-y-auto">
-                    <div className={`relative w-full max-w-2xl my-8 p-8 rounded-3xl shadow-2xl ${bgCard} border ${isDark ? "border-white/10" : "border-black/5"}`}>
-                        <div className="flex justify-between items-start mb-8">
-                            <div className="flex items-center gap-4">
-                                <div className="w-16 h-16 rounded-2xl overflow-hidden bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center border border-black/5 dark:border-white/10 shadow-lg">
-                                    {viewModal.company.logo ? (
-                                        <img src={resolveMedia(viewModal.company.logo)} alt="Logo" className="w-full h-full object-cover" />
-                                    ) : (
-                                        <FaBuilding size={32} className="text-neutral-400" />
-                                    )}
-                                </div>
-                                <div>
-                                    <h2 className={`text-2xl font-black tracking-tighter ${textStyle}`}>{renderSafe(viewModal.company.name)}</h2>
-                                    <span className={`px-2 py-0.5 rounded text-2xs font-black uppercase tracking-widest ${getStatusStyle(renderSafe(viewModal.company.status))}`}>
-                                        {renderSafe(viewModal.company.status)}
-                                    </span>
-                                </div>
-                            </div>
-                            <button onClick={() => setViewModal({ isOpen: false, company: null })} className={labelStyle + " hover:text-red-500 transition-colors"}>
-                                <FaTimes size={20} />
-                            </button>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
-                            <div className="space-y-4">
-                                <div>
-                                    <p className={`text-2xs font-black uppercase tracking-widest ${labelStyle}`}>Industry</p>
-                                    <p className={`text-sm font-bold ${textStyle}`}>{renderSafe(viewModal.company.industry)}</p>
-                                </div>
-                                <div>
-                                    <p className={`text-2xs font-black uppercase tracking-widest ${labelStyle}`}>Location</p>
-                                    <p className={`text-sm font-bold ${textStyle}`}>{renderSafe(viewModal.company.location)}</p>
-                                </div>
-                                <div>
-                                    <p className={`text-2xs font-black uppercase tracking-widest ${labelStyle}`}>Website</p>
-                                    {viewModal.company.website ? (
-                                        <a href={viewModal.company.website} target="_blank" rel="noopener noreferrer" className="text-sm font-bold text-blue-500 hover:underline flex items-center gap-1">
-                                            <FaGlobe size={12} /> {viewModal.company.website.replace(/^https?:\/\//, "")}
-                                        </a>
-                                    ) : <p className={`text-sm font-bold ${textStyle}`}>—</p>}
-                                </div>
-                            </div>
-
-                            <div className="space-y-4">
-                                <div>
-                                    <p className={`text-2xs font-black uppercase tracking-widest ${labelStyle}`}>Owner (Username/Email)</p>
-                                    <p className={`text-sm font-bold ${textStyle}`}>
-                                        {renderSafe(viewModal.company.owner)}
-                                    </p>
-                                </div>
-                                <div>
-                                    <p className={`text-2xs font-black uppercase tracking-widest ${labelStyle}`}>Slug URL</p>
-                                    <p className="text-sm font-mono opacity-60">/company/{renderSafe(viewModal.company.slug)}</p>
-                                </div>
-                                <div>
-                                    <p className={`text-2xs font-black uppercase tracking-widest ${labelStyle}`}>Created At</p>
-                                    <p className={`text-sm font-bold ${textStyle}`}>{new Date(viewModal.company.created_at).toLocaleString()}</p>
-                                </div>
-                            </div>
-
-                            <div className="md:col-span-2">
-                                <p className={`text-2xs font-black uppercase tracking-widest ${labelStyle} mb-2`}>Description</p>
-                                <div className={`p-4 rounded-2xl border ${isDark ? "bg-white/5 border-white/5 text-neutral-300" : "bg-black/5 border-black/5 text-neutral-700"} text-sm leading-relaxed`}>
-                                    {viewModal.company.description || "No description provided."}
-                                </div>
-                            </div>
-
-                            <div className="md:col-span-2 pt-4">
-                                <div className="flex justify-between items-end mb-4">
-                                    <p className={`text-2xs font-black uppercase tracking-widest ${labelStyle}`}>Company Members ({totalMembers})</p>
-                                </div>
-                                
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-                                    {members.map((member) => (
-                                        <div key={member.id} className={`flex items-center gap-3 p-3 rounded-xl border ${isDark ? "bg-[#0a0a0a] border-white/5" : "bg-gray-50 border-black/5"}`}>
-                                            <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-black/10 dark:border-white/10">
-                                                <img 
-                                                    src={member.user?.profile_picture ? resolveMedia(member.user.profile_picture) : `https://ui-avatars.com/api/?name=${member.user?.username || "U"}`} 
-                                                    alt="User" 
-                                                    className="w-full h-full object-cover" 
-                                                />
-                                            </div>
-                                            <div className="truncate">
-                                                <p className={`text-xs font-bold truncate ${textStyle}`}>{member.user?.full_name || member.user?.username || "Unknown"}</p>
-                                                <p className="text-2xs opacity-50 truncate">{member.user?.email}</p>
-                                            </div>
-                                        </div>
-                                    ))}
-                                    {members.length === 0 && !fetchingMembers && <p className="text-xs opacity-40 italic col-span-2">No members assigned to this company.</p>}
-                                </div>
-
-                                {memberNextCursor && (
-                                    <div className="mt-4 flex justify-center">
-                                        <button 
-                                            onClick={() => fetchMembers(viewModal.company.id, memberNextCursor)}
-                                            disabled={fetchingMembers}
-                                            className="px-4 py-1.5 text-2xs font-black uppercase tracking-widest bg-blue-600/10 text-blue-500 rounded-lg hover:bg-blue-600/20 transition-all disabled:opacity-50"
-                                        >
-                                            {fetchingMembers ? "Loading..." : "Load More Members"}
-                                        </button>
-                                    </div>
-                                )}
-
-                                {fetchingMembers && members.length === 0 && (
-                                    <div className="flex items-center gap-2 opacity-50 py-4">
-                                        <div className="w-3 h-3 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                                        <span className="text-xs">Loading members...</span>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        <div className="flex justify-end pt-8 border-t border-black/5 dark:border-white/5">
-                            <button
-                                onClick={() => setViewModal({ isOpen: false, company: null })}
-                                className="px-8 py-2.5 rounded-xl text-2xs font-black uppercase tracking-[0.2em] bg-neutral-200 dark:bg-neutral-800 text-black dark:text-white hover:opacity-80 transition-all"
-                            >
-                                Close View
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* EDIT MODAL */}
-            {editModal.isOpen && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn overflow-y-auto">
-                    <div className={`relative w-full max-w-2xl my-8 p-8 rounded-3xl shadow-2xl ${bgCard} border ${isDark ? "border-white/10" : "border-black/5"}`}>
-                        <div className="flex justify-between items-start mb-8">
-                            <div>
-                                <h2 className={`text-2xl font-black tracking-tighter ${textStyle}`}>Moderate Organization</h2>
-                                <p className={labelStyle}>Update details or change status for {editModal.company.name}</p>
-                            </div>
-                            <button onClick={() => setEditModal({ isOpen: false, company: null })} className={labelStyle + " hover:text-red-500 transition-colors"}>
-                                <FaTimes size={20} />
-                            </button>
-                        </div>
-
-                        <form onSubmit={handleUpdateCompany} className="space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label className={`block text-2xs font-black uppercase tracking-widest mb-2 ${labelStyle}`}>Company Name</label>
-                                    <input
-                                        type="text"
-                                        value={formData.name}
-                                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                        className={`w-full px-4 py-2.5 rounded-xl border outline-none transition-all ${isDark ? "bg-[#0a0a0a] border-gray-800 text-white focus:border-blue-500" : "bg-gray-50 border-gray-200 text-black focus:border-blue-500"}`}
-                                    />
-                                </div>
-                                <div>
-                                    <label className={`block text-2xs font-black uppercase tracking-widest mb-2 ${labelStyle}`}>Industry</label>
-                                    <input
-                                        type="text"
-                                        value={formData.industry}
-                                        onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
-                                        className={`w-full px-4 py-2.5 rounded-xl border outline-none transition-all ${isDark ? "bg-[#0a0a0a] border-gray-800 text-white focus:border-blue-500" : "bg-gray-50 border-gray-200 text-black focus:border-blue-500"}`}
-                                    />
-                                </div>
-                                <div>
-                                    <label className={`block text-2xs font-black uppercase tracking-widest mb-2 ${labelStyle}`}>Status</label>
-                                    <select
-                                        value={formData.status}
-                                        onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                                        className={`w-full px-4 py-2.5 rounded-xl border outline-none transition-all ${isDark ? "bg-[#0a0a0a] border-gray-800 text-white focus:border-blue-500" : "bg-gray-50 border-gray-200 text-black focus:border-blue-500"}`}
-                                    >
-                                        <option value="pending">Pending</option>
-                                        <option value="approved">Approved</option>
-                                        <option value="rejected">Rejected</option>
-                                        <option value="suspended">Suspended</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className={`block text-2xs font-black uppercase tracking-widest mb-2 ${labelStyle}`}>Location</label>
-                                    <input
-                                        type="text"
-                                        value={formData.location}
-                                        onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                                        className={`w-full px-4 py-2.5 rounded-xl border outline-none transition-all ${isDark ? "bg-[#0a0a0a] border-gray-800 text-white focus:border-blue-500" : "bg-gray-50 border-gray-200 text-black focus:border-blue-500"}`}
-                                    />
-                                </div>
-                                <div className="md:col-span-2">
-                                    <label className={`block text-2xs font-black uppercase tracking-widest mb-2 ${labelStyle}`}>Website</label>
-                                    <div className="relative">
-                                        <FaGlobe className={`absolute left-4 top-1/2 -translate-y-1/2 ${labelStyle}`} />
-                                        <input
-                                            type="url"
-                                            value={formData.website}
-                                            onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                                            className={`w-full pl-10 pr-4 py-2.5 rounded-xl border outline-none transition-all ${isDark ? "bg-[#0a0a0a] border-gray-800 text-white focus:border-blue-500" : "bg-gray-50 border-gray-200 text-black focus:border-blue-500"}`}
-                                            placeholder="https://example.com"
-                                        />
-                                    </div>
-                                </div>
-                                <div className="md:col-span-2">
-                                    <label className={`block text-2xs font-black uppercase tracking-widest mb-2 ${labelStyle}`}>Description</label>
-                                    <textarea
-                                        rows="4"
-                                        value={formData.description}
-                                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                        className={`w-full px-4 py-2.5 rounded-xl border outline-none transition-all resize-none ${isDark ? "bg-[#0a0a0a] border-gray-800 text-white focus:border-blue-500" : "bg-gray-50 border-gray-200 text-black focus:border-blue-500"}`}
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Members Section in Edit */}
-                            <div className="pt-4">
-                                <label className={`block text-2xs font-black uppercase tracking-widest mb-4 ${labelStyle}`}>Manage Members ({totalMembers})</label>
-                                
-                                <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-                                    {members.map((member) => (
-                                        <div key={member.id} className={`flex items-center justify-between p-3 rounded-xl border ${isDark ? "bg-[#0a0a0a] border-white/5" : "bg-gray-50 border-black/5"}`}>
-                                            <div className="flex items-center gap-3 truncate">
-                                                <div className="w-8 h-8 rounded-full overflow-hidden shrink-0">
-                                                    <img 
-                                                        src={member.user?.profile_picture ? resolveMedia(member.user.profile_picture) : `https://ui-avatars.com/api/?name=${member.user?.username || "U"}`} 
-                                                        alt="User" 
-                                                        className="w-full h-full object-cover" 
-                                                    />
-                                                </div>
-                                                <div className="truncate">
-                                                    <p className={`text-xs font-bold truncate ${textStyle}`}>{member.user?.full_name || member.user?.username || "Unknown"}</p>
-                                                    <p className="text-2xs opacity-50 truncate">{member.user?.email}</p>
-                                                </div>
-                                            </div>
-                                            <button 
-                                                type="button"
-                                                onClick={() => handleRemoveMemberClick(member)}
-                                                className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
-                                                title="Remove Member"
-                                            >
-                                                <FaTrash size={12} />
-                                            </button>
-                                        </div>
-                                    ))}
-                                    {members.length === 0 && !fetchingMembers && <p className="text-xs opacity-40 italic">No members found.</p>}
-                                </div>
-
-                                {memberNextCursor && (
-                                    <div className="mt-4 flex justify-center">
-                                        <button 
-                                            type="button"
-                                            onClick={() => fetchMembers(editModal.company.id, memberNextCursor)}
-                                            disabled={fetchingMembers}
-                                            className="px-4 py-1.5 text-2xs font-black uppercase tracking-widest bg-blue-600/10 text-blue-500 rounded-lg hover:bg-blue-600/20 transition-all disabled:opacity-50"
-                                        >
-                                            {fetchingMembers ? "Loading..." : "Load More Members"}
-                                        </button>
-                                    </div>
-                                )}
-
-                                {fetchingMembers && members.length === 0 && (
-                                    <div className="flex items-center gap-2 opacity-50 py-4">
-                                        <div className="w-3 h-3 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                                        <span className="text-xs">Loading members...</span>
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="flex justify-end gap-3 pt-6 border-t border-black/5 dark:border-white/5">
-                                <button
-                                    type="button"
-                                    onClick={() => setEditModal({ isOpen: false, company: null })}
-                                    className={`px-6 py-2.5 rounded-xl text-2xs font-black uppercase tracking-[0.2em] transition-all ${isDark ? "bg-white/5 text-white hover:bg-white/10" : "bg-black/5 text-black hover:bg-black/10"}`}
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={submitting}
-                                    className="px-8 py-2.5 rounded-xl text-2xs font-black uppercase tracking-[0.2em] bg-blue-600 text-white shadow-xl shadow-blue-600/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
-                                >
-                                    {submitting ? (
-                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                    ) : (
-                                        <FaCheck />
-                                    )}
-                                    Update Details
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-
-            {/* DELETE CONFIRMATION */}
-            {deleteConfirm.isOpen && (
-                <ConfirmationAlert
-                    title="Delete Organization"
-                    message="Are you sure you want to delete this company? This is a hard delete and cannot be undone."
-                    confirmText="Delete Permanently"
-                    onConfirm={confirmDelete}
-                    onCancel={() => setDeleteConfirm({ isOpen: false, companyId: null })}
-                />
-            )}
-            {/* DELETE MEMBER CONFIRMATION */}
-            {memberToRemove && (
-                <ConfirmationAlert
-                    title="Remove Member"
-                    message={`Are you sure you want to remove ${memberToRemove.user?.username || "this member"} from the company?`}
-                    confirmText="Remove Member"
-                    onConfirm={confirmRemoveMember}
-                    onCancel={() => setMemberToRemove(null)}
-                />
-            )}
-            {/* SETTINGS MODAL */}
-            {settingsModal.isOpen && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn overflow-y-auto">
-                    <div className={`relative w-full max-w-md my-8 p-8 rounded-3xl shadow-2xl ${bgCard} border ${isDark ? "border-white/10" : "border-black/5"}`}>
-                        <div className="flex justify-between items-start mb-8">
-                            <div>
-                                <h2 className={`text-2xl font-black tracking-tighter ${textStyle}`}>Company Settings</h2>
-                                <p className={labelStyle}>Global limitations for all organizations</p>
-                            </div>
-                            <button onClick={() => setSettingsModal({ isOpen: false })} className={labelStyle + " hover:text-red-500 transition-colors"}>
-                                <FaTimes size={20} />
-                            </button>
-                        </div>
-
-                        <form onSubmit={handleUpdateSettings} className="space-y-6">
-                            <div className="space-y-4">
-                                <div>
-                                    <label className={`block text-2xs font-black uppercase tracking-widest mb-2 ${labelStyle}`}>Free Posts Limit</label>
-                                    <input
-                                        type="number"
-                                        value={settings.free_posts_per_company}
-                                        onChange={(e) => setSettings({ ...settings, free_posts_per_company: parseInt(e.target.value) })}
-                                        className={`w-full px-4 py-2.5 rounded-xl border outline-none transition-all ${isDark ? "bg-[#0a0a0a] border-gray-800 text-white focus:border-blue-500" : "bg-gray-50 border-gray-200 text-black focus:border-blue-500"}`}
-                                        min="0"
-                                    />
-                                    <p className="text-2xs mt-1 opacity-50">Number of posts allowed for free per company.</p>
-                                </div>
-                                <div>
-                                    <label className={`block text-2xs font-black uppercase tracking-widest mb-2 ${labelStyle}`}>Paid Post Price (₹)</label>
-                                    <input
-                                        type="number"
-                                        value={settings.paid_post_price}
-                                        onChange={(e) => setSettings({ ...settings, paid_post_price: parseFloat(e.target.value) })}
-                                        className={`w-full px-4 py-2.5 rounded-xl border outline-none transition-all ${isDark ? "bg-[#0a0a0a] border-gray-800 text-white focus:border-blue-500" : "bg-gray-50 border-gray-200 text-black focus:border-blue-500"}`}
-                                        min="0"
-                                        step="0.01"
-                                    />
-                                    <p className="text-2xs mt-1 opacity-50">Price for each post beyond the free limit.</p>
-                                </div>
-                            </div>
-
-                            <div className="flex justify-end gap-3 pt-6 border-t border-black/5 dark:border-white/5">
-                                <button
-                                    type="button"
-                                    onClick={() => setSettingsModal({ isOpen: false })}
-                                    className={`px-6 py-2.5 rounded-xl text-2xs font-black uppercase tracking-[0.2em] transition-all ${isDark ? "bg-white/5 text-white hover:bg-white/10" : "bg-black/5 text-black hover:bg-black/10"}`}
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={savingSettings}
-                                    className="px-8 py-2.5 rounded-xl text-2xs font-black uppercase tracking-[0.2em] bg-blue-600 text-white shadow-xl shadow-blue-600/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
-                                >
-                                    {savingSettings ? (
-                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                    ) : (
-                                        <FaCheck />
-                                    )}
-                                    Save Settings
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
+  const MemberRow = ({ member, onRemove }) => (
+    <div className="flex items-center justify-between gap-3 p-3 rounded-xl border border-border bg-muted/40">
+      <div className="flex items-center gap-3 truncate">
+        <img
+          src={member.user?.profile_picture ? resolveMedia(member.user.profile_picture) : `https://ui-avatars.com/api/?name=${member.user?.username || "U"}`}
+          alt="User"
+          className="w-8 h-8 rounded-full object-cover shrink-0"
+        />
+        <div className="truncate">
+          <p className="text-xs font-bold text-foreground truncate">{member.user?.full_name || member.user?.username || "Unknown"}</p>
+          <p className="text-2xs text-muted-foreground truncate">{member.user?.email}</p>
         </div>
-    );
+      </div>
+      {onRemove && (
+        <button type="button" onClick={() => onRemove(member)} title="Remove Member"
+          className="p-2 text-danger hover:bg-danger/10 rounded-lg transition-colors">
+          <FaTrash size={12} />
+        </button>
+      )}
+    </div>
+  );
+
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        icon={<FaBuilding />}
+        title="Company Management"
+        subtitle="Moderate organizations and post limits"
+        breadcrumb={[{ label: "Dashboard", to: "/admin" }, { label: "Companies" }]}
+      />
+
+      {/* Settings summary */}
+      {settings && (
+        <div className="rounded-2xl border border-border bg-card shadow-sm p-6 flex flex-col sm:flex-row justify-between items-center gap-6">
+          <div className="flex flex-wrap gap-10">
+            <div className="flex flex-col">
+              <span className="text-2xs font-bold uppercase tracking-wider text-muted-foreground mb-1">Free Posts Limit</span>
+              <span className="text-3xl font-black text-primary">
+                {settings.free_posts_per_company}
+                <span className="text-sm font-medium text-muted-foreground ml-2">/ Organization</span>
+              </span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-2xs font-bold uppercase tracking-wider text-muted-foreground mb-1">Paid Post Price</span>
+              <span className="text-3xl font-black text-green-600 dark:text-green-400">
+                ₹{settings.paid_post_price}
+                <span className="text-sm font-medium text-muted-foreground ml-2">/ Extra Post</span>
+              </span>
+            </div>
+          </div>
+          <Button variant="outline" onClick={() => setSettingsModal({ isOpen: true })}>
+            <FaCog /> Update Limits
+          </Button>
+        </div>
+      )}
+
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+        <SearchInput value={searchText} onChange={setSearchText} placeholder="Search companies by name…" />
+        <select
+          value={filterStatus}
+          onChange={(e) => setFilterStatus(e.target.value)}
+          className="rounded-full border border-input bg-muted px-4 py-2.5 text-sm font-bold text-foreground outline-none hover:bg-muted/70 focus:border-primary"
+        >
+          <option value="">All Statuses</option>
+          <option value="pending">Pending</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
+          <option value="suspended">Suspended</option>
+        </select>
+      </div>
+
+      <AdminTable
+        columns={columns}
+        rows={companies}
+        loading={loading}
+        loadingLabel="Loading organizations…"
+        empty={{ icon: <FaBuilding />, title: "No organizations found", description: "Try adjusting your search or filters." }}
+        renderRow={(company) => (
+          <>
+            <td className="py-3 px-5">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-muted flex shrink-0 items-center justify-center overflow-hidden border border-border">
+                  {company.logo ? (
+                    <img src={resolveMedia(company.logo)} alt={renderSafe(company.name)} className="w-full h-full object-cover" />
+                  ) : (
+                    <FaBuilding className="text-muted-foreground" />
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <p className="font-bold text-foreground truncate">{renderSafe(company.name)}</p>
+                  <p className="text-xs font-medium text-primary truncate">@{renderSafe(company.slug)}</p>
+                </div>
+              </div>
+            </td>
+            <td className="py-3 px-5">
+              <div className="flex flex-col gap-1 text-xs text-muted-foreground">
+                <span className="flex items-center gap-2"><FaBriefcase className="opacity-60" /> {renderSafe(company.industry)}</span>
+                <span className="flex items-center gap-2"><FaMapMarkerAlt className="opacity-60" /> {renderSafe(company.location)}</span>
+              </div>
+            </td>
+            <td className="py-3 px-5 text-xs font-medium text-foreground">{renderSafe(company.owner)}</td>
+            <td className="py-3 px-5 text-center">
+              <Badge variant={STATUS_VARIANT[String(company.status).toLowerCase()] || "neutral"}>
+                {renderSafe(company.status)}
+              </Badge>
+            </td>
+            <td className="py-3 px-5">
+              <div className="flex items-center justify-center gap-1">
+                <button onClick={() => handleViewClick(company)} disabled={fetchingDetails} title="View Full Details"
+                  className="p-2 rounded-lg text-primary hover:bg-primary-soft transition-colors">
+                  {fetchingDetails ? <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin block" /> : <FaEye size={14} />}
+                </button>
+                <button onClick={() => handleEditClick(company)} title="Edit / Moderate"
+                  className="p-2 rounded-lg text-muted-foreground hover:bg-muted transition-colors">
+                  <FaEdit size={14} />
+                </button>
+                <button onClick={() => setDeleteConfirm({ isOpen: true, companyId: company.id })} title="Delete Permanently"
+                  className="p-2 rounded-lg text-danger hover:bg-danger/10 transition-colors">
+                  <FaTrash size={14} />
+                </button>
+              </div>
+            </td>
+          </>
+        )}
+        footer={
+          (prevCursor || nextCursor) && !loading ? (
+            <div className="px-5 py-4 border-t border-border bg-muted/40 flex items-center justify-between">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Total: {totalCount} Organizations
+              </p>
+              <div className="flex gap-2">
+                <button onClick={() => fetchCompanies(prevCursor)} disabled={!prevCursor}
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-border text-foreground hover:bg-muted transition-colors disabled:opacity-40 disabled:pointer-events-none">
+                  Previous
+                </button>
+                <button onClick={() => fetchCompanies(nextCursor)} disabled={!nextCursor}
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-border text-foreground hover:bg-muted transition-colors disabled:opacity-40 disabled:pointer-events-none">
+                  Next
+                </button>
+              </div>
+            </div>
+          ) : null
+        }
+      />
+
+      {/* VIEW MODAL */}
+      {viewModal.isOpen && viewModal.company && (
+        <AdminModal
+          open
+          onClose={() => setViewModal({ isOpen: false, company: null })}
+          size="lg"
+          title={renderSafe(viewModal.company.name)}
+          subtitle={`/company/${renderSafe(viewModal.company.slug)}`}
+          icon={
+            viewModal.company.logo ? (
+              <img src={resolveMedia(viewModal.company.logo)} alt="" className="w-10 h-10 rounded-xl object-cover" />
+            ) : <FaBuilding />
+          }
+          headerExtra={<Badge variant={STATUS_VARIANT[String(viewModal.company.status).toLowerCase()] || "neutral"}>{renderSafe(viewModal.company.status)}</Badge>}
+          footer={<Button variant="outline" onClick={() => setViewModal({ isOpen: false, company: null })}>Close</Button>}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <Detail label="Industry" value={renderSafe(viewModal.company.industry)} />
+            <Detail label="Location" value={renderSafe(viewModal.company.location)} />
+            <div>
+              <p className={LABEL_CLASS}>Website</p>
+              {viewModal.company.website ? (
+                <a href={viewModal.company.website} target="_blank" rel="noopener noreferrer" className="text-sm font-bold text-primary hover:underline flex items-center gap-1">
+                  <FaGlobe size={12} /> {viewModal.company.website.replace(/^https?:\/\//, "")}
+                </a>
+              ) : <p className="text-sm font-bold text-foreground">—</p>}
+            </div>
+            <Detail label="Owner" value={renderSafe(viewModal.company.owner)} />
+            <Detail label="Created At" value={viewModal.company.created_at ? new Date(viewModal.company.created_at).toLocaleString() : "—"} />
+            <div className="md:col-span-2">
+              <p className={LABEL_CLASS}>Description</p>
+              <div className="p-4 rounded-xl border border-border bg-muted/40 text-sm leading-relaxed text-foreground">
+                {viewModal.company.description || "No description provided."}
+              </div>
+            </div>
+            <div className="md:col-span-2">
+              <p className={`${LABEL_CLASS} mb-2`}>Company Members ({totalMembers})</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                {members.map((m) => <MemberRow key={m.id} member={m} />)}
+                {members.length === 0 && !fetchingMembers && <p className="text-xs text-muted-foreground italic col-span-2">No members assigned.</p>}
+              </div>
+              {memberNextCursor && (
+                <div className="mt-4 flex justify-center">
+                  <Button size="sm" variant="soft" onClick={() => fetchMembers(viewModal.company.id, memberNextCursor)} loading={fetchingMembers}>
+                    Load More Members
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+        </AdminModal>
+      )}
+
+      {/* EDIT MODAL */}
+      {editModal.isOpen && (
+        <AdminModal
+          open
+          onClose={() => setEditModal({ isOpen: false, company: null })}
+          size="lg"
+          icon={<FaEdit />}
+          title="Moderate Organization"
+          subtitle={`Update details or status for ${editModal.company.name}`}
+          footer={
+            <>
+              <Button variant="outline" onClick={() => setEditModal({ isOpen: false, company: null })}>Cancel</Button>
+              <Button type="submit" form="company-edit-form" loading={submitting}>Update Details</Button>
+            </>
+          }
+        >
+          <form id="company-edit-form" onSubmit={handleUpdateCompany} className="space-y-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className={LABEL_CLASS}>Company Name</label>
+                <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className={FIELD_CLASS} />
+              </div>
+              <div>
+                <label className={LABEL_CLASS}>Industry</label>
+                <input type="text" value={formData.industry} onChange={(e) => setFormData({ ...formData, industry: e.target.value })} className={FIELD_CLASS} />
+              </div>
+              <div>
+                <label className={LABEL_CLASS}>Status</label>
+                <select value={formData.status} onChange={(e) => setFormData({ ...formData, status: e.target.value })} className={FIELD_CLASS}>
+                  <option value="pending">Pending</option>
+                  <option value="approved">Approved</option>
+                  <option value="rejected">Rejected</option>
+                  <option value="suspended">Suspended</option>
+                </select>
+              </div>
+              <div>
+                <label className={LABEL_CLASS}>Location</label>
+                <input type="text" value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} className={FIELD_CLASS} />
+              </div>
+              <div className="md:col-span-2">
+                <label className={LABEL_CLASS}>Website</label>
+                <input type="url" value={formData.website} onChange={(e) => setFormData({ ...formData, website: e.target.value })} className={FIELD_CLASS} placeholder="https://example.com" />
+              </div>
+              <div className="md:col-span-2">
+                <label className={LABEL_CLASS}>Description</label>
+                <textarea rows="4" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} className={`${FIELD_CLASS} resize-none`} />
+              </div>
+            </div>
+
+            <div>
+              <label className={`${LABEL_CLASS} mb-3`}>Manage Members ({totalMembers})</label>
+              <div className="space-y-2 max-h-[280px] overflow-y-auto pr-2 custom-scrollbar">
+                {members.map((m) => <MemberRow key={m.id} member={m} onRemove={setMemberToRemove} />)}
+                {members.length === 0 && !fetchingMembers && <p className="text-xs text-muted-foreground italic">No members found.</p>}
+              </div>
+              {memberNextCursor && (
+                <div className="mt-4 flex justify-center">
+                  <Button type="button" size="sm" variant="soft" onClick={() => fetchMembers(editModal.company.id, memberNextCursor)} loading={fetchingMembers}>
+                    Load More Members
+                  </Button>
+                </div>
+              )}
+            </div>
+          </form>
+        </AdminModal>
+      )}
+
+      {/* SETTINGS MODAL */}
+      {settingsModal.isOpen && (
+        <AdminModal
+          open
+          onClose={() => setSettingsModal({ isOpen: false })}
+          size="sm"
+          icon={<FaCog />}
+          title="Company Settings"
+          subtitle="Global limits for all organizations"
+          footer={
+            <>
+              <Button variant="outline" onClick={() => setSettingsModal({ isOpen: false })}>Cancel</Button>
+              <Button type="submit" form="company-settings-form" loading={savingSettings}>Save Settings</Button>
+            </>
+          }
+        >
+          <form id="company-settings-form" onSubmit={handleUpdateSettings} className="space-y-4">
+            <div>
+              <label className={LABEL_CLASS}>Free Posts Limit</label>
+              <input type="number" min="0" value={settings.free_posts_per_company}
+                onChange={(e) => setSettings({ ...settings, free_posts_per_company: parseInt(e.target.value) || 0 })} className={FIELD_CLASS} />
+              <p className="text-2xs mt-1 text-muted-foreground">Number of posts allowed for free per company.</p>
+            </div>
+            <div>
+              <label className={LABEL_CLASS}>Paid Post Price (₹)</label>
+              <input type="number" min="0" step="0.01" value={settings.paid_post_price}
+                onChange={(e) => setSettings({ ...settings, paid_post_price: parseFloat(e.target.value) || 0 })} className={FIELD_CLASS} />
+              <p className="text-2xs mt-1 text-muted-foreground">Price for each post beyond the free limit.</p>
+            </div>
+          </form>
+        </AdminModal>
+      )}
+
+      {deleteConfirm.isOpen && (
+        <ConfirmationAlert
+          title="Delete Organization"
+          message="Are you sure you want to delete this company? This is a hard delete and cannot be undone."
+          confirmText="Delete Permanently"
+          onConfirm={confirmDelete}
+          onCancel={() => setDeleteConfirm({ isOpen: false, companyId: null })}
+        />
+      )}
+      {memberToRemove && (
+        <ConfirmationAlert
+          title="Remove Member"
+          message={`Are you sure you want to remove ${memberToRemove.user?.username || "this member"} from the company?`}
+          confirmText="Remove Member"
+          onConfirm={confirmRemoveMember}
+          onCancel={() => setMemberToRemove(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+function Detail({ label, value }) {
+  return (
+    <div>
+      <p className="block text-2xs font-bold uppercase tracking-wider text-muted-foreground mb-1">{label}</p>
+      <p className="text-sm font-bold text-foreground">{value}</p>
+    </div>
+  );
 }

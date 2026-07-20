@@ -67,6 +67,7 @@ const AdminExpertApplications         = lazy(() => import("./admin/adminPages/ad
 const AdminEntrepreneurApplications   = lazy(() => import("./admin/adminPages/adminEntrepreneurApplications"));
 const AdminCompanies                  = lazy(() => import("./admin/adminPages/adminCompanies"));
 const AdminAdvertisements             = lazy(() => import("./admin/adminPages/adminAdvertisements"));
+const AdminRecordings                 = lazy(() => import("./admin/adminPages/adminRecordings"));
 
 // ─── Full-screen loader shown while chunks download ───────────────────────────
 function PageLoader() {
@@ -229,6 +230,7 @@ function App() {
             <Route path="/subscriptions"                element={<AdminSubscriptions theme={theme} />} />
             <Route path="/admin-documents"              element={<AdminDocuments theme={theme} />} />
             <Route path="/admin-advertisements"         element={<AdminAdvertisements theme={theme} />} />
+            <Route path="/admin-recordings"             element={<AdminRecordings />} />
             <Route path="/admin-application/expert"     element={<AdminExpertApplications theme={theme} />} />
             <Route path="/admin-application/entrepreneur" element={<AdminEntrepreneurApplications theme={theme} />} />
           </Route>

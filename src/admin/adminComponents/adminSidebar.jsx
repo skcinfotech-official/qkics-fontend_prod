@@ -13,6 +13,7 @@ import {
   FaAppStoreIos,
   FaBullhorn,
   FaBuilding,
+  FaVideo,
   FaChevronLeft,
   FaChevronRight
 } from "react-icons/fa";
@@ -63,6 +64,7 @@ export default function AdminSidebar({ role, isOpen, setIsOpen }) {
         <SidebarLink to="/subscriptions" label="Subscriptions" icon={<FaCreditCard />} isOpen={isOpen} />
         <SidebarLink to="/admin-documents" label="Documents" icon={<FaFileAlt />} isOpen={isOpen} />
         <SidebarLink to="/admin-advertisements" label="Advertisements" icon={<FaBullhorn />} isOpen={isOpen} />
+        <SidebarLink to="/admin-recordings" label="Recordings" icon={<FaVideo />} isOpen={isOpen} />
 
         {role === "superadmin" && (
           <div className="pt-5 mt-5 border-t border-border">

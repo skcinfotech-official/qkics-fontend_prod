@@ -1,7 +1,22 @@
+import { MdFeed } from "react-icons/md";
+import { PageHeader, EmptyState } from "../../components/ui";
+
 export default function AdminPosts() {
-    return (
-        <div className="flex items-center justify-center py-20">
-            <h1 className="text-2xl font-bold opacity-50">Admin Posts Page - Coming Soon!</h1>
-        </div>
-    );
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        icon={<MdFeed />}
+        title="Posts Management"
+        subtitle="Moderate community feed posts"
+        breadcrumb={[{ label: "Dashboard", to: "/admin" }, { label: "Posts" }]}
+      />
+      <div className="rounded-2xl border border-border bg-card shadow-sm">
+        <EmptyState
+          icon={<MdFeed />}
+          title="Coming Soon"
+          description="Post moderation tools are under construction and will appear here."
+        />
+      </div>
+    </div>
+  );
 }

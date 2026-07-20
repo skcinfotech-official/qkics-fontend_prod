@@ -12,4 +12,6 @@ export { default as ContentSection } from "./ContentSection";
 export { default as BulletList } from "./BulletList";
 export { default as LoadingSpinner, FullPageLoader } from "./LoadingSpinner";
 export { default as EmptyState } from "./EmptyState";
+export { default as ModalOverlay } from "./ModalOverlay";
+export { default as AdminModal } from "./AdminModal";
 export { cn } from "./cn";

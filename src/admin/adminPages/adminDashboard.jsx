@@ -1,6 +1,7 @@
 import { useSelector } from "react-redux";
 import { Navigate } from "react-router-dom";
-import { FaUsers, FaRegFileAlt, FaCheckCircle, FaUserTie, FaUserShield, FaArrowUp, FaChartLine } from "react-icons/fa";
+import { FaUsers, FaRegFileAlt, FaCheckCircle, FaUserTie, FaUserShield, FaArrowUp, FaChartLine, FaThLarge } from "react-icons/fa";
+import { PageHeader } from "../../components/ui";
 
 export default function AdminDashboard() {
   const user = useSelector((state) => state.user.data);
@@ -47,14 +48,11 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-6">
 
-      {/* HEADER SECTION */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 w-full">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-            {role === "superadmin" ? "Super Admin Overview" : "Dashboard Overview"}
-          </h1>
-        </div>
-      </div>
+      <PageHeader
+        icon={<FaThLarge />}
+        title={role === "superadmin" ? "Super Admin Overview" : "Dashboard Overview"}
+        subtitle="Platform metrics at a glance"
+      />
 
       {/* STAT CARDS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
@@ -67,7 +65,7 @@ export default function AdminDashboard() {
               <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-primary-soft text-primary">
                 {card.icon}
               </div>
-              <div className="flex items-center gap-1 text-xs font-medium px-2 py-1 rounded bg-muted text-muted-foreground">
+              <div className="flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full bg-green-500/10 text-green-600 dark:text-green-400">
                 <FaArrowUp className="text-2xs" /> {card.trend}
               </div>
             </div>
