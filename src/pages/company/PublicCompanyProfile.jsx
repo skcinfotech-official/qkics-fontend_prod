@@ -205,7 +205,7 @@ export default function PublicCompanyProfile() {
               <div className="px-5 pb-6 md:px-8">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
                   {/* Logo */}
-                  <div className="-mt-12 h-24 w-24 flex-shrink-0 overflow-hidden rounded-2xl bg-card ring-4 ring-card shadow-xl md:h-28 md:w-28">
+                  <div className="relative z-10 -mt-12 h-24 w-24 flex-shrink-0 overflow-hidden rounded-2xl bg-card ring-4 ring-card shadow-xl md:h-28 md:w-28">
                     {company.logo ? (
                       <img src={resolveMedia(company.logo)} alt="Logo" className="h-full w-full object-cover" />
                     ) : (
