@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { BiLike, BiSolidLike } from "react-icons/bi";
-import { FaEllipsisH, FaChevronLeft, FaChevronRight, FaCrown, FaRegComments } from "react-icons/fa";
+import { FaEllipsisH, FaChevronLeft, FaChevronRight, FaCrown, FaRegComments, FaPlay } from "react-icons/fa";
 import { HiPencilAlt, HiTrash } from "react-icons/hi";
 import UserBadge from "../ui/UserBadge";
 import { useAlert } from "../../context/AlertContext";
@@ -258,10 +258,20 @@ export default function PostCard({
                             )}
 
                             {post.media[currentMediaIndex].media_type === "video" ? (
-                                <FeedVideo
-                                    src={post.media[currentMediaIndex].file}
-                                    className="relative z-10 w-full h-full block max-h-[500px] object-contain bg-black"
-                                />
+                                <>
+                                    <FeedVideo
+                                        src={post.media[currentMediaIndex].file}
+                                        controls={false}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            navigate(`/videos?start=${post.id}`);
+                                        }}
+                                        className="relative z-10 w-full h-full block max-h-[500px] object-contain bg-black cursor-pointer"
+                                    />
+                                    <span className="absolute bottom-3 left-3 z-20 flex items-center gap-1.5 rounded-full bg-black/60 px-3 py-1.5 text-2xs font-black uppercase tracking-wider text-white backdrop-blur-md pointer-events-none">
+                                        <FaPlay size={9} /> Tap to watch
+                                    </span>
+                                </>
                             ) : (
                                 <img
                                     src={post.media[currentMediaIndex].file}

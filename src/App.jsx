@@ -26,6 +26,7 @@ const DocumentsPage         = lazy(() => import("./pages/DocumentsPage"));
 const SearchResultsPage     = lazy(() => import("./pages/SearchResultsPage"));
 const EntrepreneurConnect   = lazy(() => import("./pages/entrepreneurConnect"));
 const KnowledgeHubFeed      = lazy(() => import("./pages/KnowledgeHubFeed"));
+const VideoFeed             = lazy(() => import("./pages/VideoFeed"));
 const ProfileFetcher        = lazy(() => import("./profiles/ProfileFetcher"));
 const PrivacyPolicy         = lazy(() => import("./pages/PrivacyPolicy"));
 const RefundPolicy          = lazy(() => import("./pages/RefundPolicy"));
@@ -198,6 +199,9 @@ function App() {
               STANDALONE — no navbar, no guard
           ═══════════════════════════════════════════════════════════════ */}
           <Route path="/server-down"                    element={<ServerDown />} />
+
+          {/* Immersive video feed — fullscreen, public */}
+          <Route path="/videos"                         element={<VideoFeed />} />
 
           {/* ═══════════════════════════════════════════════════════════════
               FULLSCREEN — no navbar, login required

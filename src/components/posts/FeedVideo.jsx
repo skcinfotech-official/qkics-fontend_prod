@@ -37,7 +37,7 @@ function getScrollParent(node) {
   return null; // viewport / window scroll
 }
 
-export default function FeedVideo({ src, className, poster }) {
+export default function FeedVideo({ src, className, poster, controls = true, onClick }) {
   const ref = useRef(null);
 
   useEffect(() => {
@@ -99,10 +99,10 @@ export default function FeedVideo({ src, className, poster }) {
       src={src}
       poster={poster}
       className={className}
-      controls
+      controls={controls}
       playsInline
       preload="metadata"
-      onClick={(e) => e.stopPropagation()}
+      onClick={onClick || ((e) => e.stopPropagation())}
     />
   );
 }
