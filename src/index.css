@@ -181,3 +181,10 @@ a {
 
 @keyframes wiggle { 0%, 100% { transform: rotate(-3deg); } 50% { transform: rotate(3deg); } }
 .animate-wiggle { animation: wiggle 1s ease-in-out infinite; }
+
+/* Slide up (mobile bottom sheet) / slide in from right (desktop side panel) */
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.animate-slideUp { animation: slideUp 0.28s cubic-bezier(0.32, 0.72, 0, 1); }
+@media (min-width: 640px) {
+  .animate-slideUp { animation: slideInRight 0.28s cubic-bezier(0.32, 0.72, 0, 1); }
+}

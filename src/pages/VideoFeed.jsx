@@ -2,7 +2,7 @@
 // Immersive, full-screen, scroll-through video feed (Facebook Watch / Reels
 // style). Opened from any feed video. Vertical snap scrolling, one video at a
 // time, autoplay with sound, like / comment / profile actions overlaid.
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { BiLike, BiSolidLike } from "react-icons/bi";
@@ -10,11 +10,13 @@ import { FaRegComments, FaChevronLeft } from "react-icons/fa";
 
 import useVideoFeed from "../components/hooks/useVideoFeed";
 import useLike from "../components/hooks/useLike";
-import FeedVideo from "../components/posts/FeedVideo";
+import ShortsPlayer from "../components/posts/ShortsPlayer";
+import CommentsPanel from "../components/posts/CommentsPanel";
 import UserBadge from "../components/ui/UserBadge";
 import { getAccessToken } from "../redux/store/tokenManager";
 import { resolveAvatar } from "../components/utils/mediaUrl";
 import { resolveProfileRoute } from "../components/utils/getUserProfileRoute";
+import { useAlert } from "../context/AlertContext";
 
 const firstVideo = (post) =>
   (post.media || []).find((m) => m.media_type === "video") || null;
@@ -24,15 +26,31 @@ export default function VideoFeed() {
   const [searchParams] = useSearchParams();
   const startId = searchParams.get("start");
   const { data: loggedUser } = useSelector((state) => state.user);
+  const { showAlert } = useAlert();
 
   const { posts, setPosts, loaderRef, next, loading, error } = useVideoFeed();
   const { handleLike } = useLike(setPosts, getAccessToken, () =>
-    navigate("/")
+    showAlert("Please log in to like.", "warning")
   );
 
   const scrollRef = useRef(null);
   const itemRefs = useRef({});
   const didScrollToStart = useRef(false);
+
+  // Which post's comments panel is open (null = closed).
+  const [commentsPostId, setCommentsPostId] = useState(null);
+
+  const adjustCommentCount = useCallback(
+    (postId, delta) =>
+      setPosts((prev) =>
+        prev.map((p) =>
+          p.id === postId
+            ? { ...p, total_comments: Math.max(0, (p.total_comments || 0) + delta) }
+            : p
+        )
+      ),
+    [setPosts]
+  );
 
   // Once posts arrive, jump to the video the user tapped (?start=<id>).
   useEffect(() => {
@@ -77,67 +95,69 @@ export default function VideoFeed() {
             <section
               key={post.id}
               ref={(el) => (itemRefs.current[post.id] = el)}
-              className="relative flex h-full w-full snap-start items-center justify-center"
+              className="relative flex h-full w-full snap-start items-center justify-center px-0 py-0 sm:py-4"
             >
-              <FeedVideo
-                src={vid.file}
-                className="h-full w-full object-contain"
-              />
+              {/* Shorts row: portrait video card + vertical action rail beside it */}
+              <div className="relative flex h-full items-end justify-center gap-2 sm:h-auto sm:gap-4">
+                {/* VIDEO CARD — full screen on mobile, portrait card on desktop */}
+                <div className="relative h-full w-screen overflow-hidden bg-black sm:h-[92vh] sm:max-h-[92vh] sm:w-[calc(92vh*9/16)] sm:rounded-3xl sm:shadow-2xl">
+                  <ShortsPlayer src={vid.file} scrollRootRef={scrollRef} />
 
-              {/* Gradient scrim for legibility */}
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/80 to-transparent" />
+                  {/* Author + caption — overlaid bottom-left, above the seek bar */}
+                  <div className="absolute bottom-16 left-4 right-16 z-30 sm:right-4">
+                    <button
+                      onClick={() => goProfile(author)}
+                      className="flex items-center gap-3"
+                    >
+                      <span className="h-10 w-10 overflow-hidden rounded-full ring-2 ring-white/70">
+                        <img
+                          src={resolveAvatar(author.profile_picture, author.username || "O")}
+                          alt="profile"
+                          className="h-full w-full object-cover"
+                        />
+                      </span>
+                      <span className="flex items-center gap-1.5 text-sm font-bold text-white drop-shadow">
+                        {name}
+                        <UserBadge userType={author.user_type} />
+                      </span>
+                    </button>
 
-              {/* Right action rail */}
-              <div className="absolute bottom-28 right-3 z-20 flex flex-col items-center gap-5 sm:bottom-10">
-                <button
-                  onClick={() => handleLike(post.id)}
-                  className="flex flex-col items-center gap-1 text-white"
-                >
-                  <span
-                    className={`flex h-12 w-12 items-center justify-center rounded-full backdrop-blur-md transition-all active:scale-90 ${
-                      post.is_liked ? "bg-primary" : "bg-white/15 hover:bg-white/25"
-                    }`}
+                    {(post.title || post.content) && (
+                      <p className="mt-2 line-clamp-2 text-xs font-medium leading-relaxed text-white/90 drop-shadow">
+                        {post.title || post.content}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* ACTION RAIL — overlay bottom-right on mobile, beside card on desktop */}
+                <div className="absolute bottom-28 right-3 z-40 flex flex-col items-center gap-5 sm:static sm:mb-8 sm:self-end">
+                  <button
+                    onClick={() => handleLike(post.id)}
+                    className="flex flex-col items-center gap-1 text-white"
                   >
-                    {post.is_liked ? <BiSolidLike size={24} /> : <BiLike size={24} />}
-                  </span>
-                  <span className="text-2xs font-bold">{post.total_likes}</span>
-                </button>
+                    <span
+                      className={`flex h-12 w-12 items-center justify-center rounded-full backdrop-blur-md transition-all active:scale-90 ${
+                        post.is_liked
+                          ? "bg-primary"
+                          : "bg-white/15 hover:bg-white/25 sm:bg-white/10"
+                      }`}
+                    >
+                      {post.is_liked ? <BiSolidLike size={24} /> : <BiLike size={24} />}
+                    </span>
+                    <span className="text-2xs font-bold">{post.total_likes}</span>
+                  </button>
 
-                <button
-                  onClick={() => navigate(`/post/${post.id}/comments`)}
-                  className="flex flex-col items-center gap-1 text-white"
-                >
-                  <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white/15 backdrop-blur-md transition-all hover:bg-white/25 active:scale-90">
-                    <FaRegComments size={22} />
-                  </span>
-                  <span className="text-2xs font-bold">{post.total_comments}</span>
-                </button>
-              </div>
-
-              {/* Bottom-left author + caption */}
-              <div className="absolute bottom-24 left-4 right-20 z-20 sm:bottom-8">
-                <button
-                  onClick={() => goProfile(author)}
-                  className="flex items-center gap-3"
-                >
-                  <span className="h-10 w-10 overflow-hidden rounded-full ring-2 ring-white/70">
-                    <img
-                      src={resolveAvatar(author.profile_picture, author.username || "O")}
-                      alt="profile"
-                      className="h-full w-full object-cover"
-                    />
-                  </span>
-                  <span className="flex items-center gap-1.5 text-sm font-bold text-white drop-shadow">
-                    {name}
-                    <UserBadge userType={author.user_type} />
-                  </span>
-                </button>
-
-                {(post.title || post.content) && (
-                  <p className="mt-2 line-clamp-2 text-xs font-medium leading-relaxed text-white/90 drop-shadow">
-                    {post.title || post.content}
-                  </p>
-                )}
+                  <button
+                    onClick={() => setCommentsPostId(post.id)}
+                    className="flex flex-col items-center gap-1 text-white"
+                  >
+                    <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white/15 backdrop-blur-md transition-all hover:bg-white/25 active:scale-90 sm:bg-white/10">
+                      <FaRegComments size={22} />
+                    </span>
+                    <span className="text-2xs font-bold">{post.total_comments}</span>
+                  </button>
+                </div>
               </div>
             </section>
           );
@@ -177,6 +197,13 @@ export default function VideoFeed() {
           </div>
         )}
       </div>
+
+      <CommentsPanel
+        open={commentsPostId !== null}
+        postId={commentsPostId}
+        onClose={() => setCommentsPostId(null)}
+        onCountChange={(delta) => adjustCommentCount(commentsPostId, delta)}
+      />
     </div>
   );
 }

@@ -264,6 +264,9 @@ export default function PostCard({
                                         controls={false}
                                         onClick={(e) => {
                                             e.stopPropagation();
+                                            // Remember feed scroll so returning from the
+                                            // video feed lands back on this post.
+                                            sessionStorage.setItem("scrollY", window.scrollY);
                                             navigate(`/videos?start=${post.id}`);
                                         }}
                                         className="relative z-10 w-full h-full block max-h-[500px] object-contain bg-black cursor-pointer"
