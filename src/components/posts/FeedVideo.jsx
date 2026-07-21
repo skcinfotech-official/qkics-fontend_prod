@@ -2,13 +2,15 @@ import { useEffect, useRef } from "react";
 
 /**
  * Feed video with scroll-aware playback:
- *  - Auto-plays (muted) when it scrolls into view (>=60% visible).
+ *  - Auto-plays (with SOUND) when it scrolls into view (>=60% visible).
  *  - Auto-pauses when it scrolls out of view.
  *  - Guarantees only ONE feed video plays at a time (module-level singleton):
  *    whenever any FeedVideo starts playing, every other one is paused.
  *
- * Muted autoplay is required by browser autoplay policies; users can unmute
- * via the native controls, and the next in-view video re-starts muted.
+ * We try to play unmuted first. Browsers block unmuted autoplay until the user
+ * has interacted with the page, so if that rejects we transparently fall back
+ * to a muted play (and the first user gesture makes later videos play with
+ * sound automatically).
  */
 
 // The <video> element currently playing across the whole app.
@@ -42,9 +44,20 @@ export default function FeedVideo({ src, className, poster }) {
     const video = ref.current;
     if (!video) return;
 
-    // Muted is required for programmatic autoplay without a user gesture.
-    video.muted = true;
-    video.defaultMuted = true;
+    // Try to play WITH sound; fall back to muted only if the browser's
+    // autoplay policy rejects the unmuted play (i.e. before any user gesture).
+    const playWithSound = () => {
+      video.muted = false;
+      const p = video.play();
+      if (p && typeof p.catch === "function") {
+        p.catch(() => {
+          // Autoplay policy blocked sound — retry muted so it still plays.
+          video.muted = true;
+          const p2 = video.play();
+          if (p2 && typeof p2.catch === "function") p2.catch(() => {});
+        });
+      }
+    };
 
     const handlePlay = () => {
       // Enforce single playback: pause whichever other video was playing.
@@ -63,8 +76,7 @@ export default function FeedVideo({ src, className, poster }) {
     const io = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting && entry.intersectionRatio >= 0.6) {
-          const p = video.play();
-          if (p && typeof p.catch === "function") p.catch(() => {});
+          playWithSound();
         } else if (!video.paused) {
           video.pause();
         }

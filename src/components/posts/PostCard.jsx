@@ -76,7 +76,7 @@ export default function PostCard({
     return (
         <article className="premium-card overflow-hidden bg-card text-foreground animate-fadeIn">
             {/* HEADER */}
-            <header className="p-6 flex items-center justify-between">
+            <header className="p-4 sm:p-6 flex items-center justify-between">
                 <div className="flex items-center gap-4">
                     <div
                         className="h-12 w-12 rounded-xl overflow-hidden cursor-pointer ring-2 ring-transparent hover:ring-primary/30 transition-all"
@@ -150,7 +150,7 @@ export default function PostCard({
             </header>
 
             {/* CONTENT */}
-            <div className="px-6 pb-6">
+            <div className="px-4 pb-4 sm:px-6 sm:pb-6">
                 {post.title && (
                     <h2 className="text-lg font-bold mb-1 leading-tight tracking-tight">
                         {post.title}

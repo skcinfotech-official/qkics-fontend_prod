@@ -416,6 +416,7 @@ function AddCertificationModal({ onClose, onCreate, isDark }) {
           Cancel
         </button>
       </div>
+      
     </>
   );
 }
