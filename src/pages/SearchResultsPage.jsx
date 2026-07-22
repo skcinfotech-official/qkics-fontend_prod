@@ -280,14 +280,14 @@ export default function SearchResultsPage() {
                         )}
 
                         {type === "profiles" && (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="flex flex-col gap-3">
                                 {profileLoading && (
                                     [1, 2, 3, 4].map((i) => (
-                                        <div key={i} className="h-28 rounded-3xl animate-pulse bg-muted/20" />
+                                        <div key={i} className="h-[76px] rounded-2xl animate-pulse bg-muted/20" />
                                     ))
                                 )}
                                 {!profileLoading && profileResults.length === 0 && (
-                                    <div className="col-span-full text-center py-20 rounded-3xl border border-border bg-card">
+                                    <div className="text-center py-20 rounded-3xl border border-border bg-card">
                                         <FaSearch className="mx-auto text-4xl mb-4 text-muted-foreground/30" />
                                         <h3 className="font-bold text-lg text-foreground">No people found</h3>
                                         <p className="text-sm text-muted-foreground">Try searching by name or username</p>
@@ -296,26 +296,28 @@ export default function SearchResultsPage() {
                                 {!profileLoading && profileResults.map((user) => (
                                     <div
                                         key={user.id}
-                                        className="group relative p-5 rounded-3xl border border-border bg-card hover:shadow-2xl hover:border-primary/30 transition-all duration-300 cursor-pointer overflow-hidden"
                                         onClick={() => goToProfile(user)}
+                                        className="group flex items-center gap-4 p-3 md:p-4 rounded-2xl border border-border bg-card cursor-pointer transition-all duration-300 hover:border-primary/40 hover:shadow-xl hover:shadow-primary/5 animate-fadeIn"
                                     >
-                                        <div className="absolute inset-0 bg-gradient-to-br from-primary/0 to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                        <img
+                                            src={user.profile_picture || `https://ui-avatars.com/api/?name=${user.username}&background=random`}
+                                            className="h-12 w-12 md:h-14 md:w-14 shrink-0 rounded-full object-cover ring-2 ring-transparent transition-all duration-300 group-hover:ring-primary/40"
+                                            alt={user.username}
+                                        />
 
-                                        <div className="relative flex items-center gap-5">
-                                            <div className="relative">
-                                                <img
-                                                    src={user.profile_picture || `https://ui-avatars.com/api/?name=${user.username}&background=random`}
-                                                    className="h-14 w-14 rounded-2xl object-cover ring-2 ring-transparent group-hover:ring-primary transition-all duration-300"
-                                                    alt={user.username}
-                                                />
-                                            </div>
-
-                                            <div className="min-w-0">
-                                                <h4 className="font-bold text-foreground text-lg truncate mb-0.5">{user.first_name || user.username} {user.last_name || ""}</h4>
-                                                <p className="text-2xs font-bold uppercase tracking-widest text-muted-foreground mb-2">@{user.username}</p>
+                                        <div className="min-w-0 flex-grow">
+                                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                                                <h4 className="font-bold text-foreground text-sm md:text-base truncate transition-colors group-hover:text-primary">
+                                                    {user.first_name || user.username} {user.last_name || ""}
+                                                </h4>
                                                 <UserBadge userType={user.user_type} isDark={isDark} />
                                             </div>
+                                            <p className="text-2xs font-bold uppercase tracking-widest text-muted-foreground mt-0.5 truncate">@{user.username}</p>
                                         </div>
+
+                                        <span className="hidden xs:inline-flex shrink-0 items-center px-4 py-2 rounded-xl text-3xs md:text-2xs font-black uppercase tracking-[0.15em] md:tracking-widest border border-border text-muted-foreground transition-all group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary">
+                                            View
+                                        </span>
                                     </div>
                                 ))}
                             </div>
