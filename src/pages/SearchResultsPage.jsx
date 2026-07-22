@@ -20,7 +20,7 @@ import ModalOverlay from "../components/ui/ModalOverlay";
 import LoginModal from "../components/auth/login";
 import SignupModal from "../components/auth/Signup";
 import UserBadge from "../components/ui/UserBadge";
-import { PageHeader } from "../components/ui";
+import { SearchInput } from "../components/ui";
 import CreatePostModal from "../components/posts/create_post";
 
 export default function SearchResultsPage() {
@@ -123,14 +123,19 @@ export default function SearchResultsPage() {
         });
     };
 
-    const goBack = () => {
-        navigate(-1);
-    };
-
     // Count / loading state for the currently active tab (drives the header copy).
     const activeCount = type === "posts" ? postResults.length : profileResults.length;
     const activeLoading = type === "posts" ? postLoading : profileLoading;
     const resultNoun = type === "posts" ? "post" : "profile";
+
+    // Editable query box in the header — lets users refine the search inline,
+    // keeping the currently active tab (posts / people).
+    const [searchInput, setSearchInput] = useState(query);
+    useEffect(() => { setSearchInput(query); }, [query]);
+    const submitSearch = () => {
+        const v = searchInput.trim();
+        if (v) navigate(`/search?q=${encodeURIComponent(v)}&type=${type}`);
+    };
 
     const downloadImage = async (url) => {
         try {
@@ -201,36 +206,41 @@ export default function SearchResultsPage() {
                 {/* MAIN CONTENT */}
                 <main className="col-span-12 md:col-span-9 lg:col-span-6 space-y-8 animate-fadeIn">
 
-                    {/* SEARCH RESULTS HEADER */}
-                    <PageHeader
-                        breadcrumb={[{ label: "Search" }]}
-                        onBack={goBack}
-                        title={<>Search <span className="text-primary">Results</span></>}
-                        description={
-                            query
-                                ? activeLoading
-                                    ? <>Searching for <span className="font-bold text-foreground">"{query}"</span>…</>
-                                    : <>{activeCount} {resultNoun}{activeCount === 1 ? "" : "s"} matching <span className="font-bold text-foreground">"{query}"</span></>
-                                : "Enter a search term to see results."
-                        }
-                        className="mb-0"
-                    >
-                        {/* Segmented tabs — right side on desktop, below on mobile */}
-                        <div className="inline-flex gap-1 rounded-2xl border border-border bg-muted/50 p-1.5">
-                            {["posts", "profiles"].map((t) => (
-                                <button
-                                    key={t}
-                                    onClick={() => switchTab(t)}
-                                    className={`whitespace-nowrap rounded-xl px-5 py-2 text-2xs font-black uppercase tracking-widest transition-all ${type === t
-                                        ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
-                                        : "text-muted-foreground hover:text-foreground"
-                                        }`}
-                                >
-                                    {t === "profiles" ? "People" : "Posts"}
-                                </button>
-                            ))}
+                    {/* COMPACT SEARCH HEADER — editable query + tabs on one band */}
+                    <div className="space-y-2.5">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <SearchInput
+                                value={searchInput}
+                                onChange={setSearchInput}
+                                onClear={() => setSearchInput("")}
+                                onKeyDown={(e) => e.key === "Enter" && submitSearch()}
+                                placeholder="Search posts or people..."
+                                className="w-full sm:max-w-md"
+                            />
+
+                            {/* Segmented tabs */}
+                            <div className="inline-flex shrink-0 gap-1 self-start rounded-2xl border border-border bg-muted/50 p-1.5 sm:self-auto">
+                                {["posts", "profiles"].map((t) => (
+                                    <button
+                                        key={t}
+                                        onClick={() => switchTab(t)}
+                                        className={`whitespace-nowrap rounded-xl px-5 py-2 text-2xs font-black uppercase tracking-widest transition-all ${type === t
+                                            ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
+                                            : "text-muted-foreground hover:text-foreground"
+                                            }`}
+                                    >
+                                        {t === "profiles" ? "People" : "Posts"}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
-                    </PageHeader>
+
+                        {query && !activeLoading && (
+                            <p className="px-1 text-2xs font-bold uppercase tracking-widest text-muted-foreground">
+                                {activeCount} {resultNoun}{activeCount === 1 ? "" : "s"} for <span className="text-foreground">"{query}"</span>
+                            </p>
+                        )}
+                    </div>
 
                     {/* RESULTS */}
                     <div className="space-y-6">
