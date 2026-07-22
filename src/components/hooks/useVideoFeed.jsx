@@ -15,7 +15,7 @@ const extractResults = (data) =>
 
 const getClient = () => (getAccessToken() ? axiosSecure : axios);
 
-export default function useVideoFeed() {
+export default function useVideoFeed(startId) {
   const [posts, setPosts] = useState([]);
   const [next, setNext] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -36,7 +36,36 @@ export default function useVideoFeed() {
     try {
       const res = await getClient().get(`${prefix}/community/posts/videos/`);
       const parsed = extractResults(res.data);
-      setPosts(parsed.results.map(normalizePost));
+      let results = parsed.results.map(normalizePost);
+
+      // The user tapped a specific video (from home or a profile). The global
+      // feed only returns the newest page, so that exact post may not be in it
+      // — guarantee it opens by pinning it to the FRONT of the feed. If it's
+      // already loaded we just hoist it; otherwise we fetch it directly.
+      if (startId != null) {
+        const sid = String(startId);
+        const existing = results.find((p) => String(p.id) === sid);
+        if (existing) {
+          results = [existing, ...results.filter((p) => String(p.id) !== sid)];
+        } else {
+          try {
+            const one = await getClient().get(
+              `${prefix}/community/posts/${sid}/`
+            );
+            const startPost = normalizePost(one.data);
+            if (startPost && startPost.id != null) {
+              results = [
+                startPost,
+                ...results.filter((p) => String(p.id) !== sid),
+              ];
+            }
+          } catch {
+            // Post gone / not accessible — fall back to the plain global feed.
+          }
+        }
+      }
+
+      setPosts(results);
       setNext(parsed.next);
       nextRef.current = parsed.next;
     } catch (err) {
@@ -45,7 +74,7 @@ export default function useVideoFeed() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [startId]);
 
   const loadMore = useCallback(async () => {
     const currentNext = nextRef.current;
@@ -53,7 +82,13 @@ export default function useVideoFeed() {
     try {
       const res = await getClient().get(currentNext);
       const parsed = extractResults(res.data);
-      setPosts((prev) => [...prev, ...parsed.results.map(normalizePost)]);
+      const incoming = parsed.results.map(normalizePost);
+      setPosts((prev) => {
+        // Drop anything already shown (e.g. the pinned start post) so it
+        // doesn't appear twice while scrolling.
+        const seen = new Set(prev.map((p) => String(p.id)));
+        return [...prev, ...incoming.filter((p) => !seen.has(String(p.id)))];
+      });
       setNext(parsed.next);
       nextRef.current = parsed.next;
     } catch (err) {

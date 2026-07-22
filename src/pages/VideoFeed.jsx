@@ -28,7 +28,8 @@ export default function VideoFeed() {
   const { data: loggedUser } = useSelector((state) => state.user);
   const { showAlert } = useAlert();
 
-  const { posts, setPosts, loaderRef, next, loading, error } = useVideoFeed();
+  const { posts, setPosts, loaderRef, next, loading, error } =
+    useVideoFeed(startId);
   const { handleLike } = useLike(setPosts, getAccessToken, () =>
     showAlert("Please log in to like.", "warning")
   );
