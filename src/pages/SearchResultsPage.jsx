@@ -3,7 +3,6 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { MdOutlineFileDownload, MdFilterList } from "react-icons/md";
 import { FaSearch, FaTimes } from "react-icons/fa";
-import { FiArrowLeft } from "react-icons/fi";
 
 import useSearchPosts from "../components/hooks/useSearch";
 import useSearchProfiles from "../components/hooks/useSearchProfiles";
@@ -21,7 +20,7 @@ import ModalOverlay from "../components/ui/ModalOverlay";
 import LoginModal from "../components/auth/login";
 import SignupModal from "../components/auth/Signup";
 import UserBadge from "../components/ui/UserBadge";
-import { Breadcrumb } from "../components/ui";
+import { PageHeader } from "../components/ui";
 import CreatePostModal from "../components/posts/create_post";
 
 export default function SearchResultsPage() {
@@ -128,6 +127,11 @@ export default function SearchResultsPage() {
         navigate(-1);
     };
 
+    // Count / loading state for the currently active tab (drives the header copy).
+    const activeCount = type === "posts" ? postResults.length : profileResults.length;
+    const activeLoading = type === "posts" ? postLoading : profileLoading;
+    const resultNoun = type === "posts" ? "post" : "profile";
+
     const downloadImage = async (url) => {
         try {
             const response = await fetch(url, { mode: "cors" });
@@ -151,12 +155,6 @@ export default function SearchResultsPage() {
 
                 {/* SIDEBAR: TAGS */}
                 <aside className="hidden md:block md:col-span-3 lg:col-span-3">
-                    <button
-                        onClick={goBack}
-                        className="p-3 m-3 rounded-full mt-1 transition-all bg-muted/20 hover:bg-muted/30 text-foreground"
-                    >
-                        <FiArrowLeft size={20} />
-                    </button>
                     <div className="sticky top-32 p-6 rounded-3xl border border-border bg-card shadow-xl">
                         <div className="space-y-6">
                             <div className="flex items-center gap-3 mb-2">
@@ -188,7 +186,7 @@ export default function SearchResultsPage() {
                                         {Array.isArray(tags) && tags.length > 10 && (
                                             <button
                                                 onClick={() => setShowAllTags(!showAllTags)}
-                                                className="w-full py-2 text-2xs font-black uppercase tracking-widest text-blue-500 hover:text-blue-400 transition-colors"
+                                                className="w-full py-2 text-2xs font-black uppercase tracking-widest text-primary hover:text-primary-hover transition-colors"
                                             >
                                                 {showAllTags ? "- Show Less" : "+ Show More"}
                                             </button>
@@ -204,30 +202,35 @@ export default function SearchResultsPage() {
                 <main className="col-span-12 md:col-span-9 lg:col-span-6 space-y-8 animate-fadeIn">
 
                     {/* SEARCH RESULTS HEADER */}
-                    <div className="space-y-4">
-                        <Breadcrumb items={[{ label: "Search" }]} />
-                        <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
-                            Results for <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-orange-600">"{query}"</span>
-                        </h1>
-                    </div>
-
-                    {/* GLASS TABS */}
-                    <div className="flex justify-start">
-                        <div className={`inline-flex flex-wrap justify-center p-1.5 rounded-2xl border border-border bg-background/40 backdrop-blur-md`}>
+                    <PageHeader
+                        breadcrumb={[{ label: "Search" }]}
+                        onBack={goBack}
+                        title={<>Search <span className="text-primary">Results</span></>}
+                        description={
+                            query
+                                ? activeLoading
+                                    ? <>Searching for <span className="font-bold text-foreground">"{query}"</span>…</>
+                                    : <>{activeCount} {resultNoun}{activeCount === 1 ? "" : "s"} matching <span className="font-bold text-foreground">"{query}"</span></>
+                                : "Enter a search term to see results."
+                        }
+                        className="mb-0"
+                    >
+                        {/* Segmented tabs — right side on desktop, below on mobile */}
+                        <div className="inline-flex gap-1 rounded-2xl border border-border bg-muted/50 p-1.5">
                             {["posts", "profiles"].map((t) => (
                                 <button
                                     key={t}
                                     onClick={() => switchTab(t)}
-                                    className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${type === t
-                                        ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
+                                    className={`whitespace-nowrap rounded-xl px-5 py-2 text-2xs font-black uppercase tracking-widest transition-all ${type === t
+                                        ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
                                         : "text-muted-foreground hover:text-foreground"
                                         }`}
                                 >
-                                    {t === "profiles" ? "People" : t}
+                                    {t === "profiles" ? "People" : "Posts"}
                                 </button>
                             ))}
                         </div>
-                    </div>
+                    </PageHeader>
 
                     {/* RESULTS */}
                     <div className="space-y-6">
