@@ -37,12 +37,16 @@ export default function SearchResultsPage() {
         results: postResults,
         setResults: setPostResults,
         loading: postLoading,
+        next: postsNext,
+        loaderRef: postsLoaderRef,
     } = useSearchPosts();
 
     const {
         searchProfiles,
         results: profileResults,
         loading: profileLoading,
+        next: profilesNext,
+        loaderRef: profilesLoaderRef,
     } = useSearchProfiles();
 
     const { tags, loading: loadingTags } = useTags();
@@ -131,7 +135,26 @@ export default function SearchResultsPage() {
     // Editable query box in the header — lets users refine the search inline,
     // keeping the currently active tab (posts / people).
     const [searchInput, setSearchInput] = useState(query);
-    useEffect(() => { setSearchInput(query); }, [query]);
+    const inputFocused = useRef(false);
+
+    // Resync the box only when the URL query changes from an external source
+    // (tag click, back/forward) — never while the user is typing, or it would
+    // clobber their input mid-keystroke.
+    useEffect(() => {
+        if (!inputFocused.current) setSearchInput(query);
+    }, [query]);
+
+    // Live search: debounce typing → update the URL (replace, so history isn't
+    // spammed). The URL is the single source of truth that triggers the fetch.
+    useEffect(() => {
+        const v = searchInput.trim();
+        if (v === query || v.length < 2) return;
+        const id = setTimeout(() => {
+            navigate(`/search?q=${encodeURIComponent(v)}&type=${type}`, { replace: true });
+        }, 350);
+        return () => clearTimeout(id);
+    }, [searchInput, query, type, navigate]);
+
     const submitSearch = () => {
         const v = searchInput.trim();
         if (v) navigate(`/search?q=${encodeURIComponent(v)}&type=${type}`);
@@ -214,6 +237,8 @@ export default function SearchResultsPage() {
                                 onChange={setSearchInput}
                                 onClear={() => setSearchInput("")}
                                 onKeyDown={(e) => e.key === "Enter" && submitSearch()}
+                                onFocus={() => (inputFocused.current = true)}
+                                onBlur={() => (inputFocused.current = false)}
                                 placeholder="Search posts or people..."
                                 className="w-full sm:max-w-md"
                             />
@@ -276,6 +301,13 @@ export default function SearchResultsPage() {
                                         />
                                     </div>
                                 ))}
+
+                                {/* Infinite-scroll sentinel */}
+                                {postsNext && (
+                                    <div ref={postsLoaderRef} className="py-8 flex justify-center">
+                                        <div className="animate-spin rounded-full h-7 w-7 border-2 border-t-primary border-muted" />
+                                    </div>
+                                )}
                             </>
                         )}
 
@@ -320,6 +352,13 @@ export default function SearchResultsPage() {
                                         </span>
                                     </div>
                                 ))}
+
+                                {/* Infinite-scroll sentinel */}
+                                {profilesNext && (
+                                    <div ref={profilesLoaderRef} className="py-8 flex justify-center">
+                                        <div className="animate-spin rounded-full h-7 w-7 border-2 border-t-primary border-muted" />
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
