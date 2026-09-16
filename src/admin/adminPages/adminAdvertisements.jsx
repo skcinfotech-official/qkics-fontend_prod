@@ -8,6 +8,20 @@ import ConfirmationAlert from "../../components/ui/ConfirmationAlert";
 import { PageHeader, SearchInput, Button, Badge, AdminModal } from "../../components/ui";
 import { AdminTable, TablePagination, StatusBadge, FIELD_CLASS, LABEL_CLASS } from "../adminComponents/adminUi";
 
+// Pull a human-readable message out of a DRF error response (field errors,
+// non_field_errors, or detail) so the admin sees WHY the request failed.
+const apiErrorMessage = (err, fallback) => {
+  if (err?.response?.status === 413) return "File too large for the server (upload limit)";
+  const data = err?.response?.data;
+  if (!data || typeof data !== "object") return fallback;
+  if (data.detail) return data.detail;
+  const first = Object.entries(data)[0];
+  if (!first) return fallback;
+  const [field, msgs] = first;
+  const msg = Array.isArray(msgs) ? msgs[0] : String(msgs);
+  return field === "non_field_errors" ? msg : `${field.replace(/_/g, " ")}: ${msg}`;
+};
+
 const EMPTY_FORM = {
   title: "", file: null, redirect_url: "", start_datetime: "", end_datetime: "",
   description: "", button_text: "Learn More", placement: "sidebar_featured", is_active: true,
@@ -108,7 +122,7 @@ export default function AdminAdvertisements() {
       fetchAds();
     } catch (err) {
       console.error(err);
-      showAlert("Failed to create advertisement", "error");
+      showAlert(apiErrorMessage(err, "Failed to create advertisement"), "error");
     } finally {
       setCreateLoading(false);
     }
@@ -146,7 +160,7 @@ export default function AdminAdvertisements() {
       fetchAds();
     } catch (err) {
       console.error(err);
-      showAlert("Failed to update advertisement", "error");
+      showAlert(apiErrorMessage(err, "Failed to update advertisement"), "error");
     } finally {
       setEditLoading(false);
     }
