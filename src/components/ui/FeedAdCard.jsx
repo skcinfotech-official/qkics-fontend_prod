@@ -3,30 +3,18 @@
 // In-feed sponsored card — rendered after every 10th post on screens below
 // `xl`, where the right sidebar (SponsorCard) is not visible. Desktop keeps
 // ads in the sidebar only, so this card is `xl:hidden` by default.
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { FaVolumeXmark, FaVolumeHigh, FaArrowUpRightFromSquare } from "react-icons/fa6";
 import { resolveMedia } from "../utils/mediaUrl";
+import ClampedText from "./ClampedText";
 
 export default function FeedAdCard({ ad, className = "xl:hidden" }) {
-  const [expanded, setExpanded] = useState(false);
-  const [overflows, setOverflows] = useState(false);
   const [muted, setMuted] = useState(true);
   const [mediaError, setMediaError] = useState(false);
-  const textRef = useRef(null);
 
   const mediaSrc = resolveMedia(ad?.file_url);
   const isVideo = String(ad?.media_type).toLowerCase() === "video";
   const description = ad?.description || "";
-
-  // Only show "See more" when the clamped text is actually cut off.
-  useEffect(() => {
-    const el = textRef.current;
-    if (!el || expanded) return;
-    const check = () => setOverflows(el.scrollHeight > el.clientHeight + 1);
-    check();
-    window.addEventListener("resize", check);
-    return () => window.removeEventListener("resize", check);
-  }, [description, expanded]);
 
   if (!ad || !mediaSrc || mediaError) return null;
 
@@ -81,21 +69,7 @@ export default function FeedAdCard({ ad, className = "xl:hidden" }) {
 
         {description && (
           <div className="mt-1.5">
-            <p
-              ref={textRef}
-              className={`text-sm leading-relaxed text-muted-foreground font-medium whitespace-pre-wrap ${expanded ? "" : "line-clamp-2"}`}
-            >
-              {description}
-            </p>
-            {(overflows || expanded) && (
-              <button
-                type="button"
-                onClick={() => setExpanded((v) => !v)}
-                className={`mt-2 text-xs font-black uppercase tracking-widest transition-colors ${expanded ? "text-muted-foreground hover:text-primary" : "text-primary hover:text-primary-hover"}`}
-              >
-                {expanded ? "See less ▲" : "See more ▼"}
-              </button>
-            )}
+            <ClampedText text={description} lines={2} className="text-sm leading-relaxed text-muted-foreground font-medium" />
           </div>
         )}
 

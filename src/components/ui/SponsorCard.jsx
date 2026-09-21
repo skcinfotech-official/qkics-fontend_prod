@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { resolveMedia } from "../utils/mediaUrl";
 import useActiveAds from "../hooks/useActiveAds";
+import ClampedText from "./ClampedText";
 
 export default function SponsorCard() {
     // Shared with FeedAdCard — one request per page load for both surfaces.
@@ -72,7 +73,11 @@ function SponsorItem({ item }) {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
                 </div>
                 <h4 className="font-bold text-lg leading-tight mb-2 text-foreground">{item.title}</h4>
-                <p className="text-muted-foreground text-sm mb-6 leading-relaxed">{item.description}</p>
+                {item.description && (
+                    <div className="mb-6">
+                        <ClampedText text={item.description} lines={3} className="text-muted-foreground text-sm leading-relaxed" />
+                    </div>
+                )}
                 <a
                     href={item.redirect_url}
                     target="_blank"
