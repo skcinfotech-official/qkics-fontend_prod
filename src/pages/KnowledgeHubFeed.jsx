@@ -1,5 +1,5 @@
 // src/pages/KnowledgeHubFeed.jsx
-import { useState, useEffect } from "react";
+import { Fragment, useState, useEffect } from "react";
 import { Link, useNavigate, useSearchParams, Navigate } from "react-router-dom";
 import { FaPlus } from "react-icons/fa6";
 import { MdOutlineFileDownload } from "react-icons/md";
@@ -20,6 +20,8 @@ import SignupModal from "../components/auth/Signup";
 import ModalOverlay from "../components/ui/ModalOverlay";
 import PostCard from "../components/posts/PostCard";
 import SponsorCard from "../components/ui/SponsorCard";
+import FeedAdCard from "../components/ui/FeedAdCard";
+import useActiveAds, { adAfterPost } from "../components/hooks/useActiveAds";
 import Container from "../components/ui/Container";
 import { Breadcrumb } from "../components/ui";
 
@@ -44,6 +46,7 @@ function KnowledgeHubFeed() {
 
     // HOOKS
     const { posts, setPosts, loaderRef, next } = useKnowledgeFeed(searchQuery);
+    const { ads } = useActiveAds();
 
     const { handleLike } = useLike(
         setPosts,
@@ -242,24 +245,30 @@ function KnowledgeHubFeed() {
 
                     <div className="space-y-2">
                         {posts
-                            .map((post) => (
-                                <PostCard
-                                    key={post.id}
-                                    post={post}
-                                    loggedUser={loggedUser}
-                                    onLike={handleLike}
-                                    onDelete={handleDelete}
-                                    onEdit={(p) => { setEditingPost(p); setShowCreatePost(true); }}
-                                    onCommentClick={(p) => {
-                                        if (!loggedUser) return setShowLogin(true);
-                                        sessionStorage.setItem("knowledgeScrollY", window.scrollY);
-                                        navigate(`/post/${p.id}/comments?from=knowledge`);
-                                    }}
-                                    onTagClick={applySearch}
-                                    onImageClick={setPreviewImage}
-                                    onProfileClick={goToProfile}
-                                />
-                            ))}
+                            .map((post, index) => {
+                                // In-feed sponsored slot after every 10th post (below xl only).
+                                const ad = adAfterPost(ads, index, posts.length, Boolean(next));
+                                return (
+                                    <Fragment key={post.id}>
+                                        <PostCard
+                                            post={post}
+                                            loggedUser={loggedUser}
+                                            onLike={handleLike}
+                                            onDelete={handleDelete}
+                                            onEdit={(p) => { setEditingPost(p); setShowCreatePost(true); }}
+                                            onCommentClick={(p) => {
+                                                if (!loggedUser) return setShowLogin(true);
+                                                sessionStorage.setItem("knowledgeScrollY", window.scrollY);
+                                                navigate(`/post/${p.id}/comments?from=knowledge`);
+                                            }}
+                                            onTagClick={applySearch}
+                                            onImageClick={setPreviewImage}
+                                            onProfileClick={goToProfile}
+                                        />
+                                        {ad && <FeedAdCard ad={ad} />}
+                                    </Fragment>
+                                );
+                            })}
                     </div>
 
                     <div ref={loaderRef} className="py-20 flex flex-col items-center justify-center opacity-30 gap-4">

@@ -22,6 +22,11 @@ const apiErrorMessage = (err, fallback) => {
   return field === "non_field_errors" ? msg : `${field.replace(/_/g, " ")}: ${msg}`;
 };
 
+// Mirrors Advertisement.DESCRIPTION_MAX_WORDS on the backend — the in-feed ad
+// card clamps text to 2 lines with "See more", so long copy is rejected.
+const DESCRIPTION_MAX_WORDS = 100;
+const wordCount = (text) => (text || "").trim().split(/\s+/).filter(Boolean).length;
+
 const EMPTY_FORM = {
   title: "", file: null, redirect_url: "", start_datetime: "", end_datetime: "",
   description: "", button_text: "Learn More", placement: "sidebar_featured", is_active: true,
@@ -111,6 +116,10 @@ export default function AdminAdvertisements() {
       showAlert("Please fill in all required fields", "warning");
       return;
     }
+    if (wordCount(createForm.description) > DESCRIPTION_MAX_WORDS) {
+      showAlert(`Description must be at most ${DESCRIPTION_MAX_WORDS} words`, "warning");
+      return;
+    }
     try {
       setCreateLoading(true);
       await axiosSecure.post("/v1/admin/ads/create/", buildFormData(createForm), {
@@ -148,6 +157,10 @@ export default function AdminAdvertisements() {
     e.preventDefault();
     if (!editForm.title || !editForm.redirect_url || !editForm.start_datetime || !editForm.end_datetime) {
       showAlert("Please fill in all required fields", "warning");
+      return;
+    }
+    if (wordCount(editForm.description) > DESCRIPTION_MAX_WORDS) {
+      showAlert(`Description must be at most ${DESCRIPTION_MAX_WORDS} words`, "warning");
       return;
     }
     try {
@@ -332,7 +345,7 @@ export default function AdminAdvertisements() {
           footer={
             <>
               <Button variant="outline" onClick={() => setCreateModal(false)} disabled={createLoading}>Cancel</Button>
-              <Button type="submit" form="ad-create-form" loading={createLoading}>Create Ad</Button>
+              <Button type="submit" form="ad-create-form" loading={createLoading} disabled={wordCount(createForm.description) > DESCRIPTION_MAX_WORDS}>Create Ad</Button>
             </>
           }
         >
@@ -349,7 +362,7 @@ export default function AdminAdvertisements() {
           footer={
             <>
               <Button variant="outline" onClick={() => setEditModal({ isOpen: false, adId: null })} disabled={editLoading}>Cancel</Button>
-              <Button type="submit" form="ad-edit-form" loading={editLoading}>Save Changes</Button>
+              <Button type="submit" form="ad-edit-form" loading={editLoading} disabled={wordCount(editForm.description) > DESCRIPTION_MAX_WORDS}>Save Changes</Button>
             </>
           }
         >
@@ -374,6 +387,7 @@ export default function AdminAdvertisements() {
 
 function AdFields({ form, setForm, isEdit }) {
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
+  const descWords = wordCount(form.description);
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div className="md:col-span-2">
@@ -381,8 +395,18 @@ function AdFields({ form, setForm, isEdit }) {
         <input type="text" required value={form.title} onChange={(e) => set({ title: e.target.value })} className={FIELD_CLASS} placeholder="Ad Title" />
       </div>
       <div className="md:col-span-2">
-        <label className={LABEL_CLASS}>Description</label>
-        <textarea value={form.description} onChange={(e) => set({ description: e.target.value })} className={`${FIELD_CLASS} min-h-[80px] resize-none`} placeholder="Ad Description (Optional)" />
+        <div className="flex items-center justify-between">
+          <label className={LABEL_CLASS}>Description</label>
+          <span className={`text-2xs font-bold tabular-nums ${descWords > DESCRIPTION_MAX_WORDS ? "text-danger" : "text-muted-foreground"}`}>
+            {descWords} / {DESCRIPTION_MAX_WORDS} words
+          </span>
+        </div>
+        <textarea value={form.description} onChange={(e) => set({ description: e.target.value })}
+          className={`${FIELD_CLASS} min-h-[80px] resize-none ${descWords > DESCRIPTION_MAX_WORDS ? "!border-danger focus:!ring-danger/30" : ""}`}
+          placeholder={`Ad Description (optional, max ${DESCRIPTION_MAX_WORDS} words — shown under the ad title with a "See more" toggle)`} />
+        {descWords > DESCRIPTION_MAX_WORDS && (
+          <p className="mt-1 text-xs font-semibold text-danger">Too long — remove {descWords - DESCRIPTION_MAX_WORDS} word{descWords - DESCRIPTION_MAX_WORDS === 1 ? "" : "s"}.</p>
+        )}
       </div>
       <div>
         <label className={LABEL_CLASS}>{isEdit ? "Media File (blank keeps current)" : "Media File *"}</label>

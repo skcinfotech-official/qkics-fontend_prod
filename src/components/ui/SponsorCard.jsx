@@ -1,28 +1,10 @@
-import { useState, useEffect } from "react";
-import axiosSecure from "../utils/axiosSecure";
+import { useState } from "react";
 import { resolveMedia } from "../utils/mediaUrl";
+import useActiveAds from "../hooks/useActiveAds";
 
 export default function SponsorCard() {
-    const [sponsors, setSponsors] = useState([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        const fetchSponsors = async () => {
-            try {
-                // Note: The endpoint remains /v1/ads/active/ for now as it's a backend route,
-                // but we keep the frontend variable names neutral.
-                const { data } = await axiosSecure.get("/v1/ads/active/");
-                if (data && Array.isArray(data)) {
-                    setSponsors(data);
-                }
-            } catch {
-                // If it fails (possibly due to adblock), show nothing
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchSponsors();
-    }, []);
+    // Shared with FeedAdCard — one request per page load for both surfaces.
+    const { ads: sponsors, loading } = useActiveAds();
 
     if (loading) {
         return (
