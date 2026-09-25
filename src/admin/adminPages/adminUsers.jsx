@@ -1,17 +1,37 @@
 import { useEffect, useState } from "react";
 import {
   FaEye, FaUsers, FaUserCircle, FaEnvelope, FaPhone, FaCalendarAlt,
-  FaPlus, FaArrowUp,
+  FaPlus, FaArrowUp, FaBan, FaCheckCircle, FaUserSlash,
 } from "react-icons/fa";
 import axiosSecure from "../../components/utils/axiosSecure";
 import { useAlert } from "../../context/AlertContext";
+import { useSelector } from "react-redux";
 import { PageHeader, SearchInput, Button, AdminModal } from "../../components/ui";
-import { AdminTable, TablePagination, RoleBadge, StatusBadge } from "../adminComponents/adminUi";
+import { AdminTable, TablePagination, RoleBadge, FIELD_CLASS, LABEL_CLASS } from "../adminComponents/adminUi";
 import AddInvestorModal from "./AddInvestorModal";
 import UpgradeToInvestorModal from "./UpgradeToInvestorModal";
 
+// Business account status (users.User.STATUS_TYPES) — distinct from Django's
+// is_active, which the backend keeps in sync so a block takes effect at once.
+const STATUS_META = {
+  active:   { label: "Active",   className: "bg-green-500/10 text-green-600 dark:text-green-400", dot: "bg-green-500" },
+  inactive: { label: "Inactive", className: "bg-amber-500/10 text-amber-600 dark:text-amber-400", dot: "bg-amber-500" },
+  banned:   { label: "Blocked",  className: "bg-red-500/10 text-red-600 dark:text-red-400",       dot: "bg-red-500" },
+};
+
+function AccountStatusBadge({ status }) {
+  const meta = STATUS_META[status] || STATUS_META.active;
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-2xs font-bold uppercase tracking-wide ${meta.className}`}>
+      <span className={`h-1.5 w-1.5 rounded-full ${meta.dot}`} />
+      {meta.label}
+    </span>
+  );
+}
+
 export default function AdminUsers() {
   const { showAlert } = useAlert();
+  const loggedUser = useSelector((state) => state.user?.data);
 
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -22,6 +42,10 @@ export default function AdminUsers() {
   const [totalUsers, setTotalUsers] = useState(0);
 
   const [viewModal, setViewModal] = useState({ isOpen: false, user: null });
+  const [statusModal, setStatusModal] = useState({ isOpen: false, user: null, next: "banned" });
+  const [statusReason, setStatusReason] = useState("");
+  const [statusLoading, setStatusLoading] = useState(false);
+  const [filterStatus, setFilterStatus] = useState("");
   const [isAddInvestorOpen, setIsAddInvestorOpen] = useState(false);
   const [upgradeModal, setUpgradeModal] = useState({ isOpen: false, user: null });
 
@@ -32,6 +56,7 @@ export default function AdminUsers() {
       params.append("page", page);
       if (searchText) params.append("search", searchText);
       if (filterRole) params.append("user_type", filterRole);
+      if (filterStatus) params.append("status", filterStatus);
 
       const res = await axiosSecure.get("/v1/admin/users/?" + params.toString());
       const data = Array.isArray(res.data) ? res.data : res.data?.results || [];
@@ -54,13 +79,53 @@ export default function AdminUsers() {
 
   useEffect(() => {
     setPage(1);
-  }, [searchText, filterRole]);
+  }, [searchText, filterRole, filterStatus]);
 
   useEffect(() => {
     const t = setTimeout(fetchUsers, 500);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchText, filterRole, page]);
+  }, [searchText, filterRole, filterStatus, page]);
+
+  // Mirrors the backend guards so the UI never offers an action that will 403.
+  const canChangeStatus = (user) => {
+    if (!user || !loggedUser) return false;
+    if (user.id === loggedUser.id) return false;
+    if (["admin", "superadmin"].includes(user.user_type) && loggedUser.user_type !== "superadmin") return false;
+    return true;
+  };
+
+  const openStatusModal = (user, next) => {
+    setStatusReason("");
+    setStatusModal({ isOpen: true, user, next });
+  };
+
+  const submitStatus = async () => {
+    const { user, next } = statusModal;
+    if (next !== "active" && !statusReason.trim()) {
+      showAlert("Please enter a reason", "warning");
+      return;
+    }
+    try {
+      setStatusLoading(true);
+      const { data } = await axiosSecure.patch(`/v1/admin/users/${user.id}/status/`, {
+        status: next,
+        reason: next === "active" ? "" : statusReason.trim(),
+      });
+      const verb = next === "active" ? "reactivated" : next === "banned" ? "blocked" : "deactivated";
+      const revoked = data?.sessions_revoked ? ` — ${data.sessions_revoked} session(s) signed out` : "";
+      showAlert(`@${user.username} ${verb}${revoked}`, "success");
+      setStatusModal({ isOpen: false, user: null, next: "banned" });
+      setViewModal({ isOpen: false, user: null });
+      fetchUsers();
+    } catch (err) {
+      const d = err?.response?.data;
+      const msg = d?.detail || d?.reason?.[0] || d?.status?.[0] || "Failed to update account status";
+      showAlert(msg, "error");
+    } finally {
+      setStatusLoading(false);
+    }
+  };
 
   const columns = [
     { key: "user", label: "User" },
@@ -85,7 +150,7 @@ export default function AdminUsers() {
       </PageHeader>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+      <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:items-center sm:justify-between">
         <SearchInput
           value={searchText}
           onChange={setSearchText}
@@ -103,6 +168,16 @@ export default function AdminUsers() {
           <option value="investor">Investor</option>
           <option value="admin">Admin</option>
           <option value="superadmin">Superadmin</option>
+        </select>
+        <select
+          value={filterStatus}
+          onChange={(e) => setFilterStatus(e.target.value)}
+          className="rounded-full border border-input bg-muted px-4 py-2.5 text-sm font-bold text-foreground outline-none hover:bg-muted/70 focus:border-primary"
+        >
+          <option value="">All Statuses</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+          <option value="banned">Blocked</option>
         </select>
       </div>
 
@@ -146,7 +221,7 @@ export default function AdminUsers() {
             <td className="py-3 px-5 whitespace-nowrap text-muted-foreground">
               {user.date_joined ? new Date(user.date_joined).toLocaleDateString() : "—"}
             </td>
-            <td className="py-3 px-5 text-center"><StatusBadge active={user.is_active} /></td>
+            <td className="py-3 px-5 text-center"><AccountStatusBadge status={user.status} /></td>
             <td className="py-3 px-5">
               <div className="flex items-center justify-center gap-1">
                 <button
@@ -164,6 +239,34 @@ export default function AdminUsers() {
                   >
                     <FaArrowUp />
                   </button>
+                )}
+                {canChangeStatus(user) && (
+                  user.status === "active" ? (
+                    <>
+                      <button
+                        title="Deactivate account"
+                        onClick={() => openStatusModal(user, "inactive")}
+                        className="p-2 rounded-lg text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 transition-colors"
+                      >
+                        <FaUserSlash />
+                      </button>
+                      <button
+                        title="Block account"
+                        onClick={() => openStatusModal(user, "banned")}
+                        className="p-2 rounded-lg text-danger hover:bg-danger/10 transition-colors"
+                      >
+                        <FaBan />
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      title="Reactivate account"
+                      onClick={() => openStatusModal(user, "active")}
+                      className="p-2 rounded-lg text-green-600 dark:text-green-400 hover:bg-green-500/10 transition-colors"
+                    >
+                      <FaCheckCircle />
+                    </button>
+                  )
                 )}
               </div>
             </td>
@@ -203,13 +306,29 @@ export default function AdminUsers() {
           headerExtra={
             <div className="flex items-center gap-2">
               <RoleBadge role={viewModal.user.user_type} />
-              <StatusBadge active={viewModal.user.is_active} />
+              <AccountStatusBadge status={viewModal.user.status} />
             </div>
           }
           footer={
-            <Button variant="outline" onClick={() => setViewModal({ isOpen: false, user: null })}>
-              Close
-            </Button>
+            <>
+              <Button variant="outline" onClick={() => setViewModal({ isOpen: false, user: null })}>
+                Close
+              </Button>
+              {canChangeStatus(viewModal.user) && (
+                viewModal.user.status === "active" ? (
+                  <Button onClick={() => openStatusModal(viewModal.user, "banned")}>
+                    <FaBan className="text-2xs" /> Block Account
+                  </Button>
+                ) : (
+                  <Button
+                    className="!bg-green-600 hover:!bg-green-700 !text-white"
+                    onClick={() => openStatusModal(viewModal.user, "active")}
+                  >
+                    <FaCheckCircle className="text-2xs" /> Reactivate
+                  </Button>
+                )
+              )}
+            </>
           }
         >
           <div className="space-y-4">
@@ -226,6 +345,90 @@ export default function AdminUsers() {
               <DetailRow icon={<FaCalendarAlt />} label="Joined On" value={viewModal.user.date_joined ? new Date(viewModal.user.date_joined).toLocaleDateString() : "—"} />
               <DetailRow icon={<FaCalendarAlt />} label="Last Login" value={viewModal.user.last_login ? new Date(viewModal.user.last_login).toLocaleDateString() : "Never"} />
             </div>
+            {viewModal.user.status !== "active" && (
+              <div className="rounded-xl border border-danger/30 bg-danger/5 p-4 space-y-2">
+                <h4 className="text-2xs font-bold uppercase tracking-wider text-danger">
+                  {viewModal.user.status === "banned" ? "Account blocked" : "Account deactivated"}
+                </h4>
+                {viewModal.user.status_reason && (
+                  <p className="text-sm text-foreground">
+                    <span className="font-semibold">Reason:</span> {viewModal.user.status_reason}
+                  </p>
+                )}
+                {viewModal.user.status_changed_at && (
+                  <p className="text-xs text-muted-foreground">
+                    Changed on {new Date(viewModal.user.status_changed_at).toLocaleString()}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        </AdminModal>
+      )}
+
+      {/* BLOCK / UNBLOCK / DEACTIVATE CONFIRM MODAL */}
+      {statusModal.isOpen && statusModal.user && (
+        <AdminModal
+          open
+          onClose={() => setStatusModal({ isOpen: false, user: null, next: "banned" })}
+          size="md"
+          icon={statusModal.next === "active" ? <FaCheckCircle /> : <FaBan />}
+          title={
+            statusModal.next === "active"
+              ? "Reactivate account"
+              : statusModal.next === "banned"
+                ? "Block account"
+                : "Deactivate account"
+          }
+          subtitle={`@${statusModal.user.username}`}
+          footer={
+            <>
+              <Button
+                variant="outline"
+                disabled={statusLoading}
+                onClick={() => setStatusModal({ isOpen: false, user: null, next: "banned" })}
+              >
+                Cancel
+              </Button>
+              <Button
+                loading={statusLoading}
+                onClick={submitStatus}
+                className={statusModal.next === "active" ? "!bg-green-600 hover:!bg-green-700 !text-white" : undefined}
+              >
+                {statusModal.next === "active" ? "Reactivate" : statusModal.next === "banned" ? "Block" : "Deactivate"}
+              </Button>
+            </>
+          }
+        >
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              {statusModal.next === "active" ? (
+                <>This user will be able to sign in again immediately.</>
+              ) : (
+                <>
+                  This signs the user out of every device right away and blocks new
+                  logins. Their posts and data are not deleted — you can reverse this
+                  at any time.
+                </>
+              )}
+            </p>
+            {statusModal.next !== "active" && (
+              <div>
+                <label className={LABEL_CLASS}>Reason *</label>
+                <input
+                  type="text"
+                  autoFocus
+                  maxLength={255}
+                  value={statusReason}
+                  onChange={(e) => setStatusReason(e.target.value)}
+                  className={FIELD_CLASS}
+                  placeholder="e.g. Repeated spam posts"
+                />
+                <p className="mt-1 text-2xs text-muted-foreground">
+                  Stored for the audit trail; the user is not shown this text.
+                </p>
+              </div>
+            )}
           </div>
         </AdminModal>
       )}
